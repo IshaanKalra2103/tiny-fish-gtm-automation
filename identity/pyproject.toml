@@ -1,0 +1,29 @@
+[project]
+name = "gtm-identity"
+version = "0.1.0"
+description = "Product identity + PMF tools for the GTM harness: brand evidence, moodboard, niche market research"
+readme = "README.md"
+authors = [
+    { name = "Ishaan Kalra", email = "74290686+IshaanKalra2103@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "pillow>=12.3.0",
+    "playwright>=1.63.0",
+    "pydantic>=2.14.1",
+    "python-dotenv>=1.2.4",
+    "tinyfish>=0.9.0",
+]
+
+[project.scripts]
+identity = "gtm_identity:main"
+
+[build-system]
+requires = ["uv_build>=0.8.4,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

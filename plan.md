@@ -25,6 +25,11 @@ The PRD describes a full GTM company. The deliverable grades four things: at lea
 
 **Data flow:**
 ```
+STAGE 0  Product identity + PMF (user decision, 14:05)
+  TinyFish Fetch + Browser ─► brand site: copy, real fonts/colors, screenshots ─► agent: identity.json ─► moodboard.png
+  TinyFish Search + Fetch  ─► each candidate niche: news, Reddit/HN, pains, competitors, short videos
+                           ─► agent: pmf.json (scored niches, hypothesis) ─► chosen_niche ─┐
+                                                                                             ▼
 TinyFish Search ─┬─ threads/news/blogs ──► TinyFish Fetch ──► pain points
                  └─ TikTok + Reel URLs ──► Bright Data ──► engagement + captions + top comments
 TinyFish Agent (YouTube Shorts) ─────────────────────────► views and titles
@@ -75,6 +80,7 @@ Python with **uv**.
 **Agents** (each one is a Paperclip agent; **R** = reasoning agent on Claude Code or Codex, **T** = tool step with no LLM inside):
 
 1. **Orchestrator (R):** plans the run, assigns tickets, enforces budgets.
+1b. **Product Identity & PMF (R + `identity/` tools):** runs first. `identity collect` reads the brand site with TinyFish Fetch + Browser. The agent writes `identity.json` (what it really is, audience, voice, visual), and `identity moodboard` renders `moodboard.png`. Then `identity market` scans each candidate niche with Search + Fetch, and the agent writes `pmf.json` (scored niches, chosen niche, hypothesis). Research uses `chosen_niche`, and strategy uses the voice, audience and cited claims. The procedure is in `identity/SKILL.md`.
 2. **Trend Researcher (T):** Search + Fetch + Agent → `evidence.json`. It also passes the TikTok and Reel URLs to Bright Data (`bd-gateway`), which writes `social_<platform>.json`.
 3. **Trend Analyst (R):** clusters topics, hooks and formats. A tool renders the charts.
 4. **Pattern Miner (R):** produces a template (hook pattern, beats, length, caption style, CTA), with each element citing evidence.
