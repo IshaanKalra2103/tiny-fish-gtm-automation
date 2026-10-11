@@ -20,12 +20,21 @@ RUN apt-get update \
   && mkdir -p /paperclip /workspace \
   && chown node:node /paperclip
 
-# Paperclip server + CLI, and Claude Code for the claude_local adapter
-# (the reasoning agents: CEO/orchestrator, strategist, QA personas).
-RUN npm install --global --omit=dev \
-       "paperclipai@${PAPERCLIPAI_VERSION}" \
-       @anthropic-ai/claude-code@latest \
-  && npm cache clean --force
+# Flaky network: npm retries hard, and the BuildKit cache mount keeps downloaded
+# tarballs across failed attempts, so a retry resumes instead of starting over.
+ENV NPM_CONFIG_FETCH_RETRIES=8 \
+    NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=5000 \
+    NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000 \
+    NPM_CONFIG_FETCH_TIMEOUT=600000 \
+    NPM_CONFIG_MAXSOCKETS=6
+
+# Paperclip server + CLI.
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --global --omit=dev --no-audit --no-fund "paperclipai@${PAPERCLIPAI_VERSION}"
+
+# Claude Code CLI for the claude_local adapter (the CEO/orchestrator).
+RUN --mount=type=cache,target=/root/.npm \
+    npm install --global --omit=dev --no-audit --no-fund @anthropic-ai/claude-code@latest
 
 # uv, so `process`-adapter agents can `uv run` the Python pipeline in
 # /workspace/app (mounted from the host project root).
@@ -40,6 +49,16 @@ RUN apt-get update \
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# /usr/local/bin/uv becomes a wrapper that gives each uv project its own venv
+# under /paperclip/venvs/<project> (see docker/uv-wrapper.sh). The real binaries
+# move to /usr/local/lib/uv; uvx finds its sibling uv via its resolved path.
+COPY docker/uv-wrapper.sh /usr/local/bin/uv-wrapper
+RUN mkdir -p /usr/local/lib/uv \
+  && mv /usr/local/bin/uv /usr/local/bin/uvx /usr/local/lib/uv/ \
+  && mv /usr/local/bin/uv-wrapper /usr/local/bin/uv \
+  && chmod +x /usr/local/bin/uv \
+  && ln -s /usr/local/lib/uv/uvx /usr/local/bin/uvx
+
 ENV NODE_ENV=production \
     HOME=/paperclip \
     HOST=0.0.0.0 \
@@ -52,7 +71,6 @@ ENV NODE_ENV=production \
     PAPERCLIP_DEPLOYMENT_EXPOSURE=private \
     PAPERCLIP_OPEN_ON_LISTEN=false \
     NPM_CONFIG_UPDATE_NOTIFIER=false \
-    UV_PROJECT_ENVIRONMENT=/paperclip/venvs/app \
     UV_CACHE_DIR=/paperclip/.cache/uv
 
 WORKDIR /workspace
@@ -62,7 +80,6 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=90s --retries=10 \
   CMD curl -fsS http://127.0.0.1:3100/api/health >/dev/null || exit 1
 
 ENTRYPOINT ["/usr/bin/tini", "--", "docker-entrypoint.sh"]
-# `run --yes --bind lan`: first boot onboards non-interactively with a 0.0.0.0
-# listener (a loopback bind is unreachable through Docker's port mapping);
-# later boots reuse /paperclip/instances/default/config.json.
-CMD ["paperclipai", "run", "--yes", "--bind", "lan"]
+# Like upstream's image: start the server entry directly, configured from env
+# (HOST=0.0.0.0 -> bind lan, authenticated/private). No CLI onboarding/doctor.
+CMD ["node", "/usr/local/lib/node_modules/paperclipai/node_modules/@paperclipai/server/dist/index.js"]

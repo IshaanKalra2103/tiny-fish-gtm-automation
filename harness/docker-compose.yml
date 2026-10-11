@@ -35,6 +35,10 @@ services:
       # Other containers/host services (Photon bridge, app/ FastAPI) reach us
       # via these names.
       PAPERCLIP_ALLOWED_HOSTNAMES: "host.docker.internal,gtm-paperclip,paperclip"
+      # LLM provider for app/ agents (OpenAI, US data residency). Supplied by up.sh
+      # from the shell / GTM_OPENAI_ENV_FILE; never stored in harness/.env.
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      OPENAI_BASE_URL: "${OPENAI_BASE_URL:-https://us.api.openai.com/v1}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

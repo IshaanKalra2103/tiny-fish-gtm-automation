@@ -2,6 +2,42 @@
 
 Read this first before doing anything. Latest entries at the top.
 
+## 2026-10-11 14:05: Paperclip harness LIVE on :3100 (`./harness/`), session 4d
+
+**Status:** running and verified end to end. Container `gtm-paperclip` (healthy) runs paperclipai 2026.1005.0 in authenticated/private mode.
+
+**Done**
+- `harness/` (all mine):
+  - `Dockerfile`: slim, node:24-trixie-slim + npm paperclipai + uv + espeak-ng/DejaVu
+  - `docker-compose.yml`
+  - `up.sh`: writes `.env` secrets, retrying build, waits for health
+  - `bootstrap.py`: idempotent; sets up admin, board key, company, goal, project and 8 agents
+  - `campaign.py`: new/status/approvals/approve/reject/revise
+  - `paperclip_agent.py`: stdlib helper for process agents
+  - `org.yaml`: org chart from the diagram, plus tools (bd-gateway, agentmail)
+  - `README.md`
+- Company **TinyFish GTM**, issue prefix `TIN-`. The GTM Orchestrator (CEO, claude_local) has 7 process agents reporting to it, each running `uv run gtm agent <research|analysis|strategy|video|qa|publish|learn>` with cwd `/workspace/app`.
+- Smoke test passed on TIN-1. A process agent in the container went: assignment wake → uv run → found its issue via run context → checkout → comment → done. TINYFISH_API_KEY reached the child.
+- `/usr/local/bin/uv` in the image is a wrapper that gives each project its own venv (`/paperclip/venvs/<project>`). Host `.venv` dirs are never touched.
+
+**Integration (for other sessions)**
+- UI/API: http://localhost:3100 (`/api`). From containers: http://host.docker.internal:3100/api.
+- Admin login: `harness/state/admin.json`.
+- `harness/state/integration.env` (gitignored): `PAPERCLIP_BOARD_API_KEY`, `PAPERCLIP_COMPANY_ID`, `PAPERCLIP_BOARD_USER_ID`, `PAPERCLIP_AGENT_<ROLE>`.
+- Launch a campaign: `uv run harness/campaign.py new --brand https://tinyfish.ai --niche "AI web agents"`. It creates 7 chained stage issues. Publish requests `request_board_approval`; a human approves with `campaign.py approve <approval|issue>`, in the UI, or over iMessage.
+
+**Open**
+- OPENAI_API_KEY isn't in the container yet. Waiting for the user's OK on `GTM_OPENAI_ENV_FILE=<path> ./up.sh` (reads only OPENAI_API_KEY/OPENAI_BASE_URL at launch, never copied).
+- CEO (claude_local) has no Anthropic key. It needs ANTHROPIC_API_KEY, or a subscription connected under Apps → Connections, or a switch to codex_local.
+
+**In progress: debloat (the user's request)**
+- The current image is 2.96 GB. Keep-list from the other sessions:
+  - adapters process, claude_local, codex_local
+  - AI Connections, vault secret_ref, company skills
+  - imessage-photon chat channel + chat-connectors setting
+  - AgentMail channel
+- Drop: other adapters (cursor/gemini/grok/kimi/hermes/openclaw/pi/opencode/http), discord/slack/teams/telegram/github chat adapters, Vercel, AWS, MCP gateway, runner/Dot, three.js, and the duplicate global Claude CLI.
+
 ## 2026-10-11 13:20: Video generation agent (`./video/`, session tiny-fish-gtm-automation-78), in progress
 
 **Owns:** `./video/` (uv package `vidgen`) and the user-scope Vizard MCP connection. No ports.
@@ -45,26 +81,6 @@ Read this first before doing anything. Latest entries at the top.
 - Don't `git init` inside a subfolder. Commit your own directory from the root.
 - Never commit `.env`. Run `git status` first.
 
-## 2026-10-11 12:55: Paperclip harness in Docker (`./harness/`, `./paperclip/`), session 4d
-
-**Goal:** Run Paperclip (the "AI GTM Automation Harness" box in the diagram) in Docker, with the GTM org set up in it: agent hierarchy, tasks, approvals, budgets, shared memory. Other services are out of scope for this session.
-
-**Done**
-- Cloned `paperclipai/paperclip` to `./paperclip` (master `2223b7d`). It's reference/source only; nothing runs from it.
-- The upstream image `ghcr.io/paperclipai/paperclip:latest` (1.8 GB) is unusable from here: ghcr blobs download at ~100 KB/s, and Docker Hub/npm are much faster. A source build compiles Rust (20+ min).
-- So `harness/Dockerfile` is a slim image: `node:24-trixie-slim` + `npm i -g paperclipai@2026.1005.0` (latest stable) + Claude Code CLI + uv. It uses upstream's entrypoint (`harness/docker/docker-entrypoint.sh`).
-- `harness/docker-compose.yml` sets up:
-  - container `gtm-paperclip`, port **3100**, `authenticated/private`, bind lan
-  - named volume `paperclip-data` (holds the embedded Postgres)
-  - project root mounted at `/workspace`, so process-adapter agents can `uv run` `./app` (`UV_PROJECT_ENVIRONMENT` is container-local, so the host `.venv` stays untouched)
-
-**In progress**
-- Image build
-- Bootstrap script to create the admin, a board API key, and the GTM company + agents via the API
-
-**Interfaces for other sessions** (filled in once verified)
-- API base: `http://localhost:3100/api`. From other containers: `http://host.docker.internal:3100/api`.
-
 ## 2026-10-11 13:10: AgentMail throwaway inboxes, usable from the harness (`./agentmail/`)
 
 **Done**
@@ -78,6 +94,12 @@ Read this first before doing anything. Latest entries at the top.
 - **`agentmail/SKILL.md`** (skill `throwaway-inbox`, markdown only) teaches the harness's Claude agents to use the CLI. It still needs adding to the Paperclip company library (Skills Store, local/in-app).
 - SDK gotcha: `agentmail` reads `AGENTMAIL_API_KEY` when it's imported, so pass `api_key=` explicitly after `load_dotenv`.
 - Paperclip also has a **native AgentMail connection** (Connectors → AgentMail, since v2026.916). Each inbox maps to one agent, incoming mail becomes tasks, and the key is held in Paperclip's vault. It's not set up. With the free tier full it can only attach existing inboxes. The CLI suits throwaway sign-ups better.
+
+- **Accounts (2026-10-11 13:20)**, credentials in `agentmail/.accounts.json` (gitignored, 600):
+  - Instagram **`@agentlab.gtm.xhcq`** ("Agent Lab") on `funnyflower74@agentmail.to`: created. It's logged in, in a private Dia browser context.
+  - TikTok on `eagerspring500@agentmail.to`: the email code was accepted, then TikTok refused the web sign-up ("continue on the TikTok app"). Finish it in the mobile app. Before the fix, TikTok's email autocomplete sent 2 codes to `eagerspring500@gmail.com` by mistake.
+  - The workflow is saved as the skill **`agentmail/account-signup/SKILL.md`**, linked into `.claude/skills/account-signup`. It covers pacing, stopping at CAPTCHAs and security checks, and posting only via official APIs or a human pressing Post.
+- **Open question for the user:** d8 says email should go through Paperclip's native AgentMail channel (plan.md §8). That conflicts with the inbox.py approach, and I'd already told 4d it could drop the connector. I've asked 4d to keep it until the user confirms.
 
 **Browser-harness note:** several sessions share Dia. Use a named daemon (`BU_NAME=<yours> browser-harness`) and only touch tabs you opened. This session uses `BU_NAME=agentmail`.
 
@@ -150,49 +172,39 @@ The spike code is throwaway and lives in the session scratchpad, not the repo. R
 **Next**
 - Follow the timeline in `plan.md` §4. First step: scaffold `app/` with uv, then spike Agent on TikTok Creative Center and Browser over CDP.
 
-## 2026-10-11 — Photon (Spectrum) setup
+## 2026-10-11 — Photon (Spectrum) setup (session tiny-fish-gtm-automation-4e)
 
-**Goal:** Set up Photon (photon.codes, Spectrum SDK) as the iMessage/WhatsApp interface for the GTM agent (see `docs/gtm.md` §8).
+**Owns:** `./photon/`. Port 3200 is no longer needed. Paperclip session owns `./paperclip/`, `./harness/` and port 3100.
 
-**Owns:** `./photon/` (TS service), port 3200 (reserved for a webhook receiver; default gRPC streaming needs no port). Paperclip session owns `./paperclip/`, `./harness/`, port 3100.
+**Current design (13:50, per user): the harness is the brain, and Photon is just the interface.**
+- iMessage goes through **Paperclip's native `imessage-photon` chat channel**, bound to the **GTM Orchestrator** (4d agreed). It streams over gRPC, needs no public URL, and the shared allocation works on our Free project. Each conversation becomes a task for the Orchestrator, whose adapter is swappable (`claude_local`/`codex_local`). Approvals stay in Paperclip.
+- `photon/connect_paperclip.py` (uv script, stdlib only, idempotent; prints one JSON line, never secrets):
+  - Reads `harness/state/integration.env` (4d OK'd it) and `photon/.env`.
+  - Calls: PATCH experimental `enableChatConnectors` → create endpoint → `photon/inspect` → `setup configure` (shared) → PATCH `communicationInstructions` (human iMessage style) → `setup verify`.
+  - Manual step for now; 4d documents it in harness/README.
+- The OpenAI code was removed from photon/ (llm.ts and the `openai` dep). `src/index.ts` is an echo smoke test only. **Stop it before connecting the channel**, or both reply.
+- I gave 4d the debloat keep-list:
+  - npm: `@photon-ai/advanced-imessage`, `@grpc/grpc-js`, `nice-grpc*`, `chat`, `sharp`
+  - code: `services/photon/*`, chat-channels/sdk-runtime/native-runtime chat files
+  - routes: chat-channels and experimental settings
+  - UI: `/chat-identity/confirm` and `/apps/chat/:id/settings`
+  - all migrations
+- I sent all sessions model-agnostic guidance: JSON CLIs, plain-markdown SKILL.md, no vendor LLM hardcoding, tools resolve their own secrets.
 
-**Docs version:** Stable (https://photon.codes/docs). Key contracts:
-- SDK: `spectrum-ts` (TypeScript; Node.js or Bun). Cloud iMessage provider ships inside it: `spectrum-ts/providers/imessage`.
-- Credentials: `PROJECT_ID` + `PROJECT_SECRET` in `photon/.env` (the scaffold's names; the SDK also reads `SPECTRUM_PROJECT_ID`/`SPECTRUM_PROJECT_SECRET`). Never echo `.env`.
-- CLI: `@photon-ai/cli` (`npx -y @photon-ai/cli@latest whoami`, `projects secret --project <id> --json`)
-- REST API: `https://spectrum.photon.codes` (HTTP Basic with project ID/secret)
-- `terminal` provider works without credentials, useful for local testing.
+**Photon project facts**
+- `gtm-automation`, id `e1b0dff2-3fe4-4ffd-9867-4c4f407738bb`, Free plan (shared pool, 10 users, no groups). Dashboard: https://app.photon.codes/dashboard/e1b0dff2-3fe4-4ffd-9867-4c4f407738bb
+- The user is enrolled as "Ish K" (owner). Their line is **+1 (415) 225-0168**.
+- The Photon CLI is logged in. `photon/.env` holds PROJECT_ID/PROJECT_SECRET (gitignored).
+- Fixed: the scaffold assumes bun, which auto-loads `.env`. Under npm the scripts now use `tsx --env-file=.env`.
 
-**Photon project (already exists in the user's account)**
-- Name `gtm-automation`, Free plan, id `e1b0dff2-3fe4-4ffd-9867-4c4f407738bb`
-- Dashboard: https://app.photon.codes/dashboard/e1b0dff2-3fe4-4ffd-9867-4c4f407738bb
-- The Get started page has iMessage selected as the first platform.
-
-**Done**
-- Read the Stable quickstart and iMessage provider docs.
-- Dia remote debugging is enabled (CDP port 9222). browser-harness drives Dia; the user is signed in to app.photon.codes.
-- Photon CLI is logged in (device flow, profile `developer`).
-- Scaffolded `photon/` with `create-spectrum-project@0.9.0` (spectrum-ts ^12.10.1, imessage provider, npm, no git). `photon/.env` holds `PROJECT_ID`/`PROJECT_SECRET` (gitignored; don't echo it).
-- Fixed: the template assumes bun, which auto-loads `.env`. Under npm/tsx it doesn't, so `npm start` failed with "Cloud iMessage requires projectId and projectSecret". Scripts now use `tsx --env-file=.env`.
-- `npm start` runs: "Spectrum started", provider imessage. The echo loop replies `echo: <text>`.
-- CLI state: platform `imessage` is on. 0 lines and 0 users. On Free/Pro, lines come from a **shared pool**: each enrolled user is routed through a pool number, there are no groups, and the number may differ per recipient. Quotas: 5k msgs/day per server, 50 new conversations/day per line.
-
-**AI replies (13:20)**
-- `photon/src/llm.ts` uses the OpenAI Responses API (`openai` 7.32). Model is `gpt-5.6-luna` (user pick) with reasoning effort `none`, falling back to the model default if that is rejected (unverified while there are no credits). Override with `OPENAI_MODEL`.
-- The key comes from `OPENAI_API_KEY` if that's set. Otherwise it's read from the macOS Keychain at startup (`security find-generic-password -s OPENAI_API_KEY -a OPENAI_PERSONAL -w`). That's temporary at the user's request; it isn't stored in `.env`.
-- `photon/src/index.ts`: per-conversation history (last 30 turns, in memory). It marks the message read, shows typing, and sends up to 3 short texts. The persona is casual iMessage style; it admits being an AI if sincerely asked and won't claim GTM actions that aren't wired yet. On an OpenAI error it sends "sorry, having trouble replying right now".
-- **Blocker:** the OpenAI account has **no credits** (`You have no credits remaining`). The key itself is valid (it lists GPT-5.x models). Replies fall back until the user adds credits at https://platform.openai.com/settings/organization/billing/
-
-**Enrolled (13:05)**
-- The user is enrolled as Spectrum user "Ish K" (owner, shared pool). Their texts go to the pool line **+1 (415) 225-0168**.
-- Restarted the app so it picks up the enrollment. `src/index.ts` now logs `[in]`/`[out]` per message, without content or sender.
-- Waiting on: the user texts the line and gets an `echo:` reply back.
-- Note: browser-harness `new_tab()` in Dia opens in a different browser context that isn't logged in to Photon. Use the user's existing Photon tab (`switch_tab`) to read dashboard state.
+**Live (14:00)**
+- Paperclip channel bound: endpoint `08410dbf-0cee-47bd-bc0f-6cfda743f0d1`, `imessage-photon`, shared, assigned to the GTM Orchestrator (`ce14a59f…`). Status is `verifying`, step `test` ("Waiting for a test conversation"). The echo app is stopped.
+- Gotcha: `communicationInstructions` is Slack-only (422). I sent the iMessage reply-style text to 4d for the Orchestrator's bootstrap instructions.
+- Commits: e41a5f4 (native channel, OpenAI code removed), 2abe38d (script fixes).
 
 **Next**
-1. Once the phone is added: refresh Get started, text the line, confirm the `echo:` reply. `npx -y @photon-ai/cli@latest spectrum users list --project <id>` should then show the user.
-2. Replace the echo loop with GTM commands (create campaign / status / approve) that forward to the Paperclip harness on :3100.
+1. The user texts **+1 (415) 225-0168**, gets an identity-confirm link, and opens it while signed in to Paperclip (login in `harness/state/admin.json`). Then they finish the test at http://localhost:3100/apps/chat/08410dbf-0cee-47bd-bc0f-6cfda743f0d1/settings
+2. The round trip needs the Orchestrator's runtime auth (claude_local → Claude connection/ANTHROPIC_API_KEY, or codex_local → Codex login). I asked 4d for its state.
+3. Re-check with `uv run photon/connect_paperclip.py --status`; expect status `active` and step `complete`.
 
-**Run:** `cd photon && npm start` (or `npm run dev` for watch mode).
-
-**Browser:** this session now uses `BU_NAME=photon browser-harness` and only touches tabs it opened. Early on it used the default daemon, and its device-login navigation landed in the AgentMail session's tab FD14713B.
+**Browser:** use `BU_NAME=photon browser-harness` and only tabs this session opened. `new_tab()` lands in a Dia context that isn't logged in to Photon, so read dashboard state from the user's own Photon tab with `switch_tab`.

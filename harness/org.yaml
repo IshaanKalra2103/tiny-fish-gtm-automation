@@ -28,6 +28,7 @@ defaults:
 shared_memory: |
   Shared memory lives in /workspace/runs/<campaign-id>/ (mounted from the host project):
     evidence.json        trend & competitor data (Trend Discovery)
+    social_<platform>.json  Bright Data social samples: posts + engagement + top comments (tiktok|instagram|youtube|reddit)
     analysis.json        insights + charts/ (Analysis & Insight)
     template_vN.json     content templates, versioned (Template & Strategy)
     script_vN.json, video_vN.mp4, captions, thumbnails (Content Generation)
@@ -36,12 +37,26 @@ shared_memory: |
     /workspace/memory/learnings.json   long-term learnings fed into the next run (Analytics & Learning)
   Always post a short summary comment on your Paperclip issue with the paths you wrote.
 
+# Tools available inside the container (exact commands). Agents run as uid `node`; /workspace is the project root.
+tools: |
+  Bright Data social gateway (public TikTok / Instagram Reels / YouTube / Reddit posts with views, likes,
+  shares, saves, length, sound, hashtags, creator follower count, plus top comments with account fields dropped):
+    uv run --project /workspace/brightdata bd-gateway sample --campaign <campaign-id> \
+      --platform tiktok|instagram|youtube|reddit (--keyword K | --hashtag H | --from-url PROFILE | --urls-file FILE) \
+      [--posts 10 --top 5 --comments-per-post 20]
+    -> writes /workspace/runs/<campaign-id>/social_<platform>.json and prints one JSON line {ok, path, counts, medians};
+       on failure prints {"ok": false, "error": ...} and exits 1. Instagram has no keyword search: pass reel URLs
+       found with TinyFish Search via --urls-file. (The container's uv gives each project its own venv automatically.)
+  Throwaway email inboxes (sign-up verification codes/links):
+    uv run /workspace/agentmail/inbox.py <list|wait|read|messages|send|create|delete> ...   (see /workspace/agentmail/SKILL.md)
+
 agents:
   - key: orchestrator
     name: GTM Orchestrator
     title: CEO / Campaign Orchestrator
     role: ceo
-    adapter: claude_local
+    adapter: claude_local      # swappable: claude_local | codex_local (re-run bootstrap.py to apply)
+    # model: claude-opus-5-5   # optional per-agent model (e.g. a gpt-5.x model for codex_local)
     budget_monthly_cents: 500
     capabilities: >-
       Plans each campaign from the founder's brief (product context and campaign
@@ -49,7 +64,7 @@ agents:
       budgets, and requests human approval before anything is published.
     pipeline: |
       Trend Discovery -> Analysis & Insight -> Template & Strategy -> Content Generation
-      -> QA & Testing (on fail, revise up to 2x, then ask a human) -> [board approval] -> Publishing
+      -> QA & Testing (revises up to 3 drafts) -> Publishing (files request_board_approval, waits for the board)
       -> Analytics & Learning (feeds learnings into the next campaign)
 
   - key: research
@@ -60,8 +75,10 @@ agents:
     capabilities: >-
       Finds trending topics, content formats and competitor activity across
       Instagram, TikTok, X, Reddit and YouTube using TinyFish Search, Fetch, Agent,
-      Browser and Browser Profiles/Vault. Output: trend dataset, relevant examples,
-      source links.
+      Browser and Browser Profiles/Vault, plus the Bright Data gateway (bd-gateway)
+      for TikTok/Reels/YouTube/Reddit post engagement data and top comments.
+      Output: trend dataset (evidence.json + social_<platform>.json), relevant
+      examples, source links.
 
   - key: analysis
     name: Analysis & Insight Agent
@@ -102,8 +119,10 @@ agents:
     reports_to: orchestrator
     capabilities: >-
       Validates content using a fleet of AI personas and evaluation criteria:
-      brand guidelines, factual accuracy, toxicity/risk. Persona scores are
-      SIMULATED, not real audience validation. Output: QA scores and feedback,
+      brand guidelines, factual accuracy, toxicity/risk. Personas are grounded in
+      real audience evidence from Bright Data comment samples
+      (runs/<id>/social_<platform>.json; method in brightdata/README.md), but
+      persona scores are SIMULATED, not real audience validation. Output: QA scores and feedback,
       revision requests, approved assets, persona insights.
 
   - key: publish
