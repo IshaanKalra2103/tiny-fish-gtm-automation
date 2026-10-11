@@ -39,6 +39,10 @@ services:
       # from the shell / GTM_OPENAI_ENV_FILE; never stored in harness/.env.
       OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
       OPENAI_BASE_URL: "${OPENAI_BASE_URL:-https://us.api.openai.com/v1}"
+      # codex_local agents reuse the host's Codex CLI login (ChatGPT subscription):
+      # Paperclip symlinks $CODEX_HOME/auth.json into each agent's managed Codex home,
+      # so rotating refresh tokens stay shared with the host CLI (no copy, no logout).
+      CODEX_HOME: "/host-codex"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -49,6 +53,9 @@ services:
       # Project root, so process-adapter agents can `uv run` ./app and write
       # run artifacts the host-side dashboard can read.
       - "..:/workspace"
+      # Host Codex CLI home (auth.json). Outside /paperclip on purpose: the entrypoint
+      # chowns /paperclip and must never touch these host files.
+      - "${GTM_CODEX_HOME:-${HOME}/.codex}:/host-codex"
 
 volumes:
   paperclip-data:

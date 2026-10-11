@@ -55,7 +55,7 @@ agents:
     name: GTM Orchestrator
     title: CEO / Campaign Orchestrator
     role: ceo
-    adapter: claude_local      # swappable: claude_local | codex_local (re-run bootstrap.py to apply)
+    adapter: codex_local       # swappable: claude_local | codex_local (re-run bootstrap.py to apply)
     # model: claude-opus-5-5   # optional per-agent model (e.g. a gpt-5.x model for codex_local)
     budget_monthly_cents: 500
     capabilities: >-

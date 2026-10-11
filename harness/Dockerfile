@@ -59,6 +59,12 @@ RUN mkdir -p /usr/local/lib/uv \
   && chmod +x /usr/local/bin/uv \
   && ln -s /usr/local/lib/uv/uvx /usr/local/bin/uvx
 
+# Agent CLIs on PATH, reusing the binaries paperclipai already bundles for its
+# claude_local/codex_local adapters (no second download).
+RUN NM=/usr/local/lib/node_modules/paperclipai/node_modules \
+  && ln -sf "$(ls -d $NM/@openai/codex-linux-*/vendor/*/bin/codex | head -1)" /usr/local/bin/codex \
+  && codex --version
+
 ENV NODE_ENV=production \
     HOME=/paperclip \
     HOST=0.0.0.0 \
