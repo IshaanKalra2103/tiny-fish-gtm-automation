@@ -5,6 +5,7 @@ Default model: MiniMax H3 Max text-to-video (`minimax/h3-max/text-to-video`): 5-
 """
 
 import json
+import mimetypes
 import os
 import sys
 import time
@@ -16,6 +17,8 @@ from .config import FPS, H, PACKAGE_ROOT, VidgenError, W, run, tool
 from .mcp_http import RemoteMCP
 
 MODEL = os.environ.get("VIDGEN_FAL_MODEL", "minimax/h3-max/text-to-video")
+# With product/subject images: same H3 Max, conditioned on up to 9 reference images ($0.05/s).
+REF_MODEL = os.environ.get("VIDGEN_FAL_REF_MODEL", "minimax/h3-max/reference-to-video")
 
 client = RemoteMCP(
     name="fal",
@@ -52,12 +55,35 @@ def _find(obj, key: str):
     return None
 
 
+def upload(ref: str) -> str:
+    """Public URLs pass through; local files go to fal's CDN via a signed PUT. Returns a URL models can read."""
+    if ref.startswith(("http://", "https://")):
+        return ref
+    path = Path(ref).expanduser()
+    prep = _json(client.call("upload_file", {"prepare_upload": True, "file_name": path.name,
+                                             "file_size": path.stat().st_size}))
+    put, url = _find(prep, "upload_url"), _find(prep, "file_url")
+    if not put or not url:
+        raise VidgenError(f"fal upload not prepared for {path.name}: {json.dumps(prep)[:300]}")
+    mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+    r = httpx.put(put, content=path.read_bytes(), headers={"Content-Type": mime}, timeout=300)
+    if r.status_code >= 300:
+        raise VidgenError(f"fal upload PUT {r.status_code}: {r.text[:200]}")
+    return url
+
+
 def generate(prompts: list[str], folder: Path, seconds: float = 11, aspect: str = "9:16",
-             resolution: str = "768P", wait: int = 900) -> list[Path]:
-    """Submit one clip per prompt in parallel, wait, download in order. ~$0.03 per generated second."""
+             resolution: str = "768P", wait: int = 900, refs: list[str] | None = None) -> list[Path]:
+    """Submit one clip per prompt in parallel, wait, download in order.
+
+    With `refs` (already-uploaded URLs) the clips use REF_MODEL, and prompts can cite them as Image 1, 2...
+    """
+    endpoint = REF_MODEL if refs else MODEL
+    extra = {"reference_image_urls": refs[:9]} if refs else {}
     sub = _json(client.call("submit_jobs", {"requests": [
-        {"index": i, "endpoint_id": MODEL, "input": {"prompt": p, "duration": seconds, "aspect_ratio": aspect,
-                                                     "resolution": resolution, "prompt_expansion_mode": "balanced"}}
+        {"index": i, "endpoint_id": endpoint, "input": {"prompt": p, "duration": seconds, "aspect_ratio": aspect,
+                                                        "resolution": resolution, "prompt_expansion_mode": "balanced",
+                                                        **extra}}
         for i, p in enumerate(prompts)]}, timeout=120))
     items = sub.get("results") or sub.get("requests") or sub.get("jobs") or []
     jobs = []
@@ -65,11 +91,12 @@ def generate(prompts: list[str], folder: Path, seconds: float = 11, aspect: str 
         rid = _find(it, "request_id")
         if not rid:
             raise VidgenError(f"fal rejected clip {i}: {json.dumps(it)[:300]}")
-        jobs.append({"index": _find(it, "index") if _find(it, "index") is not None else i, "endpoint_id": MODEL,
+        jobs.append({"index": _find(it, "index") if _find(it, "index") is not None else i, "endpoint_id": endpoint,
                      "request_id": rid, **{k: v for k in ("status_url", "response_url") if (v := _find(it, k))}})
     if len(jobs) != len(prompts):
         raise VidgenError(f"fal accepted {len(jobs)}/{len(prompts)} clips: {json.dumps(sub)[:300]}")
-    print(f"[fal] {len(jobs)} clips queued on {MODEL}", file=sys.stderr, flush=True)
+    print(f"[fal] {len(jobs)} clips queued on {endpoint}" + (f" with {len(refs)} refs" if refs else ""),
+          file=sys.stderr, flush=True)
     deadline = time.time() + wait
     while True:
         st = _json(client.call("wait_for_jobs", {"jobs": jobs, "timeout_seconds": 15}, timeout=60))

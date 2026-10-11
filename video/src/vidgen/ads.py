@@ -26,7 +26,7 @@ FORMATS = {
 SCENES = {  # two ~11s clips, joined: (opening, closing). {who} {brand} {trend} {a} {b} filled in.
     "talking-head": (
         "Vertical 9:16 handheld selfie UGC video. {who} talks excitedly straight to the camera about {brand}, "
-        "holding the product up to the lens, riding the '{trend}' trend. She says: \"{a}\". Natural daylight, "
+        "holding the product up to the lens, riding the '{trend}' trend, and says: \"{a}\". Natural daylight, "
         "authentic TikTok creator style, clear speech, product label visible.",
         "Same creator, same room, continuing the selfie video: shows the {brand} product close up, uses it, "
         "then smiles at camera and says: \"{b}\". Natural daylight, authentic TikTok style, product visible."),
@@ -59,10 +59,17 @@ def make(fmt: str, brand: str, trend: str, hook: str, lines: list[str], cta: str
                 "a": " ".join([hook, *lines[:half]]), "b": " ".join([*lines[half:], cta])}
         try:
             with tempfile.TemporaryDirectory() as tmp:
-                clips = fal.generate([p.format(**fill) for p in SCENES[fmt]], Path(tmp), seconds=seconds / 2)
+                ref_urls = [fal.upload(r) for r in refs[:3]]
+                prompts = [p.format(**fill) for p in SCENES[fmt]]
+                if ref_urls:  # product refs from research: keep the real product's look
+                    cite = ", ".join(f"Image {i + 1}" for i in range(len(ref_urls)))
+                    prompts = [f"{p} The {brand} product must look exactly like the product in {cite}: same shape, "
+                               f"colours, packaging and label." for p in prompts]
+                clips = fal.generate(prompts, Path(tmp), seconds=seconds / 2, refs=ref_urls or None)
                 base = fal.join(clips, Path(tmp) / "joined.mp4")
                 res = templates.make_from_video(base, fmt, hook, lines, cta, out, tag=brand)
-            return {**res, "format": fmt, "mode": "fal", "model": fal.MODEL}
+            return {**res, "format": fmt, "mode": "fal", "model": fal.REF_MODEL if ref_urls else fal.MODEL,
+                    "refs": len(ref_urls)}
         except VidgenError as e:
             fallback = {"error": f"fal: {e}"}
     elif mode == "vizard":
