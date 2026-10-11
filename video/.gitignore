@@ -1,0 +1,5 @@
+.venv/
+assets/
+.vizard/
+templates/*.mp4
+templates/src/
