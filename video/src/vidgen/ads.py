@@ -45,8 +45,8 @@ def make(fmt: str, brand: str, trend: str, hook: str, lines: list[str], cta: str
     else:
         fallback = None
     image = next((Path(r).expanduser() for r in refs if r and Path(r).expanduser().is_file()), None)
-    res = (templates.make(fmt, hook, lines, cta, out, image=image) if image
-           else templates.make("auto", hook, lines, cta, out))
+    res = (templates.make(fmt, hook, lines, cta, out, image=image, tag=brand) if image
+           else templates.make("auto", hook, lines, cta, out, tag=brand))
     res.update({"format": fmt, "mode": "demo"})
     if fallback:
         res["vizard"] = fallback  # project id / question / error, so the agent can follow up later

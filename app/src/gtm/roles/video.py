@@ -5,6 +5,8 @@ brand screenshot (TinyFish Browser) in its own framed panel that slowly scrolls 
 in a dedicated zone below the panel.
 """
 
+import json
+import os
 import platform
 import shutil
 import subprocess
@@ -30,7 +32,59 @@ def run(r: Run) -> str:
     return f"video_v1.mp4: {info['seconds']}s, voice={info['voice']}"
 
 
+VIDGEN = Path(os.environ.get("GTM_VIDGEN_PROJECT", Path(__file__).resolve().parents[4] / "video"))
+
+
 def render(r: Run, version: int) -> dict:
+    """B2C short via vidgen (talking-head / product / brainrot); the built-in renderer is the safety net."""
+    try:
+        return _render_vidgen(r, version)
+    except Exception as e:  # never lose the demo to a video-tool hiccup
+        r.log(ROLE, f"vidgen failed, using built-in renderer: {str(e)[:300]}", version=version)
+        return _render_moviepy(r, version)
+
+
+def _render_vidgen(r: Run, version: int) -> dict:
+    s, brief = r.read(f"script_v{version}.json"), r.brief
+    themes = r.read("insights.json").get("themes", []) if r.exists("insights.json") else []
+    first = themes[0] if themes else {}
+    trend = (first.get("name") or first.get("theme") or str(first)[:80]) if first else brief.get("niche", "")
+    fmt = os.environ.get("GTM_VIDEO_FORMAT", "talking-head")
+    lines = [sc["on_screen_text"] for sc in s["scenes"] if sc.get("on_screen_text")
+             and sc["on_screen_text"].strip().lower() != s["cta"].strip().lower()][:4]
+    out = r.path(f"video_v{version}.mp4")
+    shots = [r.dir / p for p in r.read("evidence.json").get("shots", [])] if r.exists("evidence.json") else []
+    person = r.dir / "refs" / "video_v1_ref1.png"  # reuse v1's Codex-drawn face across revisions
+    shot = ["--ref", str(shots[0])] if shots else []
+    attempts = [(fmt, shot)]
+    if fmt == "talking-head":  # Codex draws the face once; if that fails, a product ad off the evidence shot
+        face = (["--ref", str(person)] if person.exists() else
+                ["--person", f"a relatable creator in their 20s, one of {brief.get('audience', 'the target audience')}, "
+                             f"filming a selfie video about {brief['brand']}, natural light, TikTok UGC look"])
+        attempts = [(fmt, face), ("product", shot)]
+    env = {k: v for k, v in os.environ.items() if k != "UV_PROJECT_ENVIRONMENT"}  # don't sync over app's venv
+    for fmt, ref in attempts:
+        cmd = ["uv", "run", "--project", str(VIDGEN), "vidgen", "ad", fmt, "--out", str(out), "--brand", brief["brand"],
+               "--trend", trend, "--hook", s["hook"], *[a for ln in lines for a in ("--line", ln)], "--cta", s["cta"],
+               *ref, "--mode", os.environ.get("GTM_VIDEO_MODE", "demo")]
+        p = subprocess.run(cmd, capture_output=True, text=True, env=env, timeout=1800)
+        res = json.loads((p.stdout.strip().splitlines() or ["{}"])[-1] or "{}")
+        if res.get("ok"):
+            break
+        r.log(ROLE, f"vidgen {fmt} failed: {str(res.get('error') or p.stderr.strip()[-200:])[:300]}", version=version)
+    if not res.get("ok"):
+        raise RuntimeError(res.get("error") or p.stderr.strip()[-300:] or "vidgen returned no result")
+    shown = [s["hook"], *lines, s["cta"]]
+    info = {"version": version, "path": out.name, "seconds": float(res.get("duration") or res.get("target_seconds") or 22),
+            "voice": "vizard voiceover" if res.get("mode") == "vizard" else "none (beat + captions)",
+            "words": len(" ".join(shown).split()), "transcript": " / ".join(shown) + " [on-screen captions]",
+            "frames": _qa_frames(r, out, version), "format": fmt, "mode": res.get("mode"), "engine": "vidgen"}
+    r.write(f"video_v{version}.json", info)
+    r.log(ROLE, f"vidgen {fmt} video_v{version}.mp4 ({info['seconds']}s, {info['mode']})", version=version)
+    return info
+
+
+def _render_moviepy(r: Run, version: int) -> dict:
     s = r.read(f"script_v{version}.json")
     shots = [r.dir / p for p in r.read("evidence.json").get("shots", [])]
     segments = _segments(s)

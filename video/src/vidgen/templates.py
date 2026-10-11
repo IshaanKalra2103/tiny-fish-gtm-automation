@@ -129,7 +129,8 @@ def image_base(kind: str, image: Path, out: Path) -> Path:
     return out
 
 
-def make(name: str, hook: str, lines: list[str], cta: str, out: Path, image: Path | None = None) -> dict:
+def make(name: str, hook: str, lines: list[str], cta: str, out: Path, image: Path | None = None,
+         tag: str = "tinyfish.ai") -> dict:
     """Burn hook (0-3s), caption lines (evenly timed) and CTA (last 3.5s) onto a base clip.
 
     With `image`, `name` is one of IMAGE_LOOKS and the base is built from that image first.
@@ -149,13 +150,14 @@ def make(name: str, hook: str, lines: list[str], cta: str, out: Path, image: Pat
         if not base.exists():
             raise VidgenError(f"template {name} not built yet: run `vidgen template build`")
     try:
-        return _caption(base, name, t, hook, lines, cta, out)
+        return _caption(base, name, t, hook, lines, cta, out, tag)
     finally:
         if tmpdir:
             tmpdir.cleanup()
 
 
-def _caption(base: Path, name: str, t: dict, hook: str, lines: list[str], cta: str, out: Path) -> dict:
+def _caption(base: Path, name: str, t: dict, hook: str, lines: list[str], cta: str, out: Path,
+             tag: str) -> dict:
     hook_end, cta_start = 3.0, SECONDS - 3.5
     layers = [Layer(0, SECONDS, [graphics.gradient(top=True, bottom=True, strength=120)], z=0),
               Layer(0, hook_end, [graphics.caption(hook.split(), None, t["caption_y"], size=104,
@@ -169,7 +171,7 @@ def _caption(base: Path, name: str, t: dict, hook: str, lines: list[str], cta: s
                             [graphics.caption(words, accent_word, t["caption_y"], size=96, highlight=t["accent"])], z=1))
     layers.append(Layer(cta_start, SECONDS, [graphics.caption(cta.split(), None, t["caption_y"], size=100,
                                                               highlight=t["accent"]),
-                                             graphics.banner("tinyfish.ai", 1650, size=56, dark=True)], z=1))
+                                             graphics.banner(tag, 1650, size=56, dark=True)], z=1))
 
     out.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
