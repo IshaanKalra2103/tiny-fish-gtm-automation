@@ -77,6 +77,16 @@ def setting_for(*hints: str) -> str:
     return "a bright, tidy, modern living room with soft daylight from a window behind them"
 
 
+def _local(ref: str, folder: Path) -> str:
+    """Codex needs local image files; download URL refs."""
+    if not ref.startswith(("http://", "https://")):
+        return ref
+    import httpx
+    path = folder / f"ref_{abs(hash(ref)) % 10**8}.jpg"
+    path.write_bytes(httpx.get(ref, follow_redirects=True, timeout=60).content)
+    return str(path)
+
+
 def make(fmt: str, brand: str, trend: str, hook: str, lines: list[str], cta: str, refs: list[str], out: Path,
          mode: str = "demo", seconds: int = 22, wait: int = 900, person: str | None = None,
          product: str | None = None, setting: str | None = None) -> dict:
@@ -96,6 +106,16 @@ def make(fmt: str, brand: str, trend: str, hook: str, lines: list[str], cta: str
                 "a": " ".join([hook, *lines[:half]]), "b": " ".join([*lines[half:], cta])}
         try:
             with tempfile.TemporaryDirectory() as tmp:
+                if fmt == "talking-head" and fal.REF_MODEL.endswith("image-to-video"):
+                    # Cheap path: Codex draws the creator holding the real product (from the research refs),
+                    # and that frame anchors both clips via Turbo image-to-video.
+                    local = [_local(r, Path(tmp)) for r in refs[:2]]
+                    frame = refgen.generate(
+                        f"{fill['who']} in {fill['setting']}, holding the {brand} product from the attached image "
+                        "beside their face with the label facing the camera, selfie framing from the chest up, "
+                        "natural daylight, realistic TikTok UGC look", out.parent / "refs" / f"{out.stem}_frame",
+                        images=local or None)
+                    refs = [str(frame)]
                 ref_urls = [fal.upload(r) for r in refs[:3]]
                 prompts = [p.format(**fill) for p in SCENES[fmt]]
                 if ref_urls:  # product refs from research: keep the real product's look

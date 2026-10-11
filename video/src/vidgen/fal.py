@@ -16,9 +16,22 @@ import httpx
 from .config import FPS, H, PACKAGE_ROOT, VidgenError, W, run, tool
 from .mcp_http import RemoteMCP
 
-MODEL = os.environ.get("VIDGEN_FAL_MODEL", "minimax/h3-max/text-to-video")
-# With product/subject images: same H3 Max, conditioned on up to 9 reference images ($0.05/s).
-REF_MODEL = os.environ.get("VIDGEN_FAL_REF_MODEL", "minimax/h3-max/reference-to-video")
+# Cheapest good option on fal (Oct 2026): H3 Max Turbo at $0.015/s, half of H3 Max ($0.03/s).
+MODEL = os.environ.get("VIDGEN_FAL_MODEL", "minimax/h3-max-turbo/text-to-video")
+# With a ref image: Turbo image-to-video uses it as the first frame ($0.015/s). For stronger product fidelity
+# set minimax/h3-max/reference-to-video (up to 9 refs, $0.05/s).
+REF_MODEL = os.environ.get("VIDGEN_FAL_REF_MODEL", "minimax/h3-max-turbo/image-to-video")
+PRICE_PER_SECOND = {  # USD, from fal get_pricing on 2026-10-11
+    "minimax/h3-max-turbo/text-to-video": 0.015, "minimax/h3-max-turbo/image-to-video": 0.015,
+    "minimax/h3-max/text-to-video": 0.03, "minimax/h3-max/reference-to-video": 0.05,
+}
+MAX_USD = float(os.environ.get("VIDGEN_FAL_MAX_USD", "0.50"))  # per video; above this we don't submit
+
+
+def estimate(endpoint: str, seconds: float, clips: int) -> float:
+    if endpoint not in PRICE_PER_SECOND:
+        raise VidgenError(f"no known price for {endpoint}; add it to PRICE_PER_SECOND before spending")
+    return round(PRICE_PER_SECOND[endpoint] * (seconds + 0.7) * clips, 3)
 
 client = RemoteMCP(
     name="fal",
@@ -79,11 +92,19 @@ def generate(prompts: list[str], folder: Path, seconds: float = 11, aspect: str 
     With `refs` (already-uploaded URLs) the clips use REF_MODEL, and prompts can cite them as Image 1, 2...
     """
     endpoint = REF_MODEL if refs else MODEL
-    extra = {"reference_image_urls": refs[:9]} if refs else {}
+    cost = estimate(endpoint, seconds, len(prompts))
+    if cost > MAX_USD:
+        raise VidgenError(f"estimated ${cost} > VIDGEN_FAL_MAX_USD=${MAX_USD}; not submitting")
+    if not refs:
+        extra = {}
+    elif endpoint.endswith("image-to-video"):
+        extra = {"image_url": refs[0]}  # first frame: e.g. the Codex-drawn creator holding the product
+    else:
+        extra = {"reference_image_urls": refs[:9]}
     sub = _json(client.call("submit_jobs", {"requests": [
-        {"index": i, "endpoint_id": endpoint, "input": {"prompt": p, "duration": seconds, "aspect_ratio": aspect,
-                                                        "resolution": resolution, "prompt_expansion_mode": "disabled",  # our prompts are exact
-                                                        **extra}}
+        {"index": i, "endpoint_id": endpoint, "input": {
+            "prompt": p, "duration": seconds, "resolution": resolution, "prompt_expansion_mode": "disabled",  # exact
+            **({} if endpoint.endswith("image-to-video") else {"aspect_ratio": aspect}), **extra}}
         for i, p in enumerate(prompts)]}, timeout=120))
     items = sub.get("results") or sub.get("requests") or sub.get("jobs") or []
     jobs = []
@@ -95,7 +116,8 @@ def generate(prompts: list[str], folder: Path, seconds: float = 11, aspect: str 
                      "request_id": rid, **{k: v for k in ("status_url", "response_url") if (v := _find(it, k))}})
     if len(jobs) != len(prompts):
         raise VidgenError(f"fal accepted {len(jobs)}/{len(prompts)} clips: {json.dumps(sub)[:300]}")
-    print(f"[fal] {len(jobs)} clips queued on {endpoint}" + (f" with {len(refs)} refs" if refs else ""),
+    print(f"[fal] {len(jobs)} clips queued on {endpoint}" + (f" with {len(refs)} refs" if refs else "")
+          + f" (est ${cost})",
           file=sys.stderr, flush=True)
     deadline = time.time() + wait
     while True:

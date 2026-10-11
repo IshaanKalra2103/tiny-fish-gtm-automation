@@ -13,13 +13,15 @@ from pathlib import Path
 from .config import VidgenError, tool
 
 
-def generate(prompt: str, out: Path, timeout: int = 300) -> Path:
+def generate(prompt: str, out: Path, timeout: int = 300, images: list[str] | None = None) -> Path:
+    """`images`: local files Codex sees as input (e.g. the real product packshot to hold)."""
     home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex"))
     start = time.time()
     r = subprocess.run(
         [tool("codex"), "exec", "--skip-git-repo-check", "-s", "read-only",
          f"Generate one photorealistic vertical 9:16 image: {prompt}. "
-         "Generate the image only; don't write any files or code."],
+         "Generate the image only; don't write any files or code.",
+         *[a for img in (images or []) for a in ("-i", img)]],  # after the prompt: -i takes several files
         capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL)
     new = [p for p in (home / "generated_images").glob("*/*") if p.is_file() and p.stat().st_mtime >= start - 1]
     if r.returncode != 0 or not new:
