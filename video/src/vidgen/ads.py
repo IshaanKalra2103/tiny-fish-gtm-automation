@@ -7,6 +7,7 @@ The harness agent makes the reference images (people, product) with its own imag
 
 from pathlib import Path
 
+import os
 import tempfile
 
 from . import fal, refs as refgen, templates, vizard
@@ -81,6 +82,8 @@ def make(fmt: str, brand: str, trend: str, hook: str, lines: list[str], cta: str
          product: str | None = None, setting: str | None = None) -> dict:
     if fmt not in FORMATS:
         raise VidgenError(f"format must be one of {', '.join(FORMATS)}")
+    if mode != "demo" and os.environ.get("VIDGEN_ALLOW_PAID") != "1":
+        mode = "demo"  # paid generation (fal, vizard) is off until VIDGEN_ALLOW_PAID=1
     refs = [r for r in refs if r]
     if not refs and mode != "fal":  # no refs passed: have Codex draw them (person first, so talking-head uses it as the face)
         for i, desc in enumerate(d for d in (person, product) if d):
