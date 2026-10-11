@@ -8,11 +8,12 @@
     "dev": "tsx watch --env-file=.env src/index.ts"
   },
   "dependencies": {
+    "openai": "^7.32.0",
     "spectrum-ts": "^12.10.1"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^22",
-    "tsx": "^4"
+    "tsx": "^4",
+    "typescript": "^5"
   }
 }
