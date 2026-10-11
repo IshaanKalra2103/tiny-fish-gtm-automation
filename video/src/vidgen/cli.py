@@ -7,6 +7,7 @@ Usage:
     uv run --project video vidgen footage fetch subway | footage list
     uv run --project video vidgen tts "hello there" --out hello.mp3
     uv run --project video vidgen voices | credits | formats
+    uv run --project video vidgen ad talking-head --campaign c1 --brand B --trend "..." --hook "..." --line "..." --cta "..." --ref person.png
     uv run --project video vidgen template make --campaign c1 --hook "..." --line "..." --line "..." --cta "..."  # demo
     uv run --project video vidgen vizard make --campaign c1 --prompt "..." --ref ref1.png --ref ref2.png  # 20-25s, with sound
     uv run --project video vidgen vizard create --brief "..." --material URL_OR_PATH --aspect 9:16 --duration 30
@@ -23,7 +24,7 @@ from pathlib import Path
 
 import httpx
 
-from . import footage, images, templates, vizard
+from . import ads, footage, images, templates, vizard
 from .config import VidgenError, runs_dir
 from .render import FORMATS, estimate_chars, next_version, render
 from .tts import ElevenLabs
@@ -99,6 +100,24 @@ def main() -> int:
     sub.add_parser("voices", help="ElevenLabs voices on the account")
     sub.add_parser("credits", help="ElevenLabs characters left this cycle")
     sub.add_parser("formats", help="video formats and what they look like")
+
+    ad = sub.add_parser("ad", help="B2C short (22s): talking-head, product or brainrot, from ref images")
+    ad.add_argument("format", choices=sorted(ads.FORMATS))
+    ad.add_argument("--brand", required=True)
+    ad.add_argument("--trend", required=True, help="the trend this rides, from the analysis")
+    ad.add_argument("--hook", required=True, help="first 3 seconds, <= 8 words")
+    ad.add_argument("--line", action="append", default=[], help="script line, <= 7 words; repeatable (3-5)")
+    ad.add_argument("--cta", required=True)
+    ad.add_argument("--ref", action="append", default=[],
+                    help="reference image (person for talking-head, product shot...) from your image generation")
+    ad.add_argument("--person", help="no --ref? describe the on-camera person; Codex generates the image")
+    ad.add_argument("--product", help="no --ref? describe the product shot; Codex generates the image")
+    ad.add_argument("--mode", choices=["demo", "vizard"], default="demo",
+                    help="demo: instant captioned clip; vizard: animated + voiced (slow, credits), demo on failure")
+    ad.add_argument("--wait", type=int, default=900, help="vizard mode: seconds before falling back to demo")
+    ad_out = ad.add_mutually_exclusive_group(required=True)
+    ad_out.add_argument("--campaign", help="campaign id; writes runs/<campaign>/video_vN.mp4 (next free N)")
+    ad_out.add_argument("--out", help="write the mp4 here instead")
 
     tp = sub.add_parser("template", help="demo: caption one of five pre-rendered 22s clips (no generation)")
     tsub = tp.add_subparsers(dest="action", required=True)
@@ -190,6 +209,10 @@ def main() -> int:
             emit({"ok": True, "voices": ElevenLabs().voices()})
         elif args.cmd == "credits":
             emit({"ok": True, **ElevenLabs().credits()})
+        elif args.cmd == "ad":
+            emit(ads.make(args.format, args.brand, args.trend, args.hook, args.line, args.cta, args.ref,
+                          _out_path(args), mode=args.mode, wait=args.wait, person=args.person,
+                          product=args.product))
         elif args.cmd == "template":
             if args.action == "list":
                 emit({"ok": True, "seconds": templates.SECONDS, "templates": templates.available()})

@@ -99,16 +99,63 @@ def build(force: bool = False) -> dict:
     return built
 
 
-def make(name: str, hook: str, lines: list[str], cta: str, out: Path) -> dict:
-    """Burn hook (0-3s), caption lines (evenly timed) and CTA (last 3.5s) onto a base clip."""
-    if name == "auto":
-        name = pick(hook + "|".join(lines))
-    if name not in TEMPLATES:
-        raise VidgenError(f"unknown template {name!r}; choose from auto, {', '.join(TEMPLATES)}")
-    base = path(name)
-    if not base.exists():
-        raise VidgenError(f"template {name} not built yet: run `vidgen template build`")
-    t = TEMPLATES[name]
+# Bases built on the fly from a reference image (e.g. a person or product made with Codex image gen).
+IMAGE_LOOKS = {
+    "talking-head": {"look": "person ref, slow push-in, lower-third captions", "caption_y": 1480, "accent": "#FFE600"},
+    "product": {"look": "product ref, slow pull-out, centred captions", "caption_y": 1300, "accent": "#00E5FF"},
+    "brainrot": {"look": "ref on top, parkour below, seam captions", "caption_y": 960, "accent": "#FF4FD8"},
+}
+
+
+def image_base(kind: str, image: Path, out: Path) -> Path:
+    """22s 1080x1920 clip with the beat, from one reference image."""
+    frames = int(SECONDS * FPS)
+    if kind == "brainrot":
+        inputs = ["-loop", "1", "-framerate", str(FPS), "-t", str(SECONDS), "-i", str(image),
+                  "-ss", "60", "-t", str(SECONDS), "-i", str(GAMEPLAY)]
+        half = f"scale={W}:{H // 2}:force_original_aspect_ratio=increase,crop={W}:{H // 2},setsar=1"
+        vf = (f"[0:v]{half},zoompan=z='1+0.08*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:"
+              f"s={W}x{H // 2}:fps={FPS}[top];[1:v]{half},fps={FPS}[bot];[top][bot]vstack=inputs=2[bg]")
+    else:
+        z = f"1+0.12*on/{frames}" if kind == "talking-head" else f"1.12-0.12*on/{frames}"
+        inputs = ["-loop", "1", "-framerate", str(FPS), "-t", str(SECONDS), "-i", str(image)]
+        vf = (f"[0:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1,"
+              f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/3-(ih/zoom/3)':d=1:s={W}x{H}:fps={FPS}[bg]")
+    n = inputs.count("-i")
+    run([tool("ffmpeg"), "-hide_banner", "-loglevel", "error", "-y", *inputs, "-f", "lavfi", "-i", BEAT,
+         "-filter_complex", f"{vf};[bg]format=yuv420p[v];[{n}:a]afade=t=out:st={SECONDS - 1.2}:d=1.2[a]",
+         "-map", "[v]", "-map", "[a]", "-t", str(SECONDS), "-c:v", "libx264", "-preset", "veryfast", "-crf", "24",
+         "-c:a", "aac", "-b:a", "128k", str(out)], f"image base {kind}")
+    return out
+
+
+def make(name: str, hook: str, lines: list[str], cta: str, out: Path, image: Path | None = None) -> dict:
+    """Burn hook (0-3s), caption lines (evenly timed) and CTA (last 3.5s) onto a base clip.
+
+    With `image`, `name` is one of IMAGE_LOOKS and the base is built from that image first.
+    """
+    tmpdir = None
+    if image is not None:
+        if name not in IMAGE_LOOKS:
+            raise VidgenError(f"with an image, choose one of {', '.join(IMAGE_LOOKS)}")
+        tmpdir = tempfile.TemporaryDirectory()
+        base, t = image_base(name, Path(image), Path(tmpdir.name) / "base.mp4"), IMAGE_LOOKS[name]
+    else:
+        if name == "auto":
+            name = pick(hook + "|".join(lines))
+        if name not in TEMPLATES:
+            raise VidgenError(f"unknown template {name!r}; choose from auto, {', '.join(TEMPLATES)}")
+        base, t = path(name), TEMPLATES[name]
+        if not base.exists():
+            raise VidgenError(f"template {name} not built yet: run `vidgen template build`")
+    try:
+        return _caption(base, name, t, hook, lines, cta, out)
+    finally:
+        if tmpdir:
+            tmpdir.cleanup()
+
+
+def _caption(base: Path, name: str, t: dict, hook: str, lines: list[str], cta: str, out: Path) -> dict:
     hook_end, cta_start = 3.0, SECONDS - 3.5
     layers = [Layer(0, SECONDS, [graphics.gradient(top=True, bottom=True, strength=120)], z=0),
               Layer(0, hook_end, [graphics.caption(hook.split(), None, t["caption_y"], size=104,
