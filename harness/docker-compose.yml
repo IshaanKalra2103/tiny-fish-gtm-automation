@@ -1,0 +1,50 @@
+# GTM harness: Paperclip in Docker.
+#
+#   cd harness
+#   ./up.sh            # first run: writes .env with fresh secrets, builds, starts
+#   docker compose logs -f paperclip
+#
+# UI/API: http://localhost:3100  (API under /api)
+name: gtm-harness
+
+services:
+  paperclip:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PAPERCLIPAI_VERSION: "${PAPERCLIPAI_VERSION:-2026.1005.0}"
+    image: "gtm-harness/paperclip:${PAPERCLIPAI_VERSION:-2026.1005.0}"
+    container_name: gtm-paperclip
+    restart: unless-stopped
+    # tini is PID 1 (image ENTRYPOINT); pids_limit is the backstop for leaked
+    # agent processes, as upstream's compose files do.
+    pids_limit: 2048
+    stop_grace_period: 90s
+    ports:
+      - "${PAPERCLIP_PORT:-3100}:3100"
+    env_file:
+      - .env
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3100"
+      PAPERCLIP_HOME: "/paperclip"
+      PAPERCLIP_DEPLOYMENT_MODE: "authenticated"
+      PAPERCLIP_DEPLOYMENT_EXPOSURE: "private"
+      PAPERCLIP_PUBLIC_URL: "${PAPERCLIP_PUBLIC_URL:-http://localhost:3100}"
+      # Other containers/host services (Photon bridge, app/ FastAPI) reach us
+      # via these names.
+      PAPERCLIP_ALLOWED_HOSTNAMES: "host.docker.internal,gtm-paperclip,paperclip"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Embedded Postgres, uploads, secrets key, agent workspaces. Named volume
+      # (not a bind mount): Postgres needs real chown/0700 semantics, which
+      # Colima's virtiofs host mounts don't reliably give.
+      - paperclip-data:/paperclip
+      # Project root, so process-adapter agents can `uv run` ./app and write
+      # run artifacts the host-side dashboard can read.
+      - "..:/workspace"
+
+volumes:
+  paperclip-data:

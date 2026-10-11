@@ -1,0 +1,129 @@
+# GTM company org chart, from the "AI GTM Automation Harness" diagram.
+# Read by bootstrap.py, which creates or updates it in Paperclip, idempotently by agent name.
+#
+# Adapter per agent:
+#   claude_local : Claude Code in the container reasons, plans and delegates (needs ANTHROPIC_API_KEY)
+#   process      : runs the Python pipeline step in /workspace/app via `uv run` (owned by the app/ session)
+# Override any agent's adapter with `adapter:` below. Command shape agreed with the app/ session:
+#   uv run gtm agent <role>   (cwd /workspace/app)
+
+company:
+  name: TinyFish GTM
+  description: >-
+    AI-native GTM automation machine. Turns live web trends into QA-tested,
+    human-approved short-form launch content, then learns from the results.
+  budget_monthly_cents: 2000          # $20 across the whole company, a hard ceiling
+  goal: >-
+    Ship QA-approved, publish-ready short-form launch content for TinyFish
+    (niche: AI web agents / browser automation) grounded in live trend evidence.
+
+defaults:
+  process:
+    command: uv
+    cwd: /workspace/app
+    timeout_sec: 900
+  budget_monthly_cents: 200           # $2 per specialist
+
+# Shared-memory convention, shown to every agent in its instructions:
+shared_memory: |
+  Shared memory lives in /workspace/runs/<campaign-id>/ (mounted from the host project):
+    evidence.json        trend & competitor data (Trend Discovery)
+    analysis.json        insights + charts/ (Analysis & Insight)
+    template_vN.json     content templates, versioned (Template & Strategy)
+    script_vN.json, video_vN.mp4, captions, thumbnails (Content Generation)
+    qa_vN.json           QA scores, persona feedback, revision requests (QA & Testing)
+    publish.json         post copy, schedule, status (Publishing)
+    /workspace/memory/learnings.json   long-term learnings fed into the next run (Analytics & Learning)
+  Always post a short summary comment on your Paperclip issue with the paths you wrote.
+
+agents:
+  - key: orchestrator
+    name: GTM Orchestrator
+    title: CEO / Campaign Orchestrator
+    role: ceo
+    adapter: claude_local
+    budget_monthly_cents: 500
+    capabilities: >-
+      Plans each campaign from the founder's brief (product context and campaign
+      settings), breaks it into issues, assigns them down the pipeline, enforces
+      budgets, and requests human approval before anything is published.
+    pipeline: |
+      Trend Discovery -> Analysis & Insight -> Template & Strategy -> Content Generation
+      -> QA & Testing (on fail, revise up to 2x, then ask a human) -> [board approval] -> Publishing
+      -> Analytics & Learning (feeds learnings into the next campaign)
+
+  - key: research
+    name: Trend Discovery Agent
+    title: Research (TinyFish)
+    role: researcher
+    reports_to: orchestrator
+    capabilities: >-
+      Finds trending topics, content formats and competitor activity across
+      Instagram, TikTok, X, Reddit and YouTube using TinyFish Search, Fetch, Agent,
+      Browser and Browser Profiles/Vault. Output: trend dataset, relevant examples,
+      source links.
+
+  - key: analysis
+    name: Analysis & Insight Agent
+    title: Data Intelligence
+    role: researcher
+    reports_to: orchestrator
+    capabilities: >-
+      Analyzes trends, identifies patterns, and produces data visualizations and
+      insights on what content works and why (Python, Claude, Recharts/Plotly,
+      TinyFish enrich). Output: trend analysis, visualizations, opportunity areas,
+      content patterns.
+
+  - key: strategy
+    name: Template & Strategy Agent
+    title: Content Strategy
+    role: pm
+    reports_to: orchestrator
+    capabilities: >-
+      Extracts reusable templates from top-performing content and builds a content
+      strategy for the product and audience (Claude, competitor analysis, trend
+      clustering, RAG over previous learnings). Output: content templates, hooks,
+      scripts, structure, campaign plan, target segments.
+
+  - key: video
+    name: Content Generation Agent
+    title: Video Creation
+    role: designer
+    reports_to: orchestrator
+    capabilities: >-
+      Generates short-form videos from the templates: script, voiceover, visuals,
+      captions, platform-optimized formats (ElevenLabs, FFmpeg, templates).
+      Output: video drafts, captions and metadata, thumbnails, A/B variants.
+
+  - key: qa
+    name: QA & Testing Agent
+    title: QA (Cresta-style + AI Personas)
+    role: qa
+    reports_to: orchestrator
+    capabilities: >-
+      Validates content using a fleet of AI personas and evaluation criteria:
+      brand guidelines, factual accuracy, toxicity/risk. Persona scores are
+      SIMULATED, not real audience validation. Output: QA scores and feedback,
+      revision requests, approved assets, persona insights.
+
+  - key: publish
+    name: Publishing Agent
+    title: Multi-Platform Publishing
+    role: general
+    reports_to: orchestrator
+    capabilities: >-
+      Publishes approved content to TikTok, Instagram, X, LinkedIn and YouTube, and
+      schedules future posts. Never publishes without an approved board approval
+      (guardrail). Output: published posts, schedule and status, platform-specific
+      formats, error handling and retries.
+
+  - key: learn
+    name: Analytics & Learning Agent
+    title: Self-Improvement
+    role: general
+    reports_to: orchestrator
+    capabilities: >-
+      Tracks performance, compares it with the initial trends, and feeds learnings
+      back into templates and strategy (platform analytics, A/B analysis, Paperclip
+      long-term memory). Output: engagement metrics, what worked and what didn't,
+      updated templates, next iteration plan.

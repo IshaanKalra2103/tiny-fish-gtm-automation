@@ -1,0 +1,25 @@
+# Secrets: never commit. .env.example files are fine.
+.env
+.env.*
+!.env.example
+*.pem
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+dist/
+
+# Upstream Paperclip clone, reference only (git clone https://github.com/paperclipai/paperclip)
+paperclip/
+
+# Run artifacts (videos, screenshots). Force-add the frozen demo run if needed: git add -f
+app/runs/
+
+# Local tool state
+.claude/
+.DS_Store
+*.log
