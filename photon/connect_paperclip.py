@@ -31,7 +31,8 @@ INTEGRATION_ENV = ROOT / "harness" / "state" / "integration.env"
 PHOTON_ENV = ROOT / "photon" / ".env"
 PROVIDER = "imessage-photon"
 
-# Applies to whichever agent/runtime is bound; keeps replies human-sized on a phone.
+# Paperclip only accepts per-endpoint communicationInstructions for Slack, so this text belongs
+# in the bound agent's own instructions (harness/bootstrap.py). Kept here as the source.
 COMMUNICATION_INSTRUCTIONS = """\
 You're talking with the founder and marketing team over iMessage. Text like a person: short, \
 casual, plain text. No markdown, headings or bullet lists. Keep each message to one or two \
@@ -124,7 +125,8 @@ def main() -> None:
         })
     eid = endpoint["id"]
 
-    if endpoint.get("status") != "active" or args.reconnect:
+    configured = (endpoint.get("setup") or {}).get("step") in ("verify", "test", "complete")
+    if not configured or args.reconnect:
         inspection = pc.call("POST", f"/chat-endpoints/{eid}/photon/inspect", project)
         if not inspection.get("eligible"):
             fail("Photon project is not eligible for this channel", allocation=inspection.get("allocation"),
@@ -140,10 +142,7 @@ def main() -> None:
             "photon": photon_config,
         })
 
-    pc.call("PATCH", f"/chat-endpoints/{eid}", {
-        "communicationInstructions": COMMUNICATION_INSTRUCTIONS,
-        "allowDirectMessages": True,
-    })
+    pc.call("PATCH", f"/chat-endpoints/{eid}", {"allowDirectMessages": True})
     endpoint = pc.call("GET", f"/chat-endpoints/{eid}")
     if (endpoint.get("setup") or {}).get("step") not in ("test", "complete"):
         pc.call("POST", f"/chat-endpoints/{eid}/setup", {"action": "verify"})
