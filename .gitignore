@@ -16,8 +16,9 @@ dist/
 # Upstream Paperclip clone, reference only (git clone https://github.com/paperclipai/paperclip)
 paperclip/
 
-# Run artifacts (videos, screenshots). Force-add the frozen demo run if needed: git add -f
+# Run artifacts (videos, screenshots, audience samples). Force-add the frozen demo run if needed: git add -f
 app/runs/
+runs/
 
 # Local tool state
 .claude/

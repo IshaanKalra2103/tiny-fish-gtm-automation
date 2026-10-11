@@ -90,6 +90,7 @@ Each run writes everything to `app/runs/<run_id>/`: `evidence.json`, charts, scr
 | `harness/` | [Paperclip](https://github.com/paperclipai/paperclip) in Docker on port 3100. It provides the agent org chart, tickets, budgets and approvals. Run `cd harness && ./up.sh`. |
 | `photon/` | iMessage interface built on [Photon](https://photon.codes) (`spectrum-ts`). Lets you start a run, check status and approve by text. Run `cd photon && npm start`. |
 | `agentmail/` | Creates [AgentMail](https://agentmail.to) inboxes so the agents have their own email addresses. |
+| `brightdata/` | Gateway to [Bright Data](https://docs.brightdata.com)'s pre-built scrapers. Gets TikTok, Instagram Reels, YouTube and Reddit posts with views, engagement, length and sound, plus the top comments under them. Used for trend analysis and to ground the QA personas. It runs alongside TinyFish: Search finds the URLs, and Bright Data returns the engagement numbers that Fetch doesn't. |
 | `docs/` | `gtm.md` (product requirements and long-term vision), `deliverable.md` (the brief), and two diagrams: `flow.png` (the vision) and `demo-flow.png` (an early demo sketch). Where these differ from this README, `plan.md` and this README win. |
 | `plan.md` | Scope, architecture, timeline and risks. |
 | `CURRENT.md` | Shared work log for the parallel build sessions, newest entry first. |
