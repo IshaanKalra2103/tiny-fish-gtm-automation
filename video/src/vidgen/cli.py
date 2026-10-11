@@ -24,7 +24,7 @@ from pathlib import Path
 
 import httpx
 
-from . import ads, footage, images, templates, vizard
+from . import ads, fal, footage, images, templates, vizard
 from .config import VidgenError, runs_dir
 from .render import FORMATS, estimate_chars, next_version, render
 from .tts import ElevenLabs
@@ -112,12 +112,22 @@ def main() -> int:
                     help="reference image (person for talking-head, product shot...) from your image generation")
     ad.add_argument("--person", help="no --ref? describe the on-camera person; Codex generates the image")
     ad.add_argument("--product", help="no --ref? describe the product shot; Codex generates the image")
-    ad.add_argument("--mode", choices=["demo", "vizard"], default="demo",
-                    help="demo: instant captioned clip; vizard: animated + voiced (slow, credits), demo on failure")
+    ad.add_argument("--mode", choices=["demo", "fal", "vizard"], default="demo",
+                    help="demo: instant captioned clip; fal: MiniMax H3 Max text-to-video (~$0.66, minutes); "
+                         "vizard: animated + voiced (slow); fal/vizard fall back to demo on failure")
     ad.add_argument("--wait", type=int, default=900, help="vizard mode: seconds before falling back to demo")
     ad_out = ad.add_mutually_exclusive_group(required=True)
     ad_out.add_argument("--campaign", help="campaign id; writes runs/<campaign>/video_vN.mp4 (next free N)")
     ad_out.add_argument("--out", help="write the mp4 here instead")
+
+    fl = sub.add_parser("fal", help="fal.ai via its MCP relay (MiniMax H3 Max text-to-video)")
+    flsub = fl.add_subparsers(dest="action", required=True)
+    fll = flsub.add_parser("login", help="one-time OAuth sign-in; saves video/.fal/session.json")
+    fll.add_argument("--no-browser", action="store_true")
+    flsub.add_parser("tools", help="list the relay's tools")
+    flc = flsub.add_parser("call", help="call one relay tool with JSON arguments")
+    flc.add_argument("tool")
+    flc.add_argument("arguments", help="JSON object")
 
     tp = sub.add_parser("template", help="demo: caption one of five pre-rendered 22s clips (no generation)")
     tsub = tp.add_subparsers(dest="action", required=True)
@@ -213,6 +223,15 @@ def main() -> int:
             emit(ads.make(args.format, args.brand, args.trend, args.hook, args.line, args.cta, args.ref,
                           _out_path(args), mode=args.mode, wait=args.wait, person=args.person,
                           product=args.product))
+        elif args.cmd == "fal":
+            if args.action == "login":
+                emit({"ok": True, **fal.client.login(open_browser=not args.no_browser)})
+            elif args.action == "tools":
+                emit({"ok": True, "tools": [{"name": t["name"], "description": (t.get("description") or "")[:160],
+                                             "args": list((t.get("inputSchema") or {}).get("properties", {}))}
+                                            for t in fal.client.tools()]})
+            else:
+                emit({"ok": True, **fal.client.call(args.tool, json.loads(args.arguments), timeout=900)})
         elif args.cmd == "template":
             if args.action == "list":
                 emit({"ok": True, "seconds": templates.SECONDS, "templates": templates.available()})

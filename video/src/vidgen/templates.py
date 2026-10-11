@@ -101,10 +101,13 @@ def build(force: bool = False) -> dict:
 
 # Bases built on the fly from a reference image (e.g. a person or product made with Codex image gen).
 IMAGE_LOOKS = {
-    "talking-head": {"look": "person ref, slow push-in, lower-third captions", "caption_y": 1480, "accent": "#FFE600"},
-    "product": {"look": "product ref, slow pull-out, centred captions", "caption_y": 1300, "accent": "#00E5FF"},
+    "talking-head": {"look": "person ref in a top panel (slow push-in), captions in their own band below",
+                     "caption_y": 1420, "accent": "#FFE600", "panel": True},
+    "product": {"look": "product ref in a top panel (slow pull-out), captions in their own band below",
+                "caption_y": 1420, "accent": "#00E5FF", "panel": True},
     "brainrot": {"look": "ref on top, parkour below, seam captions", "caption_y": 960, "accent": "#FF4FD8"},
 }
+PANEL = (40, 70, 1000, 1180)  # x, y, w, h: the product/person area; no text is ever drawn over it
 
 
 def image_base(kind: str, image: Path, out: Path) -> Path:
@@ -117,10 +120,14 @@ def image_base(kind: str, image: Path, out: Path) -> Path:
         vf = (f"[0:v]{half},zoompan=z='1+0.08*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:"
               f"s={W}x{H // 2}:fps={FPS}[top];[1:v]{half},fps={FPS}[bot];[top][bot]vstack=inputs=2[bg]")
     else:
-        z = f"1+0.12*on/{frames}" if kind == "talking-head" else f"1.12-0.12*on/{frames}"
+        px, py, pw, ph = PANEL
+        z = f"1+0.10*on/{frames}" if kind == "talking-head" else f"1.10-0.10*on/{frames}"
         inputs = ["-loop", "1", "-framerate", str(FPS), "-t", str(SECONDS), "-i", str(image)]
-        vf = (f"[0:v]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setsar=1,"
-              f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/3-(ih/zoom/3)':d=1:s={W}x{H}:fps={FPS}[bg]")
+        vf = (f"[0:v]split[a][b];[a]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+              f"gblur=sigma=40,eq=brightness=-0.35,setsar=1,fps={FPS}[back];"
+              f"[b]scale={pw}:{ph}:force_original_aspect_ratio=increase,crop={pw}:{ph},setsar=1,"
+              f"zoompan=z='{z}':x='iw/2-(iw/zoom/2)':y='ih/3-(ih/zoom/3)':d=1:s={pw}x{ph}:fps={FPS}[fg];"
+              f"[back][fg]overlay={px}:{py}[bg]")
     n = inputs.count("-i")
     run([tool("ffmpeg"), "-hide_banner", "-loglevel", "error", "-y", *inputs, "-f", "lavfi", "-i", BEAT,
          "-filter_complex", f"{vf};[bg]format=yuv420p[v];[{n}:a]afade=t=out:st={SECONDS - 1.2}:d=1.2[a]",
@@ -156,23 +163,32 @@ def make(name: str, hook: str, lines: list[str], cta: str, out: Path, image: Pat
             tmpdir.cleanup()
 
 
+def make_from_video(base: Path, kind: str, hook: str, lines: list[str], cta: str, out: Path,
+                    tag: str = "tinyfish.ai") -> dict:
+    """Caption a generated full-frame clip (e.g. from fal): lower-third captions, button CTA, brand tag."""
+    t = {"look": f"generated {kind} clip, lower-third captions", "caption_y": 1500,
+         "accent": IMAGE_LOOKS.get(kind, {}).get("accent", "#FFE600"), "panel": True}
+    return _caption(base, kind, t, hook, lines, cta, out, tag)
+
+
 def _caption(base: Path, name: str, t: dict, hook: str, lines: list[str], cta: str, out: Path,
              tag: str) -> dict:
     hook_end, cta_start = 3.0, SECONDS - 3.5
     layers = [Layer(0, SECONDS, [graphics.gradient(top=True, bottom=True, strength=120)], z=0),
-              Layer(0, hook_end, [graphics.caption(hook.split(), None, t["caption_y"], size=104,
-                                                   highlight=t["accent"])], z=1)]
+              Layer(0, hook_end, [graphics.caption(hook.split(), None, t["caption_y"],
+                                                   size=88 if t.get("panel") else 104, highlight=t["accent"])], z=1)]
     lines = [ln for ln in lines if ln.strip()] or [hook]
     step = (cta_start - hook_end) / len(lines)
     for i, ln in enumerate(lines):
         words = ln.split()
         accent_word = max(range(len(words)), key=lambda k: len(words[k]))  # pop the longest word
         layers.append(Layer(hook_end + i * step, hook_end + (i + 1) * step,
-                            [graphics.caption(words, accent_word, t["caption_y"], size=96, highlight=t["accent"])], z=1))
-    cta_y = min(t["caption_y"], 1350)  # leave room for the brand tag below a two-line CTA
-    layers.append(Layer(cta_start, SECONDS, [graphics.caption(cta.split(), None, cta_y, size=100,
-                                                              highlight=t["accent"]),
-                                             graphics.banner(tag, 1720, size=56, dark=True)], z=1))
+                            [graphics.caption(words, accent_word, t["caption_y"], size=84 if t.get("panel") else 96,
+                                             highlight=t["accent"])], z=1))
+    # CTA reads as a button (one clear call to action), with the brand tag well below it.
+    cta_y = t["caption_y"] if t.get("panel") else min(t["caption_y"], 1350)
+    layers.append(Layer(cta_start, SECONDS, [graphics.banner(cta, cta_y, size=78),
+                                             graphics.banner(tag, 1760, size=52, dark=True)], z=1))
 
     out.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
