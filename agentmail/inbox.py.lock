@@ -2,6 +2,12 @@ version = 1
 revision = 3
 requires-python = ">=3.12"
 
+[manifest]
+requirements = [
+    { name = "agentmail", specifier = ">=2.0.15" },
+    { name = "python-dotenv", specifier = ">=1.2" },
+]
+
 [[package]]
 name = "agentmail"
 version = "2.0.15"
@@ -16,21 +22,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6b/f5/a99f18c1c49a532c36c8b9dc754ce29d72175635f6b6da393fa6699f861f/agentmail-2.0.15.tar.gz", hash = "sha256:faf4ec1f006fea0a01ec586ed13d08209e032f7bed3ccb2a7af905243f1251f3", size = 222317, upload-time = "2026-10-09T18:58:49.949Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/16/0c/3c7db23a92d31129e83b7d5cb21c95f15df6013ebb05bf228f9c27f4a19f/agentmail-2.0.15-py3-none-any.whl", hash = "sha256:040847f3b8a7916fe7e0a762372aca51788fad6f5638c243d3145ed0580340b6", size = 456987, upload-time = "2026-10-09T18:58:48.114Z" },
-]
-
-[[package]]
-name = "agentmail-automation"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "agentmail" },
-    { name = "python-dotenv" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "agentmail", specifier = ">=2.0.15" },
-    { name = "python-dotenv", specifier = ">=1.2.4" },
 ]
 
 [[package]]

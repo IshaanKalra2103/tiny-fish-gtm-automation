@@ -1,15 +1,21 @@
 # agentmail
 
-Creates AgentMail inboxes (agent email addresses) for the GTM agents.
+Throwaway AgentMail inboxes for the GTM agents: create them, sign up for sites with them, wait for verification codes and links, and send mail.
 
 - Account: AgentMail console (https://console.agentmail.to), signed in with Google as `codingfrig12@gmail.com`, org "Ishaan's Organization", Free Tier (3 inboxes, 3,000 emails/month).
-- API key: `tiny-fish-gtm-automation` (org scope, full access), stored in `.env` as `AGENTMAIL_API_KEY`.
+- API key: `tiny-fish-gtm-automation` (org scope, full access), in `.env` as `AGENTMAIL_API_KEY`. An `AGENTMAIL_API_KEY` environment variable takes precedence.
+- Inboxes: `funnyflower74@agentmail.to`, `eagerspring500@agentmail.to`, `youngmirror648@agentmail.to`.
+
+`inbox.py` is a uv script with inline dependencies (locked in `inbox.py.lock`). It runs from any directory and never touches a surrounding project's venv, so it is safe inside the Paperclip container, where `UV_PROJECT_ENVIRONMENT` points at `app/`'s venv.
 
 ```bash
-uv run create_inbox.py -u tinyfish-gtm -n "TinyFish GTM"   # tinyfish-gtm@agentmail.to
-uv run create_inbox.py                                    # random address
-uv run create_inbox.py -u gtm-agent --count 2             # gtm-agent-1@, gtm-agent-2@
-uv run create_inbox.py --list
+uv run agentmail/inbox.py list
+uv run agentmail/inbox.py wait eagerspring500@agentmail.to --subject verify --since 2m
+uv run agentmail/inbox.py read ADDR MESSAGE_ID
+uv run agentmail/inbox.py messages ADDR --limit 5
+uv run agentmail/inbox.py send ADDR --to x@y.com --subject S --text T
+uv run agentmail/inbox.py create [-u name] [-n "Display"] [--count N]
+uv run agentmail/inbox.py delete ADDR [ADDR ...]
 ```
 
-Each inbox is printed as one JSON line. Named inboxes are idempotent: re-running the same command returns the existing inbox.
+In the Paperclip container use `/workspace/agentmail/inbox.py`. `SKILL.md` is the agent-facing version of this, for the harness's Claude agents.
