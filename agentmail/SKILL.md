@@ -40,5 +40,10 @@ uv run $M send ADDR --to someone@x.com --subject S --text T
   and deleting an inbox loses its mail permanently.
 - `send` really sends. Don't retry a send just because it timed out; check
   `messages` on the recipient side first if you can.
+- Rate limits are handled inside the CLI: API calls retry 429 and 5xx errors with
+  backoff, `wait` slows its polling, and `send` waits 30 s between sends from one inbox,
+  capped at 40 per inbox and 90 in total per 24 h. If `send` exits 3 (`send_budget`),
+  stop and report it. Don't loop or switch inboxes to get around it. Don't call `wait`
+  in a tight loop either; give it a longer `--timeout` instead.
 - The API key comes from AGENTMAIL_API_KEY or `/workspace/agentmail/.env`. Never
   print it or copy it into issues, comments, or files.

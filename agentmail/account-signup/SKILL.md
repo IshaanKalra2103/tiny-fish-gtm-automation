@@ -25,6 +25,24 @@ Paperclip container. Tools:
   platform's official posting API (Instagram Graph API, TikTok Content Posting API)
   or have a human approve and press Post. Never script "human-like" posting.
 - Never print passwords or API keys. Read them from files inside the browser script.
+- **One new account per platform per day** from this network. Several sign-ups from
+  one IP in a short time is what triggers the "continue on the app" and phone checks.
+
+## Using the accounts: posting cadence and rate limits
+
+These caps are deliberately far below the platform limits. New accounts get flagged
+long before they reach the published caps.
+
+| | Platform limit (published) | Our cap |
+|---|---|---|
+| Instagram | 100 API-published posts per rolling 24 h per account (some Meta reference pages say 25-50, so treat 25 as the ceiling). Check `GET /{ig-user-id}/content_publishing_limit` before publishing. | ≤ 3 posts/day, ≥ 2 h apart. First 7 days: ≤ 1/day. |
+| TikTok | About 15 posts/day per creator, shared across all API clients. Posting endpoints allow about 6 requests/min per user token. | ≤ 3 posts/day, ≥ 2 h apart. First 7 days: ≤ 1/day. |
+
+- Post only through the official APIs or by a human pressing Post. No bulk following,
+  liking, commenting, or DMs from these accounts.
+- On any rate-limit, "try again later", action-blocked, or `spam_risk_too_many_posts`
+  response, pause that account for 24 h and tell a human. Never retry in a loop.
+- The email side is throttled by `inbox.py` (see `agentmail/SKILL.md`).
 
 ## Steps
 

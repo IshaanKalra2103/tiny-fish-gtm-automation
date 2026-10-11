@@ -19,6 +19,8 @@ uv run agentmail/inbox.py create [-u name] [-n "Display"] [--count N]
 uv run agentmail/inbox.py delete ADDR [ADDR ...]
 ```
 
+Rate limits are built in. API calls retry 429 and 5xx errors with backoff (honouring Retry-After). `wait` polls every 3 s, backing off to 15 s. `send` is throttled through the gitignored `.send-ledger.jsonl`: at least 30 s between sends per inbox, at most 40 per inbox and 90 in total per 24 h. It exits 3 when the budget is spent, and every send carries an Idempotency-Key.
+
 In the Paperclip container use `/workspace/agentmail/inbox.py`. `SKILL.md` is the agent-facing version of this, for the harness's Claude agents.
 
 ## Paperclip channel

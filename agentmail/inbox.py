@@ -16,13 +16,20 @@ Run from anywhere (host or the Paperclip container, where the repo is /workspace
 
 Output is JSON, one object per line. `read` and `wait` add `codes` (4-8 digit numbers)
 and `links` found in the mail, for sign-up verification. Errors go to stderr as JSON
-with exit code 1; `wait` exits 2 on timeout.
+with exit code 1; `wait` exits 2 on timeout; `send` exits 3 when the send budget is spent.
+
+Rate limits: every API call retries 429/5xx up to 5 times, honouring Retry-After (SDK
+backoff). `wait` polls every 3 s, backing off to 15 s. `send` is throttled through a shared
+ledger (.send-ledger.jsonl next to this file): at least 30 s between sends from one inbox,
+at most 40 per inbox and 90 in total per rolling 24 h (free tier: 3,000/month). Each send
+carries an Idempotency-Key, so retries never send twice.
 
 The API key comes from AGENTMAIL_API_KEY, else from the .env next to this file.
 Inline script metadata keeps uv from using (and re-syncing) any surrounding project venv.
 """
 
 import argparse
+import fcntl
 import json
 import os
 import re
@@ -36,6 +43,13 @@ from agentmail import AgentMail
 from agentmail.core.api_error import ApiError
 from agentmail.inboxes.types.create_inbox_request import CreateInboxRequest
 from dotenv import load_dotenv
+
+RETRY = {"max_retries": 5}  # SDK retries 429/408/409/5xx with Retry-After + exponential backoff
+LEDGER = Path(__file__).with_name(".send-ledger.jsonl")
+SEND_GAP_S = 30
+SEND_CAP_INBOX_24H = 40
+SEND_CAP_TOTAL_24H = 90
+POLL_MAX_S = 15.0
 
 CODE_RE = re.compile(r"(?<![\d#])\d{4,8}(?!\d)")
 LINK_RE = re.compile(r"https?://[^\s<>\"')\]]+")
@@ -99,31 +113,31 @@ def cmd_create(client, args) -> int:
             # Named inboxes get a deterministic client_id, so re-running returns the same inbox.
             client_id=f"inbox-{username}" if username else str(uuid.uuid4()),
         )
-        emit(inbox_obj(client.inboxes.create(request=request)))
+        emit(inbox_obj(client.inboxes.create(request=request, request_options=RETRY)))
     return 0
 
 
 def cmd_list(client, args) -> int:
-    for inbox in client.inboxes.list().inboxes:
+    for inbox in client.inboxes.list(request_options=RETRY).inboxes:
         emit(inbox_obj(inbox))
     return 0
 
 
 def cmd_delete(client, args) -> int:
     for inbox_id in args.inbox_ids:
-        client.inboxes.delete(inbox_id=inbox_id)
+        client.inboxes.delete(inbox_id=inbox_id, request_options=RETRY)
         emit({"deleted": inbox_id})
     return 0
 
 
 def cmd_messages(client, args) -> int:
-    for m in client.inboxes.messages.list(args.inbox, limit=args.limit).messages:
+    for m in client.inboxes.messages.list(args.inbox, limit=args.limit, request_options=RETRY).messages:
         emit(summary_obj(m))
     return 0
 
 
 def cmd_read(client, args) -> int:
-    emit(full_obj(client.inboxes.messages.get(args.inbox, args.message_id)))
+    emit(full_obj(client.inboxes.messages.get(args.inbox, args.message_id, request_options=RETRY)))
     return 0
 
 
@@ -140,22 +154,50 @@ def matches(m, args, since: datetime) -> bool:
 def cmd_wait(client, args) -> int:
     since = parse_since(args.since)
     deadline = time.monotonic() + args.timeout
+    interval = args.interval
     print(f"waiting up to {args.timeout}s for mail to {args.inbox} received after {since.isoformat()}", file=sys.stderr)
     while True:
         # Filter on receipt time client-side: the API orders by the sender's Date header.
-        recent = client.inboxes.messages.list(args.inbox, limit=50, include_spam=True).messages
+        recent = client.inboxes.messages.list(args.inbox, limit=50, include_spam=True, request_options=RETRY).messages
         hits = sorted((m for m in recent if matches(m, args, since)), key=lambda m: m.created_at)
         if hits:
-            emit(full_obj(client.inboxes.messages.get(args.inbox, hits[-1].message_id)))
+            emit(full_obj(client.inboxes.messages.get(args.inbox, hits[-1].message_id, request_options=RETRY)))
             return 0
         if time.monotonic() >= deadline:
             print(json.dumps({"error": "timeout", "inbox": args.inbox, "since": since.isoformat()}), file=sys.stderr)
             return 2
-        time.sleep(args.interval)
+        time.sleep(min(interval, max(0.0, deadline - time.monotonic())))
+        interval = min(interval * 1.5, POLL_MAX_S)
+
+
+def reserve_send(inbox: str) -> str | None:
+    """Wait out the per-inbox gap and check the 24 h caps, then record the send. Returns an error or None."""
+    with open(LEDGER, "a+") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)  # one sender at a time across agents
+        f.seek(0)
+        cutoff = time.time() - 86400
+        recent = [e for e in map(json.loads, filter(str.strip, f)) if e["t"] >= cutoff]
+        mine = [e["t"] for e in recent if e["inbox"] == inbox]
+        if len(recent) >= SEND_CAP_TOTAL_24H:
+            return f"total send budget spent ({SEND_CAP_TOTAL_24H}/24h)"
+        if len(mine) >= SEND_CAP_INBOX_24H:
+            return f"send budget for {inbox} spent ({SEND_CAP_INBOX_24H}/24h)"
+        gap = (max(mine) + SEND_GAP_S - time.time()) if mine else 0
+        if gap > 0:
+            print(f"throttling: {gap:.0f}s until {inbox} may send again", file=sys.stderr)
+            time.sleep(gap)
+        f.write(json.dumps({"t": time.time(), "inbox": inbox}) + "\n")
+    return None
 
 
 def cmd_send(client, args) -> int:
-    sent = client.inboxes.messages.send(args.inbox, to=args.to, subject=args.subject, text=args.text)
+    if error := reserve_send(args.inbox):
+        print(json.dumps({"error": "send_budget", "detail": error}), file=sys.stderr)
+        return 3
+    sent = client.inboxes.messages.send(
+        args.inbox, to=args.to, subject=args.subject, text=args.text,
+        idempotency_key=str(uuid.uuid4()), request_options=RETRY,
+    )
     emit({"message_id": sent.message_id, "thread_id": sent.thread_id})
     return 0
 
