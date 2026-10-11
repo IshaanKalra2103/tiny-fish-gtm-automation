@@ -15,11 +15,25 @@ The PRD describes a full GTM company. The deliverable grades four things: at lea
 
 | Primitive | Job in the workflow | Why no other primitive fits |
 |---|---|---|
-| **Search** | Find this week's conversations and competitor content in the niche (Reddit, HN, X, YouTube, news; `recency_minutes`, `domain_type=news`) | It's the only primitive that discovers URLs we don't already have. Free, 1–3s. |
+| **Search** | Find this week's conversations and competitor content in the niche (Reddit, HN, X, YouTube, news; `recency_minutes`, `domain_type=news`), plus **TikTok `/video/` and IG `/reel/` URLs** (`include_domains`) to hand to Bright Data | It's the only primitive that discovers URLs we don't already have. Free, 1–3s. **Tested:** returns real TikTok and Reel URLs from the past 30 days, including a creator video about TinyFish. |
 | **Fetch** | Bulk-read the ~30 URLs Search found as clean Markdown for the analyst | Known URLs with no interaction needed. Free, 10 URLs per call. The cheapest way to read at volume. |
-| **Agent** | Work **TikTok Creative Center → Top Ads**: set region, industry and period filters, open ads, return JSON of hooks, formats, CTAs and lengths | Fetch only gets an empty page shell there (we tested it). The page needs goal-driven clicking and filtering. **Spike:** filters work, but the results are login-gated (4 ads without login), so this step needs Vault/Profile. **Fallback:** YouTube Shorts search, with Agent clicking Filters → This week → View count (also tested: Fetch gets only the page footer there; Agent took 3 min and $0.35). Agent runs take 3–6 min, so start them first and run them async alongside Search/Fetch/Browser. |
+| **Agent** | Work **YouTube Shorts search**: click Filters → This week → Sort by view count, then return the top Shorts as JSON (title, channel, views, age, URL) | Fetch gets only the page footer there (we tested it), and finding these needs goal-driven clicking. **Spike:** 3 min, $0.35. Runs take 3–6 min, so start them first and run them async. *Stretch:* TikTok Creative Center Top Ads through Vault/Profile login (it's login-gated, with only 4 ads visible without logging in). |
 | **Browser** | Run a scripted Playwright session over CDP to capture screenshots and scroll-clips of the brand's product pages (video B-roll) and of reference content (evidence wall) | It's the only primitive that returns pixels, and it's deterministic at $0.002/min. Agent returns JSON and costs $0.016 per step. |
 | **Vault** *(stretch)* | After approval, Publisher logs into the brand's own scheduler and saves a **draft** | It's the only way to give an agent a login without the credentials touching our code or the LLM. |
+
+**Division of labor (user decision, 13:45):** TinyFish runs the main automation. **Bright Data** handles two things: sourcing IG Reels and TikTok, and generating personas.
+
+**Data flow:**
+```
+TinyFish Search ─┬─ threads/news/blogs ──► TinyFish Fetch ──► pain points
+                 └─ TikTok + Reel URLs ──► Bright Data ──► engagement + captions + top comments
+TinyFish Agent (YouTube Shorts) ─────────────────────────► views and titles
+                                    ↓
+              Analyst: hooks and formats, weighted by engagement
+              Personas: Bright Data comment clusters
+                                    ↓
+TinyFish Browser ──► brand B-roll ──► video ──► persona QA ──► revise ──► approve
+```
 
 **Escalation ladder (the README story):** Search → Fetch → Agent → Browser, cheapest first. If Agent gets blocked (CAPTCHA, empty result), the orchestrator falls back to Search with `include_domains` and Fetch, logs the failure, and keeps going. That is the PRD's "self-healing" requirement.
 
@@ -42,13 +56,15 @@ Python with **uv**.
 - `gpt-6-luna` for analysis and persona QA. It takes image input and is much cheaper.
 - Structured output goes through `client.responses.parse(text_format=PydanticModel)`.
 
-**Audience data: Bright Data** (`brightdata/`, built by another session). It returns public IG, TikTok, YouTube and Reddit posts plus top comments, *with engagement counts*. That data grounds the 3 personas in real audience reactions and ranks the trends. Search finds the URLs, then `bd-gateway` scrapes them.
+**Reels + TikTok sourcing and personas: Bright Data** (`brightdata/`, built by another session). It scrapes the TikTok and Reel URLs that TinyFish Search found, returning views, likes, shares, captions, durations and top comments. Those engagement numbers rank the hooks and formats. The comments, clustered and weighted by likes, generate the 3 synthetic personas, and each persona trait cites its source comments.
+- Call: `bd-gateway sample --campaign <id> --platform tiktok|instagram --urls-file runs/<id>/search_urls.txt`
+- Output: `runs/<id>/social_<platform>.json`
 - **Positioning:** Bright Data competes with TinyFish on web data. It's a supporting data source here: the TinyFish primitives keep their unique jobs, and the launch post doesn't lean on it.
 
 **Agents (each a function plus an LLM prompt with a Pydantic schema):**
 
 1. **Orchestrator:** plans the run, assigns tickets, enforces budgets.
-2. **Trend Researcher:** Search + Fetch + Agent → `evidence.json`.
+2. **Trend Researcher:** Search + Fetch + Agent → `evidence.json`. It also passes the TikTok and Reel URLs to Bright Data, which writes `social_<platform>.json`.
 3. **Trend Analyst:** clusters topics, hooks and formats → charts.
 4. **Pattern Miner:** produces a template (hook pattern, beats, length, caption style, CTA), with each element citing evidence.
 5. **Creative Strategist:** picks the concept, audience and message, then writes `script.json`. Every claim must cite either fetched evidence or a brand page.

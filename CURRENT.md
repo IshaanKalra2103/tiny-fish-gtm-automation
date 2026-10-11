@@ -99,6 +99,11 @@ The spike code is throwaway and lives in the session scratchpad, not the repo. R
 
 **OpenAI key:** source `~/Documents/work/NatCap/sentra/pipeline-1/.env` (per the user: source it, don't read or copy it) and set `OPENAI_BASE_URL=https://us.api.openai.com/v1`. Without that base URL the key returns 401 `incorrect_hostname`. The keychain key (`OPENAI_API_KEY`/`OPENAI_PERSONAL`) returns 429 `credit_balance_exhausted`.
 
+**User decision (13:45):** TinyFish runs the main automation. Bright Data does IG Reels and TikTok sourcing and persona generation.
+- TinyFish Search with `include_domains=tiktok.com|instagram.com` returns real `/video/` and `/reel/` URLs (tested). Those URLs go to `bd-gateway`.
+- Agent's source is now YouTube Shorts. Creative Center + Vault is a stretch goal.
+- The data flow is in `plan.md` §2.
+
 **Paperclip contract (from 4d, 13:40):**
 - **Entry point:** `uv run gtm agent <role>` must be a `[project.scripts]` entry point, because the harness spawns it without a shell.
 - **Plumbing:** vendor `harness/paperclip_agent.py` into `app/gtm/`.
