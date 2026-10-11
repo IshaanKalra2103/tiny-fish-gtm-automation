@@ -110,6 +110,7 @@ def main() -> int:
     ad.add_argument("--cta", required=True)
     ad.add_argument("--ref", action="append", default=[],
                     help="reference image (person for talking-head, product shot...) from your image generation")
+    ad.add_argument("--setting", help="where the shot happens (default: picked from the product category)")
     ad.add_argument("--person", help="no --ref? describe the on-camera person; Codex generates the image")
     ad.add_argument("--product", help="no --ref? describe the product shot; Codex generates the image")
     ad.add_argument("--mode", choices=["demo", "fal", "vizard"], default="demo",
@@ -222,7 +223,7 @@ def main() -> int:
         elif args.cmd == "ad":
             emit(ads.make(args.format, args.brand, args.trend, args.hook, args.line, args.cta, args.ref,
                           _out_path(args), mode=args.mode, wait=args.wait, person=args.person,
-                          product=args.product))
+                          product=args.product, setting=args.setting))
         elif args.cmd == "fal":
             if args.action == "login":
                 emit({"ok": True, **fal.client.login(open_browser=not args.no_browser)})

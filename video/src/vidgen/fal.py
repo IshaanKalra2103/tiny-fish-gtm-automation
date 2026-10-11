@@ -82,7 +82,7 @@ def generate(prompts: list[str], folder: Path, seconds: float = 11, aspect: str 
     extra = {"reference_image_urls": refs[:9]} if refs else {}
     sub = _json(client.call("submit_jobs", {"requests": [
         {"index": i, "endpoint_id": endpoint, "input": {"prompt": p, "duration": seconds, "aspect_ratio": aspect,
-                                                        "resolution": resolution, "prompt_expansion_mode": "balanced",
+                                                        "resolution": resolution, "prompt_expansion_mode": "disabled",  # our prompts are exact
                                                         **extra}}
         for i, p in enumerate(prompts)]}, timeout=120))
     items = sub.get("results") or sub.get("requests") or sub.get("jobs") or []

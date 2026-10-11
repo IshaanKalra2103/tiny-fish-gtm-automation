@@ -23,29 +23,62 @@ FORMATS = {
 }
 
 
-SCENES = {  # two ~11s clips, joined: (opening, closing). {who} {brand} {trend} {a} {b} filled in.
+NO_TEXT = "No text, captions, logos or watermarks on screen."
+HANDS_OFF = "The product stays closed the whole time: nobody opens, pours, squeezes, sprays or applies it."
+
+# Two ~11s clips joined into one ad: (opening, closing). Filled: who, brand, setting, a, b.
+# Each clip is a precise shot: setting, subject, exact action, forbidden actions, camera, light, continuity.
+SCENES = {
     "talking-head": (
-        "Vertical 9:16 handheld selfie UGC video. {who} talks excitedly straight to the camera about {brand}, "
-        "holding the product up to the lens, riding the '{trend}' trend, and says: \"{a}\". Natural daylight, "
-        "authentic TikTok creator style, clear speech, product label visible.",
-        "Same creator, same room, continuing the selfie video: shows the {brand} product close up, uses it, "
-        "then smiles at camera and says: \"{b}\". Natural daylight, authentic TikTok style, product visible."),
+        "Subject: {who}. Vertical 9:16 selfie video this person films on a phone held at arm's length. "
+        "Setting: {setting}. They stand still, facing the camera. Action: the creator holds the {brand} product in one hand beside "
+        "their face, label facing the camera, and talks directly into the lens with small natural hand gestures. "
+        f"{HANDS_OFF} Dialogue: \"{{a}}\". Camera: steady handheld, eye level, medium close-up from the chest up, "
+        f"face and product both in frame. Lighting: soft natural daylight. Style: realistic TikTok UGC. {NO_TEXT}",
+        "Subject: {who}. Continuation of the same selfie video: the same person, same outfit, same location ({setting}), same daylight. "
+        "Action: they bring the {brand} product toward the lens for a two-second close-up of the label, then lower "
+        "it back beside their face and smile while talking. "
+        f"{HANDS_OFF} Dialogue: \"{{b}}\". Camera: steady handheld, eye level, medium close-up from the chest up. "
+        f"Style: realistic TikTok UGC. {NO_TEXT}"),
     "product": (
-        "Vertical 9:16 premium product ad for {brand}, riding the '{trend}' trend: dynamic hero shots of the product, "
-        "slow push-ins, light sweeps, fast rhythmic cuts, upbeat music. Voiceover: \"{a}\".",
-        "Vertical 9:16 lifestyle shots of people happily using the {brand} product, then a final clean hero shot of "
-        "the product on a simple background. Upbeat music. Voiceover: \"{b}\"."),
+        "Vertical 9:16 studio product commercial. The {brand} product stands upright and alone on a clean, "
+        "seamless light backdrop. Camera: slow dolly-in toward the label, then a slow quarter orbit around the "
+        f"product. Lighting: soft key light with one gentle highlight sweeping across the packaging. No people, no "
+        f"hands. {HANDS_OFF} Voiceover: \"{{a}}\". {NO_TEXT}",
+        "Vertical 9:16 product commercial, same product as before, now placed in {setting}, styled neatly with a "
+        "few matching props. Camera: slow push-in that ends on a centred hero shot of the label, product sharp and "
+        f"fully in frame. Soft natural light. No people, no hands. {HANDS_OFF} Voiceover: \"{{b}}\". {NO_TEXT}"),
     "brainrot": (
-        "Vertical 9:16 chaotic fast-paced meme-style TikTok video about {brand} and the '{trend}' trend: quick zooms, "
-        "funny reactions, exaggerated expressions, energetic music. Voiceover: \"{a}\".",
-        "Vertical 9:16 continuation of the chaotic meme video, ending on the {brand} product held to camera. "
-        "Energetic music. Voiceover: \"{b}\"."),
+        "Vertical 9:16 fast-paced meme-style selfie video. Setting: {setting}. Subject: {who}. Action: the creator "
+        "reacts to the camera with big, funny, exaggerated expressions, then holds up the {brand} product like a "
+        f"surprising discovery. {HANDS_OFF} Camera: quick punch-in zooms, handheld energy. Voiceover: \"{{a}}\". "
+        f"{NO_TEXT}",
+        "Continuation of the same meme video: same creator, outfit and location ({setting}). Action: they point at the "
+        "{brand} product, nod with an over-the-top approving face, and end holding it centred and still toward "
+        f"the lens. {HANDS_OFF} Camera: quick punch-in zooms. Voiceover: \"{{b}}\". {NO_TEXT}"),
 }
+
+SETTINGS = [  # product category hints -> a setting where the product makes sense
+    (("shampoo", "hair", "shower", "skin", "soap", "body", "lotion", "beauty", "makeup", "serum", "deodorant"),
+     "a bright, tidy modern bathroom with a large mirror and a white vanity behind them"),
+    (("coffee", "tea", "snack", "food", "drink", "kitchen", "cook", "protein", "cereal"),
+     "a bright, tidy home kitchen with a marble counter behind them"),
+    (("shoe", "sneaker", "run", "fitness", "gym", "workout", "athletic"),
+     "a bright gym with equipment softly blurred behind them"),
+]
+
+
+def setting_for(*hints: str) -> str:
+    text = " ".join(hints).lower()
+    for words, place in SETTINGS:
+        if any(w in text for w in words):
+            return place
+    return "a bright, tidy, modern living room with soft daylight from a window behind them"
 
 
 def make(fmt: str, brand: str, trend: str, hook: str, lines: list[str], cta: str, refs: list[str], out: Path,
          mode: str = "demo", seconds: int = 22, wait: int = 900, person: str | None = None,
-         product: str | None = None) -> dict:
+         product: str | None = None, setting: str | None = None) -> dict:
     if fmt not in FORMATS:
         raise VidgenError(f"format must be one of {', '.join(FORMATS)}")
     refs = [r for r in refs if r]
@@ -55,7 +88,8 @@ def make(fmt: str, brand: str, trend: str, hook: str, lines: list[str], cta: str
                                             out.parent / "refs" / f"{out.stem}_ref{i + 1}")))
     if mode == "fal":
         half = max(1, (len(lines) + 1) // 2)
-        fill = {"who": person or "a relatable creator in their 20s", "brand": brand, "trend": trend,
+        fill = {"who": person or "a relatable creator in their 20s", "brand": brand,
+                "setting": setting or setting_for(brand, trend, person or "", " ".join(lines)),
                 "a": " ".join([hook, *lines[:half]]), "b": " ".join([*lines[half:], cta])}
         try:
             with tempfile.TemporaryDirectory() as tmp:
