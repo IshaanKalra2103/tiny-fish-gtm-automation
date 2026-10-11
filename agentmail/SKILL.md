@@ -5,8 +5,11 @@ description: Use the team's throwaway AgentMail inboxes to sign up for websites,
 
 # Throwaway inbox
 
-The team has three throwaway AgentMail inboxes (free tier, 3 max). One CLI covers all
-mail work. Run it from any directory; it prints one JSON object per line.
+The team has two throwaway AgentMail inboxes for sign-ups:
+`funnyflower74@agentmail.to` and `eagerspring500@agentmail.to`. The third,
+`youngmirror648@agentmail.to`, is the GTM Orchestrator's Paperclip inbox: its mail becomes
+Paperclip tasks, so never use it for sign-ups. One CLI covers all mail work. Run it from
+any directory; it prints one JSON object per line.
 
 ```bash
 M=/workspace/agentmail/inbox.py      # on the host: agentmail/inbox.py
@@ -20,7 +23,7 @@ uv run $M send ADDR --to someone@x.com --subject S --text T
 
 ## Signing up for a site
 
-1. Pick an inbox address from `list`.
+1. Pick `funnyflower74@` or `eagerspring500@` (never `youngmirror648@`).
 2. Submit the site's sign-up form with that address.
 3. Run `wait ADDR`, filtering with `--from` (sender contains) or `--subject` (subject
    contains). It returns the newest matching email received in the `--since` window

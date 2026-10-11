@@ -28,8 +28,9 @@ Paperclip container. Tools:
 
 ## Steps
 
-1. **Pick an inbox** from `uv run agentmail/inbox.py list` that hasn't been used on
-   this platform yet (check `.accounts.json`).
+1. **Pick an inbox** that hasn't been used on this platform yet (check
+   `.accounts.json`). Only `funnyflower74@` and `eagerspring500@` are throwaways;
+   `youngmirror648@` is the GTM Orchestrator's Paperclip inbox, so never sign up with it.
 2. **Write credentials first.** Add an entry to `agentmail/.accounts.json` (email, a
    generated 16-character password, name, username, an adult birthday) with
    `status: pending`, and `chmod 600` it. Check the file is gitignored with
