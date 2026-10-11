@@ -169,9 +169,10 @@ def _caption(base: Path, name: str, t: dict, hook: str, lines: list[str], cta: s
         accent_word = max(range(len(words)), key=lambda k: len(words[k]))  # pop the longest word
         layers.append(Layer(hook_end + i * step, hook_end + (i + 1) * step,
                             [graphics.caption(words, accent_word, t["caption_y"], size=96, highlight=t["accent"])], z=1))
-    layers.append(Layer(cta_start, SECONDS, [graphics.caption(cta.split(), None, t["caption_y"], size=100,
+    cta_y = min(t["caption_y"], 1350)  # leave room for the brand tag below a two-line CTA
+    layers.append(Layer(cta_start, SECONDS, [graphics.caption(cta.split(), None, cta_y, size=100,
                                                               highlight=t["accent"]),
-                                             graphics.banner(tag, 1650, size=56, dark=True)], z=1))
+                                             graphics.banner(tag, 1720, size=56, dark=True)], z=1))
 
     out.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
