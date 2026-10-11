@@ -17,7 +17,7 @@ The PRD describes a full GTM company. The deliverable grades four things: at lea
 |---|---|---|
 | **Search** | Find this week's conversations and competitor content in the niche (Reddit, HN, X, YouTube, news; `recency_minutes`, `domain_type=news`) | It's the only primitive that discovers URLs we don't already have. Free, 1–3s. |
 | **Fetch** | Bulk-read the ~30 URLs Search found as clean Markdown for the analyst | Known URLs with no interaction needed. Free, 10 URLs per call. The cheapest way to read at volume. |
-| **Agent** | Work **TikTok Creative Center → Top Ads**: set region, industry and period filters, open ads, return JSON of hooks, formats, CTAs and lengths | Fetch only gets an empty page shell there (we tested it). The page needs goal-driven clicking and filtering. |
+| **Agent** | Work **TikTok Creative Center → Top Ads**: set region, industry and period filters, open ads, return JSON of hooks, formats, CTAs and lengths | Fetch only gets an empty page shell there (we tested it). The page needs goal-driven clicking and filtering. **Spike:** filters work, but the results are login-gated (4 ads without login), so this step needs Vault/Profile. **Fallback:** YouTube Shorts search, with Agent clicking Filters → This week → View count (also tested: Fetch gets only the page footer there; Agent took 3 min and $0.35). Agent runs take 3–6 min, so start them first and run them async alongside Search/Fetch/Browser. |
 | **Browser** | Run a scripted Playwright session over CDP to capture screenshots and scroll-clips of the brand's product pages (video B-roll) and of reference content (evidence wall) | It's the only primitive that returns pixels, and it's deterministic at $0.002/min. Agent returns JSON and costs $0.016 per step. |
 | **Vault** *(stretch)* | After approval, Publisher logs into the brand's own scheduler and saves a **draft** | It's the only way to give an agent a login without the credentials touching our code or the LLM. |
 
@@ -37,7 +37,15 @@ Python with **uv**.
 - **Approval gate** before publishing: `pending → approved | rejected | revise`.
 - **Activity log:** JSONL, streamed to the dashboard.
 
-**Agents (each a function plus a Claude prompt with a Pydantic schema):**
+**LLM: OpenAI.** The key is sourced from `~/Documents/work/NatCap/sentra/pipeline-1/.env` (never read or copied). It's a US-residency project, so set `OPENAI_BASE_URL=https://us.api.openai.com/v1`. The keychain key (`OPENAI_API_KEY`/`OPENAI_PERSONAL`) has no credits.
+- `gpt-6.1-sol` for strategy and scripts.
+- `gpt-6-luna` for analysis and persona QA. It takes image input and is much cheaper.
+- Structured output goes through `client.responses.parse(text_format=PydanticModel)`.
+
+**Audience data: Bright Data** (`brightdata/`, built by another session). It returns public IG, TikTok, YouTube and Reddit posts plus top comments, *with engagement counts*. That data grounds the 3 personas in real audience reactions and ranks the trends. Search finds the URLs, then `bd-gateway` scrapes them.
+- **Positioning:** Bright Data competes with TinyFish on web data. It's a supporting data source here: the TinyFish primitives keep their unique jobs, and the launch post doesn't lean on it.
+
+**Agents (each a function plus an LLM prompt with a Pydantic schema):**
 
 1. **Orchestrator:** plans the run, assigns tickets, enforces budgets.
 2. **Trend Researcher:** Search + Fetch + Agent → `evidence.json`.
@@ -52,12 +60,13 @@ Python with **uv**.
 **Video stack:**
 - **Compositing:** MoviePy 2.x (pinned; v2 changed its API), 1080×1920, ≤30s.
 - **Visuals:** Browser screenshots with a slow pan, a hook title card, and burned-in 3-word captions.
-- **Voiceover:** ElevenLabs `/with-timestamps` gives word-level timing. If there's no key, fall back to macOS `say` with caption timing proportional to word length.
+- **Voiceover:** OpenAI `gpt-4o-mini-tts`, with `whisper-1` word timestamps driving caption sync. Offline fallback: macOS `say`, with caption timing proportional to word length.
 - **AI B-roll** (Gemini Omni Flash) is optional and off by default.
 - **Avoid** Sora (API shut down Sep 24) and Veo 3.1 preview (shuts down Oct 22).
 
 **QA:**
-- Claude can't take video input, so each check gets 8–12 sampled frames plus the transcript.
+- Each check gets 8–12 sampled frames plus the transcript (image input, not video).
+- Personas are built from the Bright Data comment clusters, weighted by likes, and each persona trait cites its source comments.
 - **Must-haves:**
   - hook lands in the first 2s
   - CTA is present
@@ -83,7 +92,10 @@ Python with **uv**.
 README.md  pyproject.toml  .env.example  dashboard.py
 gtm/  tinyfish.py (wrappers + cost meter)  harness.py (org/tickets/budgets/approvals/log)
       agents/  video.py  qa.py  memory.py  cli.py
-runs/<run_id>/  evidence.json  charts/  shots/  script_vN.json  video_vN.mp4  qa_vN.json  activity.jsonl
+```
+**Shared run folder:** `runs/<run_id>/` at the **project root**. It's shared with `brightdata/` and the Paperclip harness, and `GTM_RUNS_DIR` overrides the location. Each run folder holds:
+```
+evidence.json  social_<platform>.json  charts/  shots/  script_vN.json  video_vN.mp4  qa_vN.json  activity.jsonl
 ```
 **Run:**
 ```
@@ -114,19 +126,21 @@ uv run streamlit run dashboard.py
 
 ## 6. Budget and limits
 
-- **TinyFish:** $8 free credit.
+- **TinyFish:** wallet has $28. Spikes so far cost about $0.87.
   - Search and Fetch are free: 30 req/min and 1,000 URLs/day.
   - Agent costs $0.016/step, with 2 runs at once.
   - Browser costs $0.002/min, with 5 sessions at once.
   - Cap: **$1 per run**. Total spend: under $5.
-- **Claude:** `claude-opus-5-5` for strategy and QA. Expect under $1 per run.
+- **OpenAI:** expect under $1 per run. Spike step latencies: analysis 12s, script 19s, each persona review 15s, TTS 5s, word timestamps 2s.
+- **Bright Data:** free tier is 5,000 credits/month. Keep samples small.
 
 ## 7. Risks
 
 | Risk | Mitigation |
 |---|---|
 | Agent blocked on Creative Center (CAPTCHAs can't be solved) | Spike it first. The fallback source is already chosen, and the escalation ladder handles it at runtime. |
-| No `ANTHROPIC_API_KEY` (currently unset) | Blocker. Need it before 12:50. |
+| The script runs longer than the target (the spike's VO came out at 32.6s against a 25s ask) | Compliance gives length a hard must-have, measured on the real TTS duration. |
+| Platform terms (TikTok/Meta restrict automated extraction) | Keep samples small and public. Reddit is the default. Note this in the README. |
 | No time for polish | Cut list, in order: Vault, AI B-roll, Monitors, extra personas, dashboard styling. |
 | Flaky live run during recording | Record from the frozen successful run. The dashboard can replay `runs/<id>`. |
 
@@ -150,5 +164,5 @@ uv run streamlit run dashboard.py
 ## 9. Need from you
 
 1. Confirm the target: **TinyFish** (recommended) or another brand.
-2. `ANTHROPIC_API_KEY` (required). `ELEVENLABS_API_KEY` is optional but gives better voice and caption sync.
-3. Vault stretch: do you have a 1Password service account and a scheduler account (e.g. Buffer) for the brand? If not, Vault stays on the roadmap.
+2. A `BRIGHTDATA_API_KEY` in `brightdata/.env`.
+3. Vault: do you have a TikTok for Business login (for Creative Center) and a 1Password service account? If not, Vault stays on the roadmap and Agent uses YouTube.

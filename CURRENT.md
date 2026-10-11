@@ -99,6 +99,17 @@ The spike code is throwaway and lives in the session scratchpad, not the repo. R
 
 **OpenAI key:** source `~/Documents/work/NatCap/sentra/pipeline-1/.env` (per the user: source it, don't read or copy it) and set `OPENAI_BASE_URL=https://us.api.openai.com/v1`. Without that base URL the key returns 401 `incorrect_hostname`. The keychain key (`OPENAI_API_KEY`/`OPENAI_PERSONAL`) returns 429 `credit_balance_exhausted`.
 
+**Paperclip contract (from 4d, 13:40):**
+- **Entry point:** `uv run gtm agent <role>` must be a `[project.scripts]` entry point, because the harness spawns it without a shell.
+- **Plumbing:** vendor `harness/paperclip_agent.py` into `app/gtm/`.
+- **Each role must:**
+  1. checkout its issue
+  2. work
+  3. PATCH it to `done` with a comment, or to `blocked`
+- **Run id:** the root campaign issue's identifier (e.g. `GTM-1`), which sets the `runs/GTM-1/` folder.
+- **Publishing:** goes through `request_board_approval`.
+- I told 4d the LLM is now OpenAI (`OPENAI_API_KEY` + `OPENAI_BASE_URL`), and that the user decides how the key reaches the container.
+
 **Bright Data:** `brightdata/` (another session) collects IG/TikTok/YouTube/Reddit posts and comments with engagement counts and writes `runs/<campaign>/social_<platform>.json` at the project root, so `app/` uses root `runs/` too. There's no `brightdata/.env` yet, so it hasn't been tested live.
 
 **Other findings**
