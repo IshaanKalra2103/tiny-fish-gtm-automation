@@ -41,7 +41,15 @@ TinyFish Browser ──► brand B-roll ──► video ──► persona QA ─
 
 Python with **uv**.
 
-**Harness: Paperclip.** A parallel session is running Paperclip in Docker (`./paperclip`, `./harness`, port 3100). Each of our agents is a standalone `uv run` entrypoint, so Paperclip's `process` adapter can call it. That adapter injects `PAPERCLIP_API_URL` and `PAPERCLIP_API_KEY`, and the adapter has to be configured through the API, not the UI.
+**Harness: Paperclip drives everything** (`./harness`, Docker, port 3100). It doesn't depend on one AI runtime: an agent can run on Claude Code or Codex. There are two kinds of agents:
+- **Reasoning agents** run on Paperclip's `claude_local` (Claude Code) or `codex_local` (Codex) adapter.
+  - Each agent's model is chosen in Paperclip, in its adapter `model` setting.
+  - Credentials come from Paperclip **AI Connections**: an API key, or a Claude or ChatGPT subscription.
+  - Switching models is a harness setting, not a code change.
+- **Tool steps** run as Paperclip `process` agents (`uv run gtm agent <role>`, cwd `/workspace/app`), or as CLIs that the reasoning agents call.
+  - The adapter injects `PAPERCLIP_API_URL` and `PAPERCLIP_API_KEY`.
+  - A per-agent `env` can reference Paperclip vault secrets (`secret_ref`), so the TinyFish and Bright Data keys live in the harness instead of in `.env` files.
+- Agents are configured through the API (`harness/bootstrap.py`), not the UI.
 
 **Fallback:** `gtm/harness.py`, an in-process orchestrator with the same concepts, so the demo still runs if the Paperclip integration slips. It provides:
 
@@ -51,32 +59,35 @@ Python with **uv**.
 - **Approval gate** before publishing: `pending → approved | rejected | revise`.
 - **Activity log:** JSONL, streamed to the dashboard.
 
-**LLM: OpenAI.** The key is sourced from `~/Documents/work/NatCap/sentra/pipeline-1/.env` (never read or copied). It's a US-residency project, so set `OPENAI_BASE_URL=https://us.api.openai.com/v1`. The keychain key (`OPENAI_API_KEY`/`OPENAI_PERSONAL`) has no credits.
-- `gpt-6.1-sol` for strategy and scripts.
-- `gpt-6-luna` for analysis and persona QA. It takes image input and is much cheaper.
-- Structured output goes through `client.responses.parse(text_format=PydanticModel)`.
+**Models: chosen in the harness, not in code** (user decision, 13:50). This replaces the earlier "LLM: OpenAI" setup.
+- **No hardcoded vendor or model.** No tool in `app/`, `brightdata/` or `video/` hardcodes an LLM vendor or model. The reasoning (analysis, pattern mining, strategy and scripts, persona QA, compliance) happens in the harness agents, on whatever model each agent is set to.
+- **Tools are CLIs.** Inputs come in as flags. Big outputs go to `runs/<campaign>/`, and stdout gets one JSON line. Usage is documented in a plain-markdown `SKILL.md` that works on Claude Code and Codex, with no slash commands and no MCP-only paths. `brightdata/` already works this way.
+- **Structured output.** The Pydantic schemas stay in `app/` as validators. Reasoning agents write the JSON files (`script_vN.json`, `qa_vN.json`, ...), and a tool step validates each one before the next stage.
+- **If a Python step truly needs an LLM call,** it goes through one small adapter selected by `GTM_LLM_PROVIDER` + `GTM_LLM_MODEL`. Those are set in that agent's `env` in Paperclip, and the key comes from a vault `secret_ref`.
+- **The borrowed key goes away.** We stop using the OpenAI key from the work project; a Claude or ChatGPT subscription can be signed in through AI Connections instead.
+- **Runtime support.** The harness image ships the Claude Code CLI. `codex_local` needs the Codex CLI added to the image (harness session).
 
 **Reels + TikTok sourcing and personas: Bright Data** (`brightdata/`, built by another session). It scrapes the TikTok and Reel URLs that TinyFish Search found, returning views, likes, shares, captions, durations and top comments. Those engagement numbers rank the hooks and formats. The comments, clustered and weighted by likes, generate the 3 synthetic personas, and each persona trait cites its source comments.
 - Call: `bd-gateway sample --campaign <id> --platform tiktok|instagram --urls-file runs/<id>/search_urls.txt`
 - Output: `runs/<id>/social_<platform>.json`
 - **Positioning:** Bright Data competes with TinyFish on web data. It's a supporting data source here: the TinyFish primitives keep their unique jobs, and the launch post doesn't lean on it.
 
-**Agents (each a function plus an LLM prompt with a Pydantic schema):**
+**Agents** (each one is a Paperclip agent; **R** = reasoning agent on Claude Code or Codex, **T** = tool step with no LLM inside):
 
-1. **Orchestrator:** plans the run, assigns tickets, enforces budgets.
-2. **Trend Researcher:** Search + Fetch + Agent → `evidence.json`. It also passes the TikTok and Reel URLs to Bright Data, which writes `social_<platform>.json`.
-3. **Trend Analyst:** clusters topics, hooks and formats → charts.
-4. **Pattern Miner:** produces a template (hook pattern, beats, length, caption style, CTA), with each element citing evidence.
-5. **Creative Strategist:** picks the concept, audience and message, then writes `script.json`. Every claim must cite either fetched evidence or a brand page.
-6. **Video Creator:** Browser captures + TTS + MoviePy → `video_vN.mp4`.
-7. **Persona QA ×3 + Compliance Reviewer:** run Cresta-style must-have/nice-to-have pass/fail checks.
-8. **Publisher:** simulated. Produces the post copy, video and suggested slot, then marks it "ready to publish".
-9. **Self-Improvement:** writes failure types and winning hooks to `memory/learnings.json`, which gets injected into the next run.
+1. **Orchestrator (R):** plans the run, assigns tickets, enforces budgets.
+2. **Trend Researcher (T):** Search + Fetch + Agent → `evidence.json`. It also passes the TikTok and Reel URLs to Bright Data (`bd-gateway`), which writes `social_<platform>.json`.
+3. **Trend Analyst (R):** clusters topics, hooks and formats. A tool renders the charts.
+4. **Pattern Miner (R):** produces a template (hook pattern, beats, length, caption style, CTA), with each element citing evidence.
+5. **Creative Strategist (R):** picks the concept, audience and message, then writes `script_vN.json`. Every claim must cite either fetched evidence or a brand page.
+6. **Video Creator (T):** Browser captures + TTS + MoviePy → `video_vN.mp4`.
+7. **Persona QA ×3 + Compliance Reviewer (R):** run Cresta-style must-have/nice-to-have pass/fail checks on sampled frames plus the transcript, using the agent's own model for the images.
+8. **Publisher (T):** simulated. Produces the post copy, video and suggested slot, then marks it "ready to publish".
+9. **Self-Improvement (R):** writes failure types and winning hooks to `memory/learnings.json`, which gets injected into the next run.
 
 **Video stack:**
 - **Compositing:** MoviePy 2.x (pinned; v2 changed its API), 1080×1920, ≤30s.
 - **Visuals:** Browser screenshots with a slow pan, a hook title card, and burned-in 3-word captions.
-- **Voiceover:** OpenAI `gpt-4o-mini-tts`, with `whisper-1` word timestamps driving caption sync. Offline fallback: macOS `say`, with caption timing proportional to word length.
+- **Voiceover:** the provider is chosen by `GTM_TTS_PROVIDER` (`openai` / `elevenlabs` / `say`), set in the Video agent's `env` in Paperclip. The `openai` option uses `gpt-4o-mini-tts`, with `whisper-1` word timestamps driving caption sync. Offline fallback: macOS `say`, with caption timing proportional to word length.
 - **AI B-roll** (Gemini Omni Flash) is optional and off by default.
 - **Avoid** Sora (API shut down Sep 24) and Veo 3.1 preview (shuts down Oct 22).
 
@@ -147,7 +158,7 @@ uv run streamlit run dashboard.py
   - Agent costs $0.016/step, with 2 runs at once.
   - Browser costs $0.002/min, with 5 sessions at once.
   - Cap: **$1 per run**. Total spend: under $5.
-- **OpenAI:** expect under $1 per run. Spike step latencies: analysis 12s, script 19s, each persona review 15s, TTS 5s, word timestamps 2s.
+- **LLM:** billed to whichever AI Connection each agent uses (a subscription or an API key). Spike latencies on OpenAI: analysis 12s, script 19s, each persona review 15s, TTS 5s, word timestamps 2s.
 - **Bright Data:** free tier is 5,000 credits/month. Keep samples small.
 
 ## 7. Risks
@@ -157,12 +168,18 @@ uv run streamlit run dashboard.py
 | Agent blocked on Creative Center (CAPTCHAs can't be solved) | Spike it first. The fallback source is already chosen, and the escalation ladder handles it at runtime. |
 | The script runs longer than the target (the spike's VO came out at 32.6s against a 25s ask) | Compliance gives length a hard must-have, measured on the real TTS duration. |
 | Platform terms (TikTok/Meta restrict automated extraction) | Keep samples small and public. Reddit is the default. Note this in the README. |
+| The iMessage channel is experimental, and the Photon Free plan may not support DMs | Demo the same approve flow over the AgentMail channel or the Paperclip UI. |
 | No time for polish | Cut list, in order: Vault, AI B-roll, Monitors, extra personas, dashboard styling. |
 | Flaky live run during recording | Record from the frozen successful run. The dashboard can replay `runs/<id>`. |
 
 ## 8. Parallel track and out of scope
 
-- **Photon iMessage (parallel track, see `CURRENT.md`).** The SDK is TypeScript only, so the plan is a small `bridge.ts` running `spectrum-ts` that POSTs to a FastAPI `/chat` endpoint. Supported commands: start a run, check status, approve. It only gets wired in if the core loop is done by 14:25.
+- **Channels: Paperclip's built-in connectors, not separate services** (user decision, 13:55). Messages reach the harness agents directly, so there's no bridge and no LLM loop of our own.
+  - **iMessage:** Paperclip's `imessage-photon` channel binds the Photon project to a harness agent (the orchestrator by default). Each conversation becomes a Paperclip task, answered by that agent on its configured model.
+    - `photon/` is now only the setup script (`connect_paperclip.py`). Its own OpenAI reply code is gone.
+    - The channel is experimental: it needs the chat-connectors setting turned on.
+    - Paperclip's docs name Photon's Pro plan for DMs, and the project is on Free.
+  - **Email:** Paperclip's built-in AgentMail channel. Paperclip creates the inbox, stores the key in its vault, and turns each email thread into a task. The scripts in `agentmail/` aren't needed at runtime.
 
 **Ports and directories** (to avoid stepping on the parallel sessions):
 
@@ -170,7 +187,9 @@ uv run streamlit run dashboard.py
 |---|---|---|
 | This plan | `app/` | Streamlit 8501, FastAPI 8000 |
 | Paperclip session | `paperclip/`, `harness/` | 3100 |
-| Photon session | `photon/` | 3200 |
+| Photon session | `photon/` (setup script for the harness channel only) | none |
+| Bright Data session | `brightdata/` (CLI + `SKILL.md`) | none |
+| Video session | `video/` | none |
 
 **Out of scope today (roadmap in the README):**
 - Real publishing and engagement ingestion
@@ -182,3 +201,6 @@ uv run streamlit run dashboard.py
 1. Confirm the target: **TinyFish** (recommended) or another brand.
 2. A `BRIGHTDATA_API_KEY` in `brightdata/.env`.
 3. Vault: do you have a TikTok for Business login (for Creative Center) and a 1Password service account? If not, Vault stays on the roadmap and Agent uses YouTube.
+4. In Paperclip, connect a model account for the reasoning agents: a Claude or ChatGPT subscription, or an API key (Connectors → AI).
+5. An AgentMail API key, entered in Paperclip's AgentMail connector rather than a `.env` file.
+6. Photon: add the phone number, and check whether the Free plan works with Paperclip's iMessage channel (otherwise upgrade to Pro, or demo over email).

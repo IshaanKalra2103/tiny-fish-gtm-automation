@@ -69,7 +69,7 @@ New accounts start with $8 in the wallet, so Agent and Browser work before you a
 
 ```bash
 # 1. Get a key at https://agent.tinyfish.ai/api-keys
-cp app/.env.example app/.env   # TINYFISH_API_KEY, ANTHROPIC_API_KEY; ELEVENLABS_API_KEY optional
+cp app/.env.example app/.env   # TINYFISH_API_KEY (no LLM key: the model is set per agent in the Paperclip harness)
 
 # 2. Install and run
 cd app
@@ -88,8 +88,8 @@ Each run writes everything to `app/runs/<run_id>/`: `evidence.json`, charts, scr
 |---|---|
 | `app/` | The pipeline and the Streamlit dashboard (Python, uv). Becomes `app.zip` in the deliverable. *(being built)* |
 | `harness/` | [Paperclip](https://github.com/paperclipai/paperclip) in Docker on port 3100. It provides the agent org chart, tickets, budgets and approvals. Run `cd harness && ./up.sh`. |
-| `photon/` | iMessage interface built on [Photon](https://photon.codes) (`spectrum-ts`). Lets you start a run, check status and approve by text. Run `cd photon && npm start`. |
-| `agentmail/` | Creates [AgentMail](https://agentmail.to) inboxes so the agents have their own email addresses. |
+| `photon/` | Setup script that connects a [Photon](https://photon.codes) project to Paperclip's built-in iMessage channel. You can start a run, check status and approve by text, and the harness agent answers on whatever model it's set to. There's no separate service. |
+| `agentmail/` | Helper scripts for [AgentMail](https://agentmail.to). At runtime, email goes through Paperclip's built-in AgentMail channel, where each email thread becomes a task. |
 | `brightdata/` | Gateway to [Bright Data](https://docs.brightdata.com)'s pre-built scrapers. Gets TikTok, Instagram Reels, YouTube and Reddit posts with views, engagement, length and sound, plus the top comments under them. Used for trend analysis and to ground the QA personas. It runs alongside TinyFish: Search finds the URLs, and Bright Data returns the engagement numbers that Fetch doesn't. |
 | `docs/` | `gtm.md` (product requirements and long-term vision), `deliverable.md` (the brief), and two diagrams: `flow.png` (the vision) and `demo-flow.png` (an early demo sketch). Where these differ from this README, `plan.md` and this README win. |
 | `plan.md` | Scope, architecture, timeline and risks. |
@@ -102,7 +102,8 @@ Each run writes everything to `app/runs/<run_id>/`: `evidence.json`, charts, scr
 - **Nothing posts automatically.** The pipeline stops at "ready to publish" and waits for a human. The Vault stretch goal only ever saves a **draft**.
 - **Persona scores are labeled *simulated*.** They're an AI critique, not real audience validation.
 - **Every claim in a script must cite** either a fetched source or a page on the brand's own site. The compliance reviewer rejects any claim that doesn't.
-- **Credentials never touch the code or the LLM.** Logins go through Vault. API keys live in `.env`, which is gitignored.
+- **Credentials never touch the code or the LLM.** Logins go through Vault. API keys and model accounts live in Paperclip's vault and AI Connections. Local `.env` files are gitignored.
+- **No model is hardcoded.** The harness runs its agents on Claude Code or Codex, and each agent's model is chosen in Paperclip. Our code only provides tools: CLIs that write their output files to `runs/` and print one JSON line, each with a plain-markdown `SKILL.md`.
 - **The pipeline respects each platform's access limits.** Where a site blocks access (Meta Ad Library returns 403, LinkedIn returns 999), it doesn't try to get around it. It uses a different source instead.
 
 ## Out of scope today
