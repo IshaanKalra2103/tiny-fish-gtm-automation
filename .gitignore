@@ -13,26 +13,12 @@ __pycache__/
 node_modules/
 dist/
 
-# Upstream Paperclip clone, reference only (git clone https://github.com/paperclipai/paperclip)
-paperclip/
-
-# Run artifacts (videos, screenshots, audience samples). Force-add the frozen demo run if needed: git add -f
-app/runs/
-runs/
-
 # Local tool state
-.claude/
+/.claude/
 .DS_Store
 *.log
 
-# screen recordings of e2e demo sessions (large media)
-recordings/
 
-# Large media from the Loopcast deliverable and promo renders (keep local)
-legacy/loopcast/deliverables/*.mp4
-legacy/loopcast/deliverables/fframes/*.mp4
-legacy/loopcast/promo/build/
-legacy/loopcast/promo/__pycache__/
 
 # MainStreet AI runtime state
 workspaces/

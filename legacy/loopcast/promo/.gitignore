@@ -1,8 +1,0 @@
-# renders, stills, sheets and mixes are regenerable; keep the paid inputs (VO take, music) and the word timings
-build/*
-!build/vo_take_*.mp3
-!build/vo_take_*.json
-!build/vo_words.js
-!build/vo_words.json
-!build/vo.wav
-!build/music_a.mp3

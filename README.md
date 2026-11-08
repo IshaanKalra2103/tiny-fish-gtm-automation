@@ -15,7 +15,8 @@ Built for the UMD AI for Small Business Hack-a-thon, Fall 2026. Design: `docs/su
 | `demo-sites/` | Five fictional Maryland business websites, deployed as their own static Vercel project |
 | `imessage/` | Photon relay from iMessage to the API |
 | `scripts/` | `live.sh` (tunnel, deploy, relay) and `prerun_demos.py` |
-| `legacy/loopcast/` | Archived Loopcast GTM app; the runnable version lives on `main` |
+
+This folder holds only the hackathon work (branch `aisb` of IshaanKalra2103/tiny-fish-gtm-automation). Loopcast, the TinyFish GTM app it grew from, lives on `main` in ~/Documents/projects/tiny-fish-gtm-automation.
 
 ## Run it
 

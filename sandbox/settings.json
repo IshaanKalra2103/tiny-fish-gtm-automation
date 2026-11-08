@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ws:*)", "Bash(catalog:*)", "Bash(tf:*)", "Bash(inbox:*)", "Bash(preview:*)", "Bash(approval:*)",
+      "Read", "Write", "Edit", "Skill"
+    ],
+    "deny": ["WebFetch", "WebSearch", "Bash(curl:*)", "Bash(wget:*)", "Bash(rm:*)"]
+  },
+  "env": {
+    "BASH_DEFAULT_TIMEOUT_MS": "600000",
+    "BASH_MAX_TIMEOUT_MS": "600000"
+  }
+}
