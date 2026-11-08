@@ -1,0 +1,327 @@
+{
+ "version": 1,
+ "generated_at": "2026-11-08T00:00:00Z",
+ "needs": [
+  {
+   "id": "missed-calls",
+   "title": "AI phone receptionist",
+   "plain": "Answers the calls you miss and books the job."
+  },
+  {
+   "id": "reviews",
+   "title": "Review replies and reputation",
+   "plain": "Drafts replies to Google and Yelp reviews."
+  },
+  {
+   "id": "social-posts",
+   "title": "Social posts and specials",
+   "plain": "Writes and schedules posts about your specials."
+  },
+  {
+   "id": "booking",
+   "title": "Booking and reminders",
+   "plain": "Lets customers book online and reminds them."
+  },
+  {
+   "id": "website-chat",
+   "title": "Website chat and FAQ",
+   "plain": "Answers common questions on your website, day and night."
+  },
+  {
+   "id": "books",
+   "title": "Invoicing and bookkeeping",
+   "plain": "Sends invoices and sorts your receipts."
+  },
+  {
+   "id": "marketing-msgs",
+   "title": "Email and SMS marketing",
+   "plain": "Sends offers to past customers."
+  },
+  {
+   "id": "quotes",
+   "title": "Estimates and quotes",
+   "plain": "Turns a site visit into a written quote fast."
+  },
+  {
+   "id": "menu-inventory",
+   "title": "Menu and inventory",
+   "plain": "Keeps your menu and stock counts up to date."
+  }
+ ],
+ "type_needs": {
+  "restaurant": [
+   "reviews",
+   "social-posts",
+   "menu-inventory",
+   "website-chat"
+  ],
+  "coffee_shop": [
+   "social-posts",
+   "reviews",
+   "website-chat",
+   "marketing-msgs"
+  ],
+  "hvac": [
+   "missed-calls",
+   "quotes",
+   "reviews",
+   "books"
+  ],
+  "landscaping": [
+   "quotes",
+   "missed-calls",
+   "books",
+   "reviews"
+  ],
+  "salon": [
+   "booking",
+   "reviews",
+   "social-posts",
+   "marketing-msgs"
+  ],
+  "other": [
+   "missed-calls",
+   "reviews",
+   "social-posts",
+   "booking",
+   "website-chat",
+   "books"
+  ]
+ },
+ "tools": [
+  {
+   "id": "chat-a",
+   "name": "Chat-A",
+   "vendor": "chat-a Inc",
+   "url": "https://chat-a.example",
+   "need_ids": [
+    "website-chat"
+   ],
+   "business_types": [
+    "coffee_shop",
+    "restaurant"
+   ],
+   "what_it_does": "Does website-chat",
+   "price": {
+    "free_plan": true,
+    "from_usd_month": null,
+    "pricing_url": null,
+    "notes": ""
+   },
+   "setup": {
+    "minutes": 15,
+    "difficulty": "easy",
+    "agent_setup": true,
+    "playbook": "setup-chat-a"
+   },
+   "integrations": [
+    "website",
+    "instagram"
+   ],
+   "trust": {
+    "score": 85,
+    "badge": "verified",
+    "signals": {}
+   },
+   "sim_test": null,
+   "sources": [],
+   "status": "approved",
+   "reviewed_by": "t",
+   "reviewed_at": "2026-11-08"
+  },
+  {
+   "id": "chat-b",
+   "name": "Chat-B",
+   "vendor": "chat-b Inc",
+   "url": "https://chat-b.example",
+   "need_ids": [
+    "website-chat"
+   ],
+   "business_types": [
+    "coffee_shop"
+   ],
+   "what_it_does": "Does website-chat",
+   "price": {
+    "free_plan": false,
+    "from_usd_month": 20,
+    "pricing_url": null,
+    "notes": ""
+   },
+   "setup": {
+    "minutes": 15,
+    "difficulty": "easy",
+    "agent_setup": false,
+    "playbook": null
+   },
+   "integrations": [
+    "website"
+   ],
+   "trust": {
+    "score": 90,
+    "badge": "verified",
+    "signals": {}
+   },
+   "sim_test": null,
+   "sources": [],
+   "status": "approved",
+   "reviewed_by": "t",
+   "reviewed_at": "2026-11-08"
+  },
+  {
+   "id": "chat-c",
+   "name": "Chat-C",
+   "vendor": "chat-c Inc",
+   "url": "https://chat-c.example",
+   "need_ids": [
+    "website-chat"
+   ],
+   "business_types": [
+    "coffee_shop"
+   ],
+   "what_it_does": "Does website-chat",
+   "price": {
+    "free_plan": false,
+    "from_usd_month": 10,
+    "pricing_url": null,
+    "notes": ""
+   },
+   "setup": {
+    "minutes": 15,
+    "difficulty": "easy",
+    "agent_setup": false,
+    "playbook": null
+   },
+   "integrations": [
+    "square",
+    "website"
+   ],
+   "trust": {
+    "score": 60,
+    "badge": "caution",
+    "signals": {}
+   },
+   "sim_test": null,
+   "sources": [],
+   "status": "approved",
+   "reviewed_by": "t",
+   "reviewed_at": "2026-11-08"
+  },
+  {
+   "id": "recep-a",
+   "name": "Recep-A",
+   "vendor": "recep-a Inc",
+   "url": "https://recep-a.example",
+   "need_ids": [
+    "missed-calls"
+   ],
+   "business_types": [
+    "hvac"
+   ],
+   "what_it_does": "Does missed-calls",
+   "price": {
+    "free_plan": false,
+    "from_usd_month": 30,
+    "pricing_url": null,
+    "notes": ""
+   },
+   "setup": {
+    "minutes": 15,
+    "difficulty": "easy",
+    "agent_setup": false,
+    "playbook": null
+   },
+   "integrations": [
+    "sms"
+   ],
+   "trust": {
+    "score": 80,
+    "badge": "verified",
+    "signals": {}
+   },
+   "sim_test": null,
+   "sources": [],
+   "status": "approved",
+   "reviewed_by": "t",
+   "reviewed_at": "2026-11-08"
+  },
+  {
+   "id": "recep-b",
+   "name": "Recep-B",
+   "vendor": "recep-b Inc",
+   "url": "https://recep-b.example",
+   "need_ids": [
+    "missed-calls"
+   ],
+   "business_types": [
+    "hvac"
+   ],
+   "what_it_does": "Does missed-calls",
+   "price": {
+    "free_plan": false,
+    "from_usd_month": 5,
+    "pricing_url": null,
+    "notes": ""
+   },
+   "setup": {
+    "minutes": 15,
+    "difficulty": "easy",
+    "agent_setup": false,
+    "playbook": null
+   },
+   "integrations": [
+    "sms"
+   ],
+   "trust": {
+    "score": 95,
+    "badge": "verified",
+    "signals": {}
+   },
+   "sim_test": null,
+   "sources": [],
+   "status": "pending",
+   "reviewed_by": "t",
+   "reviewed_at": "2026-11-08"
+  },
+  {
+   "id": "reviews-a",
+   "name": "Reviews-A",
+   "vendor": "reviews-a Inc",
+   "url": "https://reviews-a.example",
+   "need_ids": [
+    "reviews"
+   ],
+   "business_types": [
+    "restaurant",
+    "salon",
+    "hvac"
+   ],
+   "what_it_does": "Does reviews",
+   "price": {
+    "free_plan": true,
+    "from_usd_month": null,
+    "pricing_url": null,
+    "notes": ""
+   },
+   "setup": {
+    "minutes": 15,
+    "difficulty": "easy",
+    "agent_setup": false,
+    "playbook": null
+   },
+   "integrations": [
+    "google_business",
+    "yelp"
+   ],
+   "trust": {
+    "score": 78,
+    "badge": "verified",
+    "signals": {}
+   },
+   "sim_test": null,
+   "sources": [],
+   "status": "approved",
+   "reviewed_by": "t",
+   "reviewed_at": "2026-11-08"
+  }
+ ]
+}
