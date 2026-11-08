@@ -50,6 +50,7 @@ class Workspaces:
         oid = "o_" + secrets.token_hex(5)
         d = self.root / oid
         (d / "tmp").mkdir(parents=True)
+        self.decisions_dir(oid).mkdir(parents=True, exist_ok=True)
         _write(d / "source.json", {"source": source, "channel": channel, "created_at": now()})
         return oid
 
@@ -57,6 +58,10 @@ class Workspaces:
         if not OWNER_RE.match(owner_id or ""):
             raise NotFound(owner_id)
         return self.root / owner_id
+
+    def decisions_dir(self, owner_id: str) -> Path:
+        """Outside the owner folder and mounted read-only at /decisions, so only the API can say yes."""
+        return self.root / "_decisions" / self.owner_dir(owner_id).name
 
     def exists(self, owner_id: str) -> bool:
         try:
@@ -104,9 +109,12 @@ class Workspaces:
         ap = _read(p)
         if not ap:
             raise NotFound(approval_id)
-        if ap.get("status") != "pending":
-            raise ValueError(ap.get("status"))
+        prior = _read(self.decisions_dir(owner_id) / f"{approval_id}.json")
+        if prior or ap.get("status") != "pending":
+            raise ValueError((prior or ap).get("status"))
         ap = {**ap, "status": "approved" if decision == "approve" else "rejected", "decided_at": now()}
+        _write(self.decisions_dir(owner_id) / f"{approval_id}.json",
+               {"id": approval_id, "tool_id": ap["tool_id"], "status": ap["status"], "decided_at": ap["decided_at"]})
         _write(p, ap)
         return ap
 

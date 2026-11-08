@@ -24,14 +24,16 @@ def check_approval(aid: str, tool: str) -> None:
     """The owner's yes is the gate for any account creation (spec §5.5), so it is enforced here, not in the prompt."""
     if not re.fullmatch(r"ap_[A-Za-z0-9]+", aid or ""):
         raise ToolError(f"'{aid}' is not an approval id. Ask the owner first with `approval request --tool {tool} --summary ...`.")
-    path = config.work() / "approvals" / f"{aid}.json"
+    path = config.decisions() / f"{aid}.json"  # read-only mount: the agent cannot write a yes for itself
     if not path.exists():
+        if (config.work() / "approvals" / f"{aid}.json").exists():
+            raise ToolError(f"Approval {aid} is not approved yet. Do not start a setup; end your turn and wait for the owner.")
         raise ToolError(f"No approval {aid}. Ask the owner first with `approval request --tool {tool} --summary ...`.")
     ap = json.loads(path.read_text())
     if ap.get("tool_id") != tool:
         raise ToolError(f"Approval {aid} is for {ap.get('tool_id')}, not {tool}. Ask the owner about {tool} with `approval request`.")
     if ap.get("status") != "approved":
-        raise ToolError(f"Approval {aid} is {ap.get('status')}, not approved. Do not start a setup; wait for the owner.")
+        raise ToolError(f"Approval {aid} is {ap.get('status')}, not approved. Do not start a setup.")
     runs = config.work() / "runs"
     for f in sorted(runs.glob("*.json")) if runs.exists() else []:
         if json.loads(f.read_text()).get("approval") == aid:

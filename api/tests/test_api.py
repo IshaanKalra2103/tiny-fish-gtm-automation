@@ -87,6 +87,8 @@ async def test_approval_decide_twice_409_and_one_turn(make_client, settings):
     await sse_events(c, ok.json()["turn_id"])
     assert len(runner.calls) == 1 and "Owner approved approval ap_1" in runner.calls[0]["prompt"]
     assert json.loads((ws.owner_dir(oid) / "approvals" / "ap_1.json").read_text())["status"] == "approved"
+    decision = json.loads((ws.decisions_dir(oid) / "ap_1.json").read_text())
+    assert decision["status"] == "approved" and decision["tool_id"] == "chat-a"
 
 
 async def test_bundle_hides_password_and_reveal_once(make_client, settings):
@@ -153,6 +155,7 @@ def test_docker_runner_command(settings, monkeypatch):
     assert cmd[:3] == ["docker", "run", "--rm"]
     assert f"{settings.workspaces / 'o_1234567890'}:/work" in cmd
     assert cmd[cmd.index("--session-id") + 1] == "sid-1" and "--resume" not in cmd
+    assert f"{settings.workspaces / '_decisions' / 'o_1234567890'}:/decisions:ro" in cmd
     assert "claude-sonnet-5-5" in cmd and "stream-json" in cmd
     assert r.command("o_1234567890", "hello", "sid-1", resume=True)[r.command("o_1234567890", "hello", "sid-1", resume=True).index("--resume") + 1] == "sid-1"
     assert r.env()["CLAUDE_CODE_OAUTH_TOKEN"] == "sk-ant-oat01-abcdef"

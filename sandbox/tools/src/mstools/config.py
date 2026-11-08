@@ -29,6 +29,11 @@ def global_budget() -> Path:
     return Path(os.environ.get("MS_GLOBAL_BUDGET", "/budget/global.json"))
 
 
+def decisions() -> Path:
+    """Owner decisions on approvals. The API writes them; the sandbox mounts this folder read-only."""
+    return Path(os.environ.get("MS_DECISIONS", "/decisions"))
+
+
 def owner_budget() -> Path:
     return work() / "budget.json"
 

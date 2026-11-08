@@ -51,10 +51,22 @@ def test_search_returns_hits(env, monkeypatch, capsys):
 
 
 def approve(env, aid="ap_1", tool="chat-a", status="approved"):
+    """The API records decisions in the read-only /decisions mount; the agent's own approvals/ copy is not trusted."""
     d = env["work"] / "approvals"
     d.mkdir(parents=True, exist_ok=True)
-    (d / f"{aid}.json").write_text(json.dumps({"id": aid, "tool_id": tool, "summary": "s", "status": status,
+    (d / f"{aid}.json").write_text(json.dumps({"id": aid, "tool_id": tool, "summary": "s", "status": "pending",
                                                 "created_at": "2026-11-08T00:00:00Z"}))
+    if status != "pending":
+        (env["decisions"] / f"{aid}.json").write_text(json.dumps({"id": aid, "tool_id": tool, "status": status}))
+
+
+def test_agent_start_ignores_self_approved_file(env, monkeypatch, capsys):
+    approve(env, status="pending")
+    (env["work"] / "approvals" / "ap_1.json").write_text(json.dumps({"id": "ap_1", "tool_id": "chat-a", "summary": "s",
+                                                                      "status": "approved", "created_at": "x"}))
+    fake = FakeClient()
+    code, out = call(monkeypatch, capsys, fake, *START)
+    assert code == 1 and "not approved" in out["error"] and fake.queued == []
 
 
 START = ("agent-start", "--url", "https://v.example", "--goal", "sign up", "--tool", "chat-a", "--approval", "ap_1")

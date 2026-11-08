@@ -47,7 +47,8 @@ class DockerRunner:
                "-e", f"MS_OWNER_ID={owner_id}", *[x for k in PASS_ENV for x in ("-e", k)]]
         return ["docker", "run", "--rm", "--name", self.name(owner_id), "--label", "mainstreet=1",
                 "--memory", "1g", "--cpus", "1.5", "--pids-limit", "256",
-                "-v", f"{work}:/work", "-v", f"{self.s.budget}:/budget", *env, self.s.image,
+                "-v", f"{work}:/work", "-v", f"{self.s.workspaces / '_decisions' / owner_id}:/decisions:ro",
+                "-v", f"{self.s.budget}:/budget", *env, self.s.image,
                 "claude", "-p", prompt, "--resume" if resume else "--session-id", session_id,
                 "--model", self.s.model, "--output-format", "stream-json", "--verbose",
                 "--settings", "/sandbox/settings.json", "--add-dir", "/work",
@@ -63,6 +64,7 @@ class DockerRunner:
 
     async def run(self, owner_id: str, prompt: str, session_id: str, resume: bool) -> AsyncIterator[dict]:
         self.s.budget.mkdir(parents=True, exist_ok=True)
+        (self.s.workspaces / "_decisions" / owner_id).mkdir(parents=True, exist_ok=True)
         # What is on disk wins over our flag: a turn that died early may or may not have created the session.
         resume = self.session_exists(owner_id, session_id)
         await self._rm(owner_id)  # the per-owner lock means any container with this name is a leftover
