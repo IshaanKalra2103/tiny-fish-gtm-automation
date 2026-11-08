@@ -161,6 +161,11 @@ wheels = [
 name = "mainstreet-ai"
 version = "0.1.0"
 source = { virtual = "." }
+dependencies = [
+    { name = "msapi" },
+    { name = "mscatalog" },
+    { name = "mstools" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -169,6 +174,11 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "msapi", editable = "api" },
+    { name = "mscatalog", editable = "catalog" },
+    { name = "mstools", editable = "sandbox/tools" },
+]
 
 [package.metadata.requires-dev]
 dev = [
