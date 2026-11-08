@@ -1,0 +1,80 @@
+import json
+import sys
+from types import SimpleNamespace as NS
+
+import pytest
+
+from mstools import budget, config, tf, tinyfish
+
+
+class FakeClient:
+    def __init__(self, run_status="COMPLETED", result=None, fetch_ok=(), fetch_bad=()):
+        self.queued = []
+        self.search = NS(query=lambda query, **kw: NS(results=[NS(title="T", url="https://a.example", snippet="s", site_name="a.example", date=None)]))
+        self.fetch = NS(get_contents=lambda urls, **kw: NS(
+            results=[NS(url=u, title="Page", text="hello " * 10) for u in urls if u in fetch_ok],
+            errors=[NS(url=u, error="404") for u in urls if u in fetch_bad]))
+        self.agent = NS(queue=self._queue)
+        self.runs = NS(get=lambda run_id: NS(run_id=run_id, status=run_status, result=result, error=None,
+                                             streaming_url="https://stream.example/x"))
+
+    def _queue(self, **kw):
+        self.queued.append(kw)
+        return NS(run_id="run_1", error=None)
+
+
+def call(monkeypatch, capsys, fake, *argv):
+    monkeypatch.setattr(tinyfish, "client", lambda: fake)
+    monkeypatch.setattr(sys, "argv", ["tf", *argv])
+    with pytest.raises(SystemExit) as e:
+        tf.main()
+    return e.value.code, json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+
+
+def test_fetch_reports_failed_urls_without_raising(env, monkeypatch, capsys):
+    fake = FakeClient(fetch_ok={"https://ok.example"}, fetch_bad={"https://dead.example"})
+    code, out = call(monkeypatch, capsys, fake, "fetch", "https://ok.example", "https://dead.example")
+    assert code == 0 and out["ok"] is True
+    assert out["failed"] == ["https://dead.example"] and out["docs"][0]["url"] == "https://ok.example"
+
+
+def test_fetch_whole_call_error_lists_all_failed(env, monkeypatch, capsys):
+    fake = FakeClient()
+    fake.fetch = NS(get_contents=lambda urls, **kw: (_ for _ in ()).throw(RuntimeError("boom")))
+    code, out = call(monkeypatch, capsys, fake, "fetch", "https://maps.google.com/x")
+    assert code == 0 and out["failed"] == ["https://maps.google.com/x"] and out["docs"] == []
+
+
+def test_search_returns_hits(env, monkeypatch, capsys):
+    code, out = call(monkeypatch, capsys, FakeClient(), "search", "AI receptionist for HVAC")
+    assert code == 0 and out["hits"][0]["url"] == "https://a.example"
+
+
+def test_agent_start_refuses_when_budget_below_one_setup(env, monkeypatch, capsys):
+    budget.charge(config.owner_budget(), "tinyfish_owner", 0.80, 1.50)
+    fake = FakeClient()
+    code, out = call(monkeypatch, capsys, fake, "agent-start", "--url", "https://v.example", "--goal", "sign up")
+    assert code == 1 and "Not enough budget" in out["error"] and fake.queued == []
+
+
+def test_agent_start_reserves_max_steps(env, monkeypatch, capsys):
+    fake = FakeClient()
+    code, out = call(monkeypatch, capsys, fake, "agent-start", "--url", "https://v.example", "--goal", "sign up")
+    assert code == 0 and out["run_id"] == "run_1"
+    assert fake.queued[0]["agent_config"].max_steps == 45
+    assert budget.spent(config.owner_budget(), "tinyfish_owner") == pytest.approx(0.72)
+
+
+def test_agent_wait_completed_blocked_is_needs_owner(env, monkeypatch, capsys):
+    monkeypatch.setenv("MS_POLL_SECONDS", "0")
+    fake = FakeClient(result={"blocked": True, "reason": "CAPTCHA"})
+    code, out = call(monkeypatch, capsys, fake, "agent-wait", "run_1")
+    assert code == 0 and out["outcome"] == "needs_owner" and out["streaming_url"].startswith("https://")
+    saved = json.loads((env["work"] / "runs" / "run_1.json").read_text())
+    assert saved["streaming_url"] == "https://stream.example/x"
+
+
+def test_agent_wait_completed_with_result_is_done(env, monkeypatch, capsys):
+    monkeypatch.setenv("MS_POLL_SECONDS", "0")
+    code, out = call(monkeypatch, capsys, FakeClient(result={"account_created": True}), "agent-wait", "run_1")
+    assert out["outcome"] == "done" and out["result"]["account_created"] is True
