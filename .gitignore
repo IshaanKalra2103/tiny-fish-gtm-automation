@@ -24,3 +24,21 @@ runs/
 .claude/
 .DS_Store
 *.log
+
+# screen recordings of e2e demo sessions (large media)
+recordings/
+
+# Large media from the Loopcast deliverable and promo renders (keep local)
+deliverables/*.mp4
+deliverables/fframes/*.mp4
+promo/build/
+promo/__pycache__/
+
+# MainStreet AI runtime state
+workspaces/
+budget/
+catalog/data/
+web/.next/
+web/.vercel/
+demo-sites/.vercel/
+.superpowers/

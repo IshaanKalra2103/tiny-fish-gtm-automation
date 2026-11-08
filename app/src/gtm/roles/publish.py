@@ -38,8 +38,8 @@ def fingerprint(r: Run, version: int) -> str:
 def run(r: Run, approved: bool = False, approval: dict | None = None) -> str:
     qa = r.read("qa.json")
     pkg = r.read("publish.json")
-    if not qa or not qa.get("passed"):
-        raise ValueError("Passing QA is required before preparing or approving a package")
+    if not config.qa_ok(qa):
+        raise ValueError("Passing QA is required before preparing or approving a package (GTM_QA_GATE=strict)")
     v = qa["final_version"]
     current_hash = fingerprint(r, v)
     if pkg and (pkg.get("version") != v or pkg.get("artifact_hash") != current_hash):
@@ -63,7 +63,7 @@ def run(r: Run, approved: bool = False, approval: dict | None = None) -> str:
     copy = llm.parse(r, ROLE, "fast", "Write platform-native captions for a developer audience. No hype.",
                      [llm.text(f"Script: {s}\nLink (keep the {{platform}} placeholder): {utm}")], PostCopy)
     pkg = {"version": v, "video": f"video_v{v}.mp4", "qa_passed": qa["passed"], "artifact_hash": current_hash,
-           "status": "awaiting_approval" if qa["passed"] else "needs_human",
+           "status": "awaiting_approval", "qa_flags": qa.get("flags", []),
            "copy": copy.model_dump(), "link": utm, "simulated": True}
     r.write("publish.json", pkg)
     r.log(ROLE, f"publish.json: v{v} {pkg['status']}; approve with `gtm approve {r.id}` or on the Paperclip board")

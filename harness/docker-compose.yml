@@ -37,8 +37,15 @@ services:
       PAPERCLIP_ALLOWED_HOSTNAMES: "host.docker.internal,gtm-paperclip,paperclip"
       # LLM provider for app/ agents (OpenAI, US data residency). Supplied by up.sh
       # from the shell / GTM_OPENAI_ENV_FILE; never stored in harness/.env.
-      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
-      OPENAI_BASE_URL: "${OPENAI_BASE_URL:-https://us.api.openai.com/v1}"
+      # GTM_-prefixed on purpose: a container-wide OPENAI_API_KEY is picked up by the
+      # Codex CLI, so the codex_local Orchestrator drops the ChatGPT login and fails
+      # with 401. app/src/gtm/config.py maps these back to OPENAI_* inside workers.
+      GTM_OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      GTM_OPENAI_BASE_URL: "${OPENAI_BASE_URL:-https://us.api.openai.com/v1}"
+      # Campaign workers' LLM calls go through `codex exec` on the Codex ChatGPT login below
+      # (app/src/gtm/llm.py). GTM_LLM_PROVIDER=openai ./up.sh to use the API key instead.
+      # TTS stays on OpenAI when a key is supplied, else the system voice.
+      GTM_LLM_PROVIDER: "${GTM_LLM_PROVIDER:-codex}"
       # codex_local agents reuse the host's Codex CLI login (ChatGPT subscription):
       # Paperclip symlinks $CODEX_HOME/auth.json into each agent's managed Codex home,
       # so rotating refresh tokens stay shared with the host CLI (no copy, no logout).

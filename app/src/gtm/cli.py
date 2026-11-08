@@ -119,6 +119,14 @@ def _step(run: Run, role: str) -> str:
     return msg
 
 
+def _chat_cards(pc, run: Run, role: str, msg: str) -> None:
+    """iMessage is the dashboard: render this stage's card(s) into runs/<id>/cards/. harness/chat_relay.py (board side)
+    sends them into the chat thread the campaign came from (agents can't attach to or publish in that thread)."""
+    if run.brief.get("chat_issue"):
+        from . import cards
+        cards.build(run, role)
+
+
 def _paperclip_agent(role: str) -> int:
     """Paperclip process-adapter contract: checkout the issue, do the work, comment + set status."""
     from .paperclip_agent import PaperclipRun
@@ -134,6 +142,7 @@ def _paperclip_agent(role: str) -> int:
         if not run.exists("brief.json"):
             run.write("brief.json", _brief_from(pc.campaign_issue(issue)))
         msg = _step(run, role)
+        _chat_cards(pc, run, role, msg)
         if role == "publish" and run.read("publish.json", {}).get("status") == "awaiting_approval":
             with run.exclusive():
                 pkg = run.read("publish.json")

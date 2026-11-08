@@ -28,7 +28,7 @@ def run(r: Run) -> str:
         r.log(ROLE, f"niche from identity/pmf.json: {niche}")
     with r.timer(ROLE), ThreadPoolExecutor(max_workers=4) as pool:
         # 1. Agent: YouTube Shorts needs real clicking (Fetch only gets the page footer there).
-        yt: Future = pool.submit(tf.agent, r, f"https://www.youtube.com/results?search_query={niche.replace(' ', '+')}+%23shorts",
+        yt: Future | None = None if config.RESEARCH_MODE == "minimal" else pool.submit(tf.agent, r, f"https://www.youtube.com/results?search_query={niche.replace(' ', '+')}+%23shorts",
                                  "This is a YouTube search page. Click 'Filters', choose Upload date = 'This week', then "
                                  "Sort by = 'View count'. From the resulting list extract the top 8 videos: title, channel, "
                                  "view count, upload age and video URL. Do not open individual videos. Return JSON.",
@@ -74,7 +74,7 @@ def run(r: Run) -> str:
     summary = (f"evidence.json: {len(evidence['threads'])} threads, {len(news)} news, "
                f"{len(social['tiktok'])} TikToks + {len(social['instagram'])} Reels -> Bright Data "
                f"({', '.join(f'{p}: {s.get('posts', 0)} posts' if s.get('ok') else f'{p}: skipped' for p, s in bd_status.items())}), "
-               f"{len(youtube['videos'])} YouTube Shorts via Agent, {len(shots)} Browser screenshots")
+               f"{len(youtube['videos'])} YouTube Shorts via {youtube['source']}, {len(shots)} Browser screenshots")
     r.log(ROLE, summary)
     return summary
 
@@ -87,12 +87,17 @@ def _brightdata(r: Run, platform: str, urls: list[str]) -> dict:
     urls_file = r.path(f"search_urls_{platform}.txt")
     urls_file.write_text("\n".join(urls) + "\n")
     r.log(ROLE, f"Bright Data: scraping {len(urls)} {platform} URLs found by TinyFish Search", primitive="brightdata")
-    env = {**os.environ, "GTM_RUNS_DIR": str(config.RUNS_DIR)}
+    # Drop the caller's uv env: the harness's uv wrapper only picks a per-project venv when
+    # UV_PROJECT_ENVIRONMENT is unset, so inheriting ours made bd-gateway sync over app's venv.
+    env = {k: v for k, v in os.environ.items() if k not in ("UV_PROJECT_ENVIRONMENT", "VIRTUAL_ENV")}
+    env["GTM_RUNS_DIR"] = str(config.RUNS_DIR)
     try:
         p = subprocess.run(["uv", "run", "--project", str(config.BRIGHTDATA_DIR), "bd-gateway", "sample",
                             "--platform", platform, "--urls-file", str(urls_file), "--campaign", r.id,
-                            "--posts", "10", "--top", "5", "--comments-per-post", "15"],
-                           capture_output=True, text=True, timeout=900, env=env)
+                            *(["--posts", "5", "--top", "3", "--comments-per-post", "10"] if config.RESEARCH_MODE == "minimal"
+                              else ["--posts", "10", "--top", "5", "--comments-per-post", "15"])],
+                           capture_output=True, text=True, env=env,
+                           timeout=180 if config.RESEARCH_MODE == "minimal" else 600)  # leave room in the 900s worker timeout
         line = (p.stdout.strip().splitlines() or ["{}"])[-1]
         status = json.loads(line)
     except Exception as e:
@@ -102,7 +107,11 @@ def _brightdata(r: Run, platform: str, urls: list[str]) -> dict:
     return status
 
 
-def _youtube(r: Run, fut: Future, niche: str) -> dict:
+def _youtube(r: Run, fut: Future | None, niche: str) -> dict:
+    if fut is None:
+        r.log(ROLE, "Minimal research mode: YouTube Shorts via Search (GTM_RESEARCH_MODE=full runs the Agent)")
+        hits = tf.search(r, f"{niche} shorts", include_domains="youtube.com", recency_minutes=60 * 24 * 14)
+        return {"source": "search", "videos": [{"title": h["title"], "url": h["url"], "views": None} for h in hits]}
     try:
         res = fut.result(timeout=480)
         if res["ok"] and (res["result"] or {}).get("videos"):

@@ -3,6 +3,12 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Restore tokens/sessions from the device vault (macOS Keychain) before anything is generated,
+# so a fresh checkout reuses the same secrets as the existing data volume. See vault.py.
+if command -v security >/dev/null 2>&1 && command -v uv >/dev/null 2>&1; then
+  uv run vault.py restore >/dev/null 2>&1 || echo "vault restore skipped (run: uv run harness/vault.py list)" >&2
+fi
+
 if [ ! -f .env ]; then
   cp .env.example .env
   chmod 600 .env
@@ -28,8 +34,10 @@ done
 # process env (nothing is printed or written).
 if [ -n "${GTM_OPENAI_ENV_FILE:-}" ]; then
   [ -f "$GTM_OPENAI_ENV_FILE" ] || { echo "GTM_OPENAI_ENV_FILE not found" >&2; exit 1; }
+  # Source it in a subshell (shell quoting and inline "# comments" parse correctly;
+  # a grep/sed parser kept the comment as part of the key -> 401) and keep only these two.
   for k in OPENAI_API_KEY OPENAI_BASE_URL; do
-    v=$(grep -E "^(export )?${k}=" "$GTM_OPENAI_ENV_FILE" | tail -1 | sed -E "s/^(export )?${k}=//; s/^[\"']//; s/[\"']$//")
+    v=$(set -a; . "$GTM_OPENAI_ENV_FILE" >/dev/null 2>&1; eval "printf %s \"\${$k:-}\"")
     if [ -n "$v" ]; then export "$k=$v"; echo "loaded ${k} from GTM_OPENAI_ENV_FILE"; fi
   done
 fi
@@ -39,6 +47,9 @@ echo "waiting for http://localhost:${PAPERCLIP_PORT:-3100}/api/health ..."
 for _ in $(seq 1 90); do
   if curl -fsS "http://localhost:${PAPERCLIP_PORT:-3100}/api/health" >/dev/null 2>&1; then
     echo "Paperclip is up: http://localhost:${PAPERCLIP_PORT:-3100}"
+    echo "preparing campaign workers (first install may take several minutes) ..."
+    docker compose exec -T --user node -w /workspace/app paperclip uv sync --frozen
+    echo "Workers installed. Run uv run harness/campaign.py doctor from the repository root."
     exit 0
   fi
   sleep 2

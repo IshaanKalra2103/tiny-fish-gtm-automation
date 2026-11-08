@@ -3,6 +3,7 @@
 import importlib.util
 import os
 import shutil
+from pathlib import Path
 
 from . import config
 
@@ -12,10 +13,14 @@ def inspect():
     def add(name, ok, fix, required=True):
         checks.append({"name": name, "ok": bool(ok), "required": required, "fix": "" if ok else fix})
     provider = os.environ.get("GTM_LLM_PROVIDER", "openai")
-    add("llm_provider", provider in ("openai", "anthropic"), "Set GTM_LLM_PROVIDER to openai or anthropic")
+    add("llm_provider", provider in ("openai", "anthropic", "codex"), "Set GTM_LLM_PROVIDER to openai, anthropic or codex")
     key = "ANTHROPIC_API_KEY" if provider == "anthropic" else "OPENAI_API_KEY"
     add("tinyfish_credentials", os.environ.get("TINYFISH_API_KEY"), "Supply TINYFISH_API_KEY to the worker")
-    add("llm_credentials", os.environ.get(key), f"Supply {key} to the worker environment")
+    if provider == "codex":
+        auth = Path(os.environ.get("CODEX_HOME") or "~/.codex").expanduser() / "auth.json"
+        add("llm_credentials", shutil.which("codex") and auth.exists(), "Install the Codex CLI and run codex login (or mount its CODEX_HOME)")
+    else:
+        add("llm_credentials", os.environ.get(key), f"Supply {key} to the worker environment")
     for module in ("tinyfish", "openai", "pydantic", "moviepy", "PIL"):
         add(module, importlib.util.find_spec(module) is not None, "Run uv sync --project app --frozen")
     add("node", shutil.which("node"), "Install Node for browser capture")

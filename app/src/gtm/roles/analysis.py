@@ -38,11 +38,20 @@ class Template(BaseModel):
     why: str = Field(description="which evidence (with engagement numbers) supports this template")
 
 
+class Idea(BaseModel):
+    title: str
+    hook: str = Field(description="the spoken/on-screen line for the first 2 seconds")
+    format: str = Field(description="one of the recurring formats, e.g. screen-recording demo, POV, listicle")
+    why: str = Field(description="the trend evidence (with engagement numbers) behind this idea")
+
+
 class Insights(BaseModel):
     themes: list[Theme]
     top_hooks: list[Hook]
     formats: list[str] = Field(description="recurring video formats seen in the top social posts")
     template: Template
+    ideas: list[Idea] = Field(description="exactly 3 distinct short-video ideas for the brand built on the template; "
+                                          "the first is the strongest and is the one that gets produced")
 
 
 class Persona(BaseModel):
@@ -76,6 +85,7 @@ def run(r: Run) -> str:
                              "You are a trend analyst and pattern miner on a growth team. Ground every claim in the "
                              "evidence and its engagement numbers. Prefer patterns that recur across platforms.",
                              [llm.text(json.dumps(compact, default=str)[:60000])], Insights)
+        insights.ideas = insights.ideas[:3]
         r.write("insights.json", insights.model_dump())
 
         source = "brightdata_comments" if comments else "fetched_thread_text"
@@ -93,7 +103,8 @@ def run(r: Run) -> str:
                                   "personas": [p.model_dump() for p in personas.personas]})
 
     r.write("charts.json", _chart_data(ev, posts, insights))
-    summary = (f"insights.json: {len(insights.themes)} themes, template '{insights.template.name}'; "
+    summary = (f"insights.json: {len(insights.themes)} themes, template '{insights.template.name}', "
+               f"{len(insights.ideas)} ideas ({' | '.join(i.title for i in insights.ideas)}); "
                f"personas.json: {len(personas.personas)} personas from {source} ({len(comments)} comments)")
     r.log(ROLE, summary)
     return summary

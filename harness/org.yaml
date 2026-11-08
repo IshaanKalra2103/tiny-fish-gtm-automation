@@ -29,12 +29,12 @@ shared_memory: |
   Shared memory lives in /workspace/runs/<campaign-id>/ (mounted from the host project):
     evidence.json        trend & competitor data (Trend Discovery)
     social_<platform>.json  Bright Data social samples: posts + engagement + top comments (tiktok|instagram|youtube|reddit)
-    analysis.json        insights + charts/ (Analysis & Insight)
-    template_vN.json     content templates, versioned (Template & Strategy)
+    insights.json, personas.json, charts.json (Analysis & Insight)
+    workflow.json        stage status, summaries and failures (shared execution lifecycle)
     script_vN.json, video_vN.mp4, captions, thumbnails (Content Generation)
     qa_vN.json           QA scores, persona feedback, revision requests (QA & Testing)
     publish.json         post copy, schedule, status (Publishing)
-    /workspace/memory/learnings.json   long-term learnings fed into the next run (Analytics & Learning)
+    /workspace/runs/learnings.json   long-term learnings fed into the next run (Analytics & Learning)
   Always post a short summary comment on your Paperclip issue with the paths you wrote.
 
 # Tools available inside the container (exact commands). Agents run as uid `node`; /workspace is the project root.
@@ -55,8 +55,11 @@ agents:
     name: GTM Orchestrator
     title: CEO / Campaign Orchestrator
     role: ceo
-    adapter: codex_local       # swappable: claude_local | codex_local (re-run bootstrap.py to apply)
-    # model: claude-opus-5-5   # optional per-agent model (e.g. a gpt-5.x model for codex_local)
+    adapter: claude_local      # swappable: claude_local | codex_local (re-run bootstrap.py to apply)
+    # model: defaults to GTM_CEO_MODEL (claude-opus-5-5). Auth: the user's Claude subscription via Apps -> Connections
+    # harness/skills/<slug>, attached by sync_skills.py. Never attach content-making (video/image) skills here:
+    # the Orchestrator routes content requests to the pipeline.
+    skills: [gtm-orchestrator, gtm-founder-chat, gtm-spend-limits]
     budget_monthly_cents: 500
     capabilities: >-
       Plans each campaign from the founder's brief (product context and campaign

@@ -1,5 +1,21 @@
 # TinyFish GTM Automation
 
+## Harness entry point
+
+Campaigns run through Paperclip and a shared worker lifecycle. From the repository root:
+
+```sh
+./harness/up.sh                         # start server and install workers
+uv run harness/bootstrap.py            # reconcile company and agents
+uv run harness/campaign.py doctor       # check actual container readiness
+uv run harness/campaign.py new --brand https://tinyfish.ai --niche "AI web agents"
+uv run harness/campaign.py status TIN-123
+uv run harness/campaign.py approvals
+uv run harness/campaign.py approve <approval-id>
+```
+
+The campaign owns seven ordered stages and one `runs/<campaign>/workflow.json` execution record. QA failure blocks downstream work; approval is bound to the generated artifact; learning completes the campaign after approval. Use `campaign.py retry <blocked-stage>` after resolving a failure. See [the harness guide](harness/README.md) for the current operational contract; the older product overview below includes planned features.
+
 You give it a brand URL and a niche. It finds what's trending in that niche this week, works out the short-video format that's currently winning, and turns that into a 9:16 video about your brand. Three simulated audience personas and a compliance reviewer then critique the video. If it fails, it rewrites and re-renders on its own. The finished video waits for a human to approve it, and what it learned feeds the next run.
 
 Every piece of web work runs on live [TinyFish](https://tinyfish.ai) primitives (Search, Fetch, Agent, Browser), each doing the part of the job it's actually built for.

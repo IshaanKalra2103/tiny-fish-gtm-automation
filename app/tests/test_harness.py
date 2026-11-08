@@ -72,6 +72,7 @@ class HarnessTests(unittest.TestCase):
         workflow.execute(self.run, "research", worker)
         self.assertEqual(worker.call_count, 1)
 
+    @patch.object(config, "QA_GATE", "strict")
     def test_failed_qa_cannot_finish_or_publish(self):
         for name in OUTPUTS["video"]:
             self.run.write(name, {})

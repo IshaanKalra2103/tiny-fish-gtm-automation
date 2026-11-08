@@ -22,7 +22,8 @@ def require_outputs(run, role):
     missing = [name for name in OUTPUTS[role] if not run.exists(name)]
     if missing:
         raise StageBlocked(f"{role} missing artifacts: {', '.join(missing)}")
-    if role == "qa" and not run.read("qa.json").get("passed"):
+    from .config import qa_ok
+    if role == "qa" and not qa_ok(run.read("qa.json")):
         raise StageBlocked("QA exhausted its revisions without passing; review qa.json before retrying")
     if role == "publish" and run.read("publish.json").get("status") != "ready_to_publish":
         raise StageBlocked("Human approval is required before learning/completion")
@@ -30,7 +31,7 @@ def require_outputs(run, role):
         from .roles.publish import fingerprint
         pkg = run.read("publish.json")
         qa = run.read("qa.json", {})
-        if not qa.get("passed") or pkg.get("version") != qa.get("final_version") or pkg.get("artifact_hash") != fingerprint(run, pkg["version"]):
+        if not qa_ok(qa) or pkg.get("version") != qa.get("final_version") or pkg.get("artifact_hash") != fingerprint(run, pkg["version"]):
             raise StageBlocked("Approved artifacts changed; a new package and approval are required")
 
 

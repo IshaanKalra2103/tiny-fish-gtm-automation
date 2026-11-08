@@ -50,7 +50,8 @@ def write_script(r: Run, version: int, feedback: dict | None = None) -> Script:
     content = [llm.text(
         f"Brand: {ev['brief']['brand']} ({ev['brief']['brand_url']}). Goal: {ev['brief']['goal']}.\n"
         f"Brand page (the only source for product claims):\n{ev['brand_page']['text'][:4000]}\n\n"
-        f"Mined template + themes:\n{json.dumps(ins)[:8000]}\n\n"
+        f"Mined template + themes + ideas:\n{json.dumps(ins)[:8000]}\n\n"
+        + (f"Produce idea #1: {json.dumps(ins['ideas'][0])}\n\n" if ins.get("ideas") else "") +
         f"Personas who will review it:\n{json.dumps(personas['personas'])[:4000]}\n\n"
         f"Allowed evidence URLs for claims: {json.dumps(allowed)}\n"
         f"Hard limits: total voiceover <= {words} words (video must be under {config.MAX_VIDEO_SECONDS}s), "

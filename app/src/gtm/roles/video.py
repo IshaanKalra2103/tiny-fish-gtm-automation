@@ -56,6 +56,13 @@ def _render_vidgen(r: Run, version: int) -> dict:
     shots = [r.dir / p for p in r.read("evidence.json").get("shots", [])] if r.exists("evidence.json") else []
     person = r.dir / "refs" / "video_v1_ref1.png"  # reuse v1's Codex-drawn face across revisions
     shot = ["--ref", str(shots[0])] if shots else []
+    prev = r.read(f"qa_v{version - 1}.json") if version > 1 and r.exists(f"qa_v{version - 1}.json") else {}
+    was_product = r.exists(f"video_v{version - 1}.json") and r.read(f"video_v{version - 1}.json").get("format") == "product"
+    if shots and (was_product or any("product is actually shown" in b.lower() for b in prev.get("blocking", []))):
+        # A talking-head can never fix "product not shown": revise as a product ad on the Browser screenshot.
+        fmt = "product"
+        r.log(ROLE, "QA flagged 'product not shown' -> revising as a product ad on the TinyFish Browser screenshot",
+              version=version)
     attempts = [(fmt, shot)]
     if fmt == "talking-head":  # Codex draws the face once; if that fails, a product ad off the evidence shot
         face = (["--ref", str(person)] if person.exists() else

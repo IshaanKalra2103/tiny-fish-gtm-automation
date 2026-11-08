@@ -51,15 +51,25 @@ def run(r: Run) -> str:
             if result["passed"]:
                 break
             r.log(ROLE, f"v{v} failed QA -> revising: {'; '.join(result['blocking'])[:200]}", version=v)
-    final = history[-1]
-    summary = {"final_version": final["version"], "passed": final["passed"],
-               "status": "ready_for_approval" if final["passed"] else "needs_human",
-               "versions": [{k: h[k] for k in ("version", "passed", "avg_score", "blocking")} for h in history]}
-    r.write("qa.json", summary)
-    msg = (f"QA: {len(history)} draft(s); v{final['version']} {'PASSED' if final['passed'] else 'still failing -> needs human'} "
+    final = summarize(r, history)
+    msg = (f"QA: {len(history)} draft(s); v{final['version']} {'PASSED' if final['passed'] else ('best draft, flagged -> human approval' if config.QA_GATE == 'advisory' else 'still failing -> needs human')} "
            f"(avg {final['avg_score']}/10). " + " | ".join(f"v{h['version']}: {h['avg_score']}" for h in history))
     r.log(ROLE, msg)
     return msg
+
+
+def summarize(r: Run, history: list[dict]) -> dict:
+    """qa.json. Advisory gate: if nothing passed, the best-scoring draft goes to the human with its flags."""
+    final = history[-1] if history[-1]["passed"] else max(history, key=lambda h: h["avg_score"])
+    if not final["passed"] and config.QA_GATE != "advisory":
+        final = history[-1]
+    status = ("ready_for_approval" if final["passed"] else
+              "ready_for_approval_with_flags" if config.QA_GATE == "advisory" else "needs_human")
+    summary = {"final_version": final["version"], "passed": final["passed"], "gate": config.QA_GATE, "status": status,
+               "flags": final["blocking"],
+               "versions": [{k: h[k] for k in ("version", "passed", "avg_score", "blocking")} for h in history]}
+    r.write("qa.json", summary)
+    return final
 
 
 def evaluate(r: Run, v: int) -> dict:

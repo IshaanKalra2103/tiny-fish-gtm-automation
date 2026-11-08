@@ -27,21 +27,46 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import subprocess
 import urllib.error
 import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-STATE = json.loads((HERE / "state" / "paperclip.json").read_text())
-TOKEN = json.loads((HERE / "state" / "board.json").read_text())["token"]
-API = STATE["apiUrl"]
-CID = STATE["companyId"]
-A = STATE["agents"]
+sys.path.insert(0, str(HERE.parent / "app" / "src"))
+from gtm.contract import STAGES, brief_description
+
+STATE = {}
+TOKEN = API = CID = ""
+A = {}
+
+
+# Inside a Paperclip agent run (e.g. the Orchestrator answering an iMessage) the run's own token is used,
+# so the CEO launches campaigns with one command instead of rediscovering the API.
+AGENT_RUN = bool(os.environ.get("PAPERCLIP_RUN_ID") and os.environ.get("PAPERCLIP_API_KEY"))
+
+
+def configure():
+    global STATE, TOKEN, API, CID, A
+    try:
+        STATE = json.loads((HERE / "state" / "paperclip.json").read_text())
+        if AGENT_RUN:
+            TOKEN = os.environ["PAPERCLIP_API_KEY"]
+        else:
+            TOKEN = json.loads((HERE / "state" / "board.json").read_text())["token"]
+    except FileNotFoundError:
+        raise RuntimeError("Harness not bootstrapped. Run ./harness/up.sh, then uv run harness/bootstrap.py")
+    API, CID, A = STATE["apiUrl"], STATE["companyId"], STATE["agents"]
+    if AGENT_RUN and os.environ.get("PAPERCLIP_API_URL"):
+        API = os.environ["PAPERCLIP_API_URL"].rstrip("/").removesuffix("/api") + "/api"
 
 
 def call(method: str, path: str, body=None):
     headers = {"Authorization": f"Bearer {TOKEN}", "Accept": "application/json"}
+    if AGENT_RUN:
+        headers["X-Paperclip-Run-Id"] = os.environ["PAPERCLIP_RUN_ID"]
     data = None
     if body is not None:
         data = json.dumps(body).encode()
@@ -55,63 +80,39 @@ def call(method: str, path: str, body=None):
     return json.loads(raw) if raw else None
 
 
+def chat_issue() -> str | None:
+    """The chat-origin issue this agent run is answering (iMessage thread), so stages can post cards back to it."""
+    if not AGENT_RUN:
+        return None
+    try:
+        snap = call("GET", f"/heartbeat-runs/{os.environ['PAPERCLIP_RUN_ID']}").get("contextSnapshot") or {}
+        issue = call("GET", f"/issues/{snap['issueId']}") if snap.get("issueId") else {}
+        return issue.get("id") if issue.get("originKind") == "chat_channel" else None
+    except (SystemExit, KeyError, AttributeError):
+        return None
+
+
 def brief_md(a) -> str:
-    # app/ agents parse the `brand_url:` / `niche:` lines.
-    return f"""brand_url: {a.brand}
-niche: {a.niche}
-platforms: {a.platforms}
-
-## Product context
-- **Brand / website:** {a.brand}
-- **Niche / theme:** {a.niche}
-- **Audience:** {a.audience}
-- **Goal:** {a.goal}
-- **Brand voice:** {a.voice}
-- **Competitors:** {a.competitors or "(discover them)"}
-
-## Campaign settings
-- **Platforms:** {a.platforms}
-- **Budget / cadence:** {a.cadence}
-- **Approval:** human approval required before anything is published
-
-{a.brief or ""}
-
-Shared memory for this campaign: `/workspace/runs/<this issue's identifier>/`
-"""
-
-
-STAGES = [
-    ("research", "Trend discovery",
-     "Find what's trending in the niche across the campaign platforms (TinyFish Search/Fetch/Agent/Browser, "
-     "Bright Data social samples). Write `evidence.json` and `social_<platform>.json` with source links."),
-    ("analysis", "Trend analysis & insights",
-     "Cluster topics, hooks, formats and engagement patterns from the evidence. Write `analysis.json` "
-     "and charts that show what works and why, plus opportunity areas."),
-    ("strategy", "Content template & strategy",
-     "Extract a reusable template (hook pattern, beats, length, caption style, CTA), each element citing "
-     "evidence, and pick concept, audience and message. Write `template_vN.json` and `script_vN.json`. "
-     "Read `/workspace/memory/learnings.json` first."),
-    ("video", "Generate short-form video",
-     "Render the video from the script (voiceover, visuals, burned-in captions, 9:16, 30s or less). Write "
-     "`video_vN.mp4` plus captions/thumbnail."),
-    ("qa", "QA: personas + compliance",
-     "Score the draft with simulated personas (grounded in Bright Data comment evidence) and compliance "
-     "checks (hook in 2s, CTA, every claim supported, legible captions, 30s or less). Revise up to 3 drafts. "
-     "Write `qa_vN.json`. Persona scores are SIMULATED."),
-    ("publish", "Approval & publish",
-     "File a `request_board_approval` with the final video + post copy and wait (issue in_review). Only "
-     "after the board approves (wakeReason=approval_approved): produce platform-specific copy, schedule "
-     "and status in `publish.json`. Real posting requires explicit board authorization (guardrail)."),
-    ("learn", "Learnings & next iteration",
-     "Compare outcome and QA history with the initial trends. Update `/workspace/memory/learnings.json` "
-     "(winning hooks, recurring QA failures) and write the next-iteration plan."),
-]
+    return brief_description({
+        "brand_url": a.brand, "niche": a.niche, "platforms": a.platforms,
+        "audience": a.audience, "goal": a.goal, "voice": a.voice,
+        "competitors": a.competitors, "cadence": a.cadence, "notes": a.brief,
+        **({"chat_issue": ci} if (ci := chat_issue()) else {}),
+    })
 
 
 def cmd_new(a) -> None:
+    description = brief_md(a)
+    # Check the real container, not the host shell, before scheduling paid work.
+    # The host doctor needs docker; inside an agent run the workers' credentials aren't visible anyway.
+    if a.mode == "pipeline" and not AGENT_RUN:
+        cmd_doctor(a)
+    missing = [key for key, _, _ in STAGES if not A.get(key)]
+    if missing:
+        raise RuntimeError(f"Missing agents: {missing}; rerun bootstrap.py")
     root = call("POST", f"/companies/{CID}/issues", {
         "title": f"Campaign: {a.niche} for {a.brand}",
-        "description": brief_md(a),
+        "description": description,
         "projectId": STATE["projectId"], "goalId": STATE["goalId"], "priority": "high",
         **({"assigneeAgentId": A["orchestrator"]} if a.mode == "ceo" else {}),
     })
@@ -128,7 +129,7 @@ def cmd_new(a) -> None:
             "description": f"{desc}\n\nCampaign brief: see parent issue {ident}. "
                            f"Write outputs to `/workspace/runs/{ident}/`.",
             "parentId": root["id"], "projectId": STATE["projectId"], "goalId": STATE["goalId"],
-            "assigneeAgentId": A[key], "priority": "high",
+            "assigneeAgentId": A[key], "priority": "high", "status": "todo",  # backlog issues are never woken
             "blockedByIssueIds": [prev["id"]] if prev else [],
         }
         prev = call("POST", f"/companies/{CID}/issues", body)
@@ -150,6 +151,46 @@ def cmd_status(a) -> None:
         ex = (k.get("executionState") or {})
         stage = f"  [{ex.get('currentStageType')} {ex.get('status')}]" if ex.get("currentStageType") else ""
         print(f"  {k.get('identifier')}  {k['status']:12s} {k['title']}{stage}")
+    ident = root.get("identifier") or root["id"]
+    path = HERE.parent / "runs" / ident / "workflow.json"
+    if path.is_file():
+        state = json.loads(path.read_text())
+        print(f"worker: {state['status']} at {state['current_stage']}")
+        for role, entry in state["stages"].items():
+            print(f"  {role:10s} {entry['status']:18s} {entry.get('summary', '')}")
+    print(f"artifacts: {HERE.parent / 'runs' / ident}")
+
+
+def cmd_doctor(a) -> None:
+    checks = []
+    health = call("GET", "/health")
+    checks.append({"name": "paperclip", "ok": bool(health)})
+    agents = call("GET", f"/companies/{CID}/agents")
+    by_id = {agent["id"]: agent for agent in agents}
+    for role, _, _ in STAGES:
+        agent = by_id.get(A.get(role), {})
+        cfg = agent.get("adapterConfig") or {}
+        checks.append({"name": role, "ok": agent.get("adapterType") == "process"
+                       and cfg.get("args") == ["run", "gtm", "agent", role]
+                       and cfg.get("cwd") == "/workspace/app"
+                       and agent.get("status") not in ("paused", "terminated"),
+                       "fix": "Run uv run harness/bootstrap.py to reconcile workers"})
+    try:
+        result = subprocess.run(["docker", "exec", "--user", "node", "-w", "/workspace/app", "gtm-paperclip",
+                                 "uv", "run", "--no-sync", "gtm", "doctor"], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError("Cannot inspect worker runtime; ensure Docker is running and run ./harness/up.sh") from exc
+    try:
+        worker = json.loads(result.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        worker = {"ok": False, "exit_code": result.returncode,
+                  "error": "Worker runtime is unavailable",
+                  "fix": "Run docker exec --user node -w /workspace/app gtm-paperclip uv sync --frozen, then retry doctor"}
+    checks.append({"name": "worker_runtime", **worker})
+    ok = all(c["ok"] for c in checks)
+    print(json.dumps({"ok": ok, "checks": checks}, indent=2))
+    if not ok:
+        raise SystemExit(1)
 
 
 def pending_approvals() -> list[dict]:
@@ -165,7 +206,7 @@ def resolve_approval(ref: str) -> dict:
             return ap
     issue = find_issue(ref)
     for ap in pend:
-        linked = {i if isinstance(i, str) else i.get("id") for i in (ap.get("issueIds") or ap.get("issues") or [])}
+        linked = {i["id"] for i in call("GET", f"/approvals/{ap['id']}/issues") or []}
         if issue["id"] in linked:
             return ap
     sys.exit(f"no pending approval for {ref}; pending: {[p['id'] for p in pend]}")
@@ -180,6 +221,11 @@ def cmd_approvals(a) -> None:
 def _decide(a, action: str, default_note: str) -> None:
     ap = resolve_approval(a.ref)
     call("POST", f"/approvals/{ap['id']}/{action}", {"decisionNote": a.message or default_note})
+    if action in ("reject", "request-revision"):
+        # Paperclip's revision endpoint records the decision but does not wake the worker.
+        for issue in call("GET", f"/approvals/{ap['id']}/issues") or []:
+            call("PATCH", f"/issues/{issue['id']}", {"status": "blocked",
+                 "comment": f"Board {action}: {a.message or default_note}. Revise the package before requesting a new approval."})
     print(f"{action} -> approval {ap['id']}")
 
 
@@ -195,13 +241,23 @@ def cmd_revise(a) -> None:
     _decide(a, "request-revision", "Please revise.")
 
 
+def cmd_retry(a) -> None:
+    issue = find_issue(a.issue)
+    if issue["status"] != "blocked":
+        raise ValueError("Only blocked stage issues can be retried; use approvals for a pending human gate")
+    if not issue.get("parentId"):
+        raise ValueError("Retry the blocked stage issue, not the campaign parent")
+    call("PATCH", f"/issues/{issue['id']}", {"status": "todo", "comment": a.message or "Retry after resolving the blocker"})
+    print(f"queued retry for {issue.get('identifier', issue['id'])}")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
     n = sub.add_parser("new")
     n.add_argument("--brand", required=True)
     n.add_argument("--niche", required=True)
-    n.add_argument("--platforms", default="tiktok,instagram,youtube,x")
+    n.add_argument("--platforms", default="tiktok,instagram,youtube")
     n.add_argument("--audience", default="developers building with AI agents (B2B)")
     n.add_argument("--goal", default="awareness and signups")
     n.add_argument("--voice", default="technical, concrete, a little playful; no hype")
@@ -212,11 +268,21 @@ def main() -> None:
     n.set_defaults(fn=cmd_new)
     s = sub.add_parser("status"); s.add_argument("issue"); s.set_defaults(fn=cmd_status)
     sub.add_parser("approvals").set_defaults(fn=cmd_approvals)
+    sub.add_parser("doctor").set_defaults(fn=cmd_doctor)
+    retry = sub.add_parser("retry")
+    retry.add_argument("issue")
+    retry.add_argument("-m", "--message")
+    retry.set_defaults(fn=cmd_retry)
     for name, fn, req in (("approve", cmd_approve, False), ("reject", cmd_reject, True), ("revise", cmd_revise, True)):
         sp = sub.add_parser(name); sp.add_argument("ref"); sp.add_argument("-m", "--message", required=req)
         sp.set_defaults(fn=fn)
     a = p.parse_args()
-    a.fn(a)
+    try:
+        configure()
+        a.fn(a)
+    except (RuntimeError, ValueError, urllib.error.URLError) as exc:
+        print(json.dumps({"ok": False, "error": str(exc)}), file=sys.stderr)
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

@@ -47,6 +47,9 @@ def build(r: Run) -> str:
                     + "".join(f"<li>{escape(x)}</li>" for x in t["beats"]) + f"</ol><p><b>CTA:</b> {escape(t['cta_pattern'])}</p>"
                     f"<p class=muted>{escape(t['why'])}</p><h4>Themes</h4><ul>"
                     + "".join(f"<li><b>{escape(th['name'])}</b> — {escape(th['pain_point'])}</li>" for th in ins["themes"]) + "</ul>")
+    ideas = "".join(f"<div class=card><b>{n}. {escape(i['title'])}</b><span>Hook: “{escape(i['hook'])}”</span>"
+                    f"<small>Format: {escape(i['format'])}</small><em>{escape(i['why'])}</em></div>"
+                    for n, i in enumerate((ins or {}).get("ideas", []), 1))
     pcards = ""
     if personas:
         pcards = f"<p class=muted>{escape(personas['label'])} Source: {escape(personas['source'])}.</p><div class=grid>" + "".join(
@@ -104,6 +107,7 @@ LLM tokens {costs['llm_tokens']:,} · time {sum(timings.values()):.0f}s ({escape
 <p><b>Current stage:</b> {escape(state.get('current_stage', 'not started'))} · {escape(state.get('stages', {}).get(state.get('current_stage'), {}).get('summary', ''))}</p>
 {_identity_block(r)}<h2>Who did what</h2><div class=grid>{cards}</div>
 <h2>Trends</h2><div class=charts><canvas id=sources></canvas><canvas id=themes></canvas><canvas id=social></canvas><canvas id=yt></canvas></div>
+<h2>Three content ideas</h2><div class=grid>{ideas or "<p class=muted>Not generated yet.</p>"}</div>
 <h2>Evidence</h2><div class=shots>{shots}</div>
 <h3>Top TikToks + Reels (Bright Data, engagement-ranked)</h3><table><tr><td>platform</td><td>post</td><td>views</td><td>likes</td></tr>{social}</table>
 <h3>YouTube Shorts this week (TinyFish Agent)</h3><ul>{yt}</ul><h3>Threads read (TinyFish Fetch)</h3><ul>{threads}</ul>

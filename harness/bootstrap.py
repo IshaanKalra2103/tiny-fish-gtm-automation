@@ -10,6 +10,7 @@
 2. Mints a non-expiring board API key            -> harness/state/board.json
 3. Creates/updates company, goal, project, and the agents from harness/org.yaml
 4. Writes harness/state/integration.env for other services (Photon bridge, app/ dashboard)
+5. Syncs harness/skills/* into the company skill library and attaches them per org.yaml (sync_skills.py)
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ from pathlib import Path
 import yaml
 
 HERE = Path(__file__).resolve().parent
-STATE = HERE / "state"
+STATE = Path(os.environ.get("GTM_STATE_DIR", HERE / "state"))
 PUBLIC_URL = os.environ.get("PAPERCLIP_PUBLIC_URL", "http://localhost:3100").rstrip("/")
 API = PUBLIC_URL + "/api"
 CEO_MODEL = os.environ.get("GTM_CEO_MODEL", "claude-opus-5-5")
@@ -150,12 +151,20 @@ voice, competitors) and the **campaign settings** (platforms, budget/cadence, th
 preferences). Ask for anything missing in one short question; otherwise default to TinyFish
 (https://tinyfish.ai, niche "AI web agents / browser automation").
 
-To run a campaign, create the stage tree (this is what `harness/campaign.py new` does):
-1. A campaign issue whose description starts with the lines `brand_url: <url>`, `niche: <niche>`, `platforms: <list>`.
-2. Seven child issues (`POST /api/companies/$PAPERCLIP_COMPANY_ID/issues` with `parentId`), assigned in order
-   to the specialists below and chained with `blockedByIssueIds` (each blocked by the previous one):
+HARD RULE: any request for content (a reel, video, post, campaign, "find trends and make ...") is handled ONLY by
+launching the pipeline below. Never produce content yourself: no image generation, no scripts, no storyboards,
+no "packages". The specialists do research (TinyFish), video, persona QA and the approval gate; your reply is one
+short text with the campaign id and that you'll report back.
+
+To run a campaign, launch it with ONE command (it uses your own run token; don't create issues by hand):
+   uv run /workspace/harness/campaign.py new --brand <url> --niche "<the topic the founder asked for, in their words>" \
+       --platforms instagram --audience "<who it is for>" --goal "<what the reel should achieve>"
+1. `--niche` is the founder's topic verbatim (e.g. "AI productivity"); research searches on it. Never swap in the default niche.
+2. It creates the campaign issue (validated brief) and seven chained stage issues in `todo`, assigned to:
 {ceo['pipeline']}
-   Paperclip wakes each specialist when its blocker is done. QA runs its own revise loop.
+   Paperclip wakes each specialist when its blocker is done. QA runs its own revise loop; failed QA blocks the pipeline.
+   Don't check worker credentials yourself (gtm doctor, env, secrets endpoints): they live in the process agents'
+   environment and are invisible from your sandbox. A stage blocks with a clear message if one is missing.
 3. Never publish anything yourself. The Publishing Agent files a `request_board_approval`; only the
    board approves it (guardrail: explicit authorization before publishing).
 4. Keep spend inside budgets. If a stage ends `blocked`, tell the board what is needed.
@@ -169,6 +178,13 @@ Keep each message to one or two sentences, and split longer answers into a few s
 answer or the next action. For anything that changes work (a new campaign, approvals, publishing), confirm
 what you'll do in one line, then do it through Paperclip tasks. Never publish without an approved board
 approval. If someone sincerely asks whether you're a human, say you're the AI GTM agent.
+iMessage doesn't render markdown: no [text](url) links, bullets, headings or bold. Never attach documents
+(.md, .json, .txt) to the chat; keep long material on the Paperclip issue. Only images (stage cards from
+/workspace/runs/<campaign>/cards/*.png, thumbnails) and the final video .mp4 belong in the thread. The pipeline
+stages post their own cards to this thread as they finish, so don't duplicate them.
+When the founder replies APPROVE (or yes / ship it) to a "Final reel is ready" card, the board relay records
+that as the board approval for them; just confirm in one line that it's approved and the post is queued
+(posting is simulated in this demo). Never claim you approved anything yourself.
 
 ## Your team (agent names to assign)
 {roster}
@@ -177,6 +193,10 @@ approval. If someone sincerely asks whether you're a human, say you're the AI GT
 {org['shared_memory']}
 ## Tools you can run directly (bash, inside the harness container)
 {org.get('tools', '')}
+## Skills
+Your attached skills hold the detailed playbook: `gtm-orchestrator` (routing every request, launch, blocked stages),
+`gtm-founder-chat` (iMessage style and pacing) and `gtm-spend-limits` (costs, retries, caps). Follow them; if one
+ever disagrees with this file, this file wins.
 Always leave a comment on the issue you worked on.
 """
 
@@ -315,6 +335,9 @@ def main() -> None:
     (STATE / "integration.env").write_text(env)
     (STATE / "integration.env").chmod(0o600)
     log("wrote state/paperclip.json and state/integration.env")
+
+    import sync_skills  # harness/skills/* -> company skills, attached per org.yaml `skills:`
+    log(f"skills: {json.dumps(sync_skills.sync(h.call, cid, ids, org))}")
     print(json.dumps(state, indent=2))
 
 
