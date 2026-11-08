@@ -12,8 +12,9 @@ PREVIEW_MAX_SECONDS = 8
 PREVIEW_MIN_SECONDS = 2
 PREVIEWS_PER_OWNER = 2
 PREVIEWS_PER_DAY = 10
-VIDEO_MODEL = "alibaba/wan-3.0"
-VIDEO_USD_PER_SEC = 0.0425
+VIDEO_MODEL = "google/veo-3.1-lite"  # $0.05/s at 720p without audio (OpenRouter, 2026-11-08)
+VIDEO_USD_PER_SEC = 0.05
+VIDEO_DURATIONS = (4, 6, 8)  # what veo-3.1-lite accepts
 
 
 def work() -> Path:
