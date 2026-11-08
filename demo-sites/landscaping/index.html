@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chesapeake Green Landscaping - Annapolis, MD</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:18px/1.6 'Source Sans 3',sans-serif;background:#f3f7ee;color:#1d2b1f}
+header{background:#1f4d2b;color:#f3f7ee;padding:40px 20px;text-align:center;border-bottom:6px solid #4f8a3a}
+h1,h2{font-family:'Fraunces',serif;margin:0 0 10px}
+h1{font-size:2.4rem;line-height:1.15} h2{font-size:1.6rem;color:#1f4d2b;border-bottom:2px solid #4f8a3a;padding-bottom:4px;margin-top:8px}
+main{max-width:760px;margin:0 auto;padding:10px 20px 30px}
+section{margin:28px 0}
+.tag{font-size:1.05rem;opacity:.9}
+table{width:100%;border-collapse:collapse} td{padding:6px 0;border-bottom:1px dotted #4f8a3a} td+td{text-align:right;white-space:nowrap;padding-left:12px}
+a{color:#1f5c2e}
+form{display:grid;gap:10px;background:#e5eedb;padding:18px;border:1px solid #4f8a3a}
+label{font-weight:600} input,textarea,select{font:inherit;padding:10px;border:1px solid #777;width:100%;background:#fff;color:#111}
+button{font:inherit;font-weight:700;padding:12px;background:#4f8a3a;color:#fff;border:0;cursor:pointer}
+#ok{display:none;font-weight:700}
+footer{background:#1f4d2b;color:#f3f7ee;text-align:center;padding:18px;font-size:.9rem}
+</style></head><body>
+<header><h1>Chesapeake Green Landscaping</h1><div class="tag">Lawns, beds and patios for Anne Arundel County homes.</div></header>
+<main>
+<section><h2>About us</h2><p>I'm Tom Reyes. I've run Chesapeake Green since 2012 with a crew of four. Free quotes, we'll come out and walk the yard with you, so there is no need to send photos. Spring and fall fill up fast, so call early. We mostly work by word of mouth and a stack of paper invoices, which keeps us busy enough.</p></section>
+<section><h2>Hours</h2><table><tr><td>Mon - Fri</td><td>7:00 am - 4:30 pm</td></tr><tr><td>Saturday</td><td>8:00 am - 12:00 pm</td></tr><tr><td>Sunday</td><td>Closed</td></tr></table></section>
+<section><h2>Services and prices</h2><table><tr><td>Weekly mowing (typical lot)</td><td>from $55</td></tr><tr><td>Spring or fall cleanup</td><td>from $275</td></tr><tr><td>Mulch install (per yard)</td><td>$85</td></tr><tr><td>Hedge trimming</td><td>from $120</td></tr><tr><td>Flagstone patio (per sq ft)</td><td>$24</td></tr><tr><td>Garden bed design</td><td>quote</td></tr></table><p>All quotes are free. We come out to your property.</p></section>
+<section><h2>Find us</h2><p>2205 Forest Drive, Annapolis, MD 21401<br>Phone: <a href="tel:+14105550119">(410) 555-0119</a></p></section>
+<section><h2>Ask for a free quote</h2>
+<form onsubmit="document.getElementById('ok').style.display='block';return false;">
+<label for="n">Your name</label><input id="n" name="name" required>
+<label for="p">Phone</label><input id="p" name="phone" type="tel" required>
+<label for="m">Describe your yard and what you need</label><textarea id="m" name="message" rows="4"></textarea>
+<button type="submit">Request a quote</button><div id="ok">Thanks! We'll call you back.</div>
+</form></section>
+</main>
+<footer>Fictional business for the MainStreet AI demo</footer>
+</body></html>

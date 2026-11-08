@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Route 40 Diner - Ellicott City, MD</title>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:18px/1.6 'Lora',serif;background:#fbf1dc;color:#2b1a14}
+header{background:#a4161a;color:#fff4dc;padding:40px 20px;text-align:center;border-bottom:6px solid #c8232c}
+h1,h2{font-family:'Alfa Slab One',serif;margin:0 0 10px}
+h1{font-size:2.4rem;line-height:1.15} h2{font-size:1.6rem;color:#a4161a;border-bottom:2px solid #c8232c;padding-bottom:4px;margin-top:8px}
+main{max-width:760px;margin:0 auto;padding:10px 20px 30px}
+section{margin:28px 0}
+.tag{font-size:1.05rem;opacity:.9}
+table{width:100%;border-collapse:collapse} td{padding:6px 0;border-bottom:1px dotted #c8232c} td+td{text-align:right;white-space:nowrap;padding-left:12px}
+a{color:#a4161a}
+form{display:grid;gap:10px;background:#fff8e8;padding:18px;border:1px solid #c8232c}
+label{font-weight:600} input,textarea,select{font:inherit;padding:10px;border:1px solid #777;width:100%;background:#fff;color:#111}
+button{font:inherit;font-weight:700;padding:12px;background:#c8232c;color:#fff;border:0;cursor:pointer}
+#ok{display:none;font-weight:700}
+footer{background:#a4161a;color:#fff4dc;text-align:center;padding:18px;font-size:.9rem}
+</style></head><body>
+<header><h1>Route 40 Diner</h1><div class="tag">Breakfast all day since 1998. Booths, bottomless coffee, real milkshakes.</div></header>
+<main>
+<section><h2>About us</h2><p>Hi, I'm Carol Dietrich. My husband and I opened Route 40 Diner in 1998 and I have run it for 28 years. Saturday morning is our rush: expect a 30 minute wait for a booth from 9 to 11. We ring everything up on Square POS, so we take cards, but we still keep the pie case stocked the old way. Call ahead for large parties, we do not take reservations online.</p></section>
+<section><h2>Hours</h2><table><tr><td>Mon - Fri</td><td>6:00 am - 8:00 pm</td></tr><tr><td>Saturday</td><td>6:00 am - 9:00 pm</td></tr><tr><td>Sunday</td><td>7:00 am - 3:00 pm</td></tr></table></section>
+<section><h2>Menu favorites</h2><table><tr><td>Two eggs any style, toast, home fries</td><td>$9.50</td></tr><tr><td>Buttermilk pancakes (short stack)</td><td>$8.25</td></tr><tr><td>Route 40 Burger with fries</td><td>$12.95</td></tr><tr><td>Hot turkey sandwich with gravy</td><td>$13.50</td></tr><tr><td>Chocolate milkshake</td><td>$6.50</td></tr><tr><td>Slice of pie</td><td>$5.25</td></tr></table><p>Catering trays for offices and church groups: ask Carol for a quote.</p></section>
+<section><h2>Find us</h2><p>8120 Baltimore National Pike, Ellicott City, MD 21043<br>Phone: <a href="tel:+13015550142">(301) 555-0142</a></p></section>
+<section><h2>Questions or large-party requests</h2>
+<form onsubmit="document.getElementById('ok').style.display='block';return false;">
+<label for="n">Your name</label><input id="n" name="name" required>
+<label for="p">Phone</label><input id="p" name="phone" type="tel" required>
+<label for="m">Tell us your party size and day</label><textarea id="m" name="message" rows="4"></textarea>
+<button type="submit">Send</button><div id="ok">Thanks! We'll call you back.</div>
+</form></section>
+</main>
+<footer>Fictional business for the MainStreet AI demo</footer>
+</body></html>

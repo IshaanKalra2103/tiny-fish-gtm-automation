@@ -1,0 +1,13 @@
+[project]
+name = "msapi"
+version = "0.1.0"
+description = "MainStreet AI API: owner workspaces, sandboxed agent turns, approvals, iMessage"
+requires-python = ">=3.12"
+dependencies = ["mstools", "fastapi>=0.115", "uvicorn>=0.32", "sse-starlette>=2.1"]
+
+[tool.uv.sources]
+mstools = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.8.4,<0.9.0"]
+build-backend = "uv_build"

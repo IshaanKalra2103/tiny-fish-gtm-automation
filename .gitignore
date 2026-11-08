@@ -29,10 +29,10 @@ runs/
 recordings/
 
 # Large media from the Loopcast deliverable and promo renders (keep local)
-deliverables/*.mp4
-deliverables/fframes/*.mp4
-promo/build/
-promo/__pycache__/
+legacy/loopcast/deliverables/*.mp4
+legacy/loopcast/deliverables/fframes/*.mp4
+legacy/loopcast/promo/build/
+legacy/loopcast/promo/__pycache__/
 
 # MainStreet AI runtime state
 workspaces/

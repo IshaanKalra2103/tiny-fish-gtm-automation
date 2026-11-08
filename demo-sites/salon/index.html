@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Main Street Shears - Westminster, MD</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:18px/1.6 'Jost',sans-serif;background:#fff7f5;color:#151515}
+header{background:#111111;color:#f8d9d4;padding:40px 20px;text-align:center;border-bottom:6px solid #e9b4ab}
+h1,h2{font-family:'Playfair Display',serif;margin:0 0 10px}
+h1{font-size:2.4rem;line-height:1.15} h2{font-size:1.6rem;color:#111111;border-bottom:2px solid #e9b4ab;padding-bottom:4px;margin-top:8px}
+main{max-width:760px;margin:0 auto;padding:10px 20px 30px}
+section{margin:28px 0}
+.tag{font-size:1.05rem;opacity:.9}
+table{width:100%;border-collapse:collapse} td{padding:6px 0;border-bottom:1px dotted #e9b4ab} td+td{text-align:right;white-space:nowrap;padding-left:12px}
+a{color:#8a3a30}
+form{display:grid;gap:10px;background:#fbe9e5;padding:18px;border:1px solid #e9b4ab}
+label{font-weight:600} input,textarea,select{font:inherit;padding:10px;border:1px solid #777;width:100%;background:#fff;color:#111}
+button{font:inherit;font-weight:700;padding:12px;background:#e9b4ab;color:#111;border:0;cursor:pointer}
+#ok{display:none;font-weight:700}
+footer{background:#111111;color:#f8d9d4;text-align:center;padding:18px;font-size:.9rem}
+</style></head><body>
+<header><h1>Main Street Shears</h1><div class="tag">Cuts, color and styling. Three chairs on Main Street.</div></header>
+<main>
+<section><h2>About us</h2><p>I'm Priya Shah. I opened Main Street Shears in 2016 and have been behind the chair for 14 years. We are a small team of three stylists. Call to book, we keep the schedule in an appointment book and answer the phone between clients, so leave a message if we are busy. Walk-ins are welcome when there is an open chair.</p></section>
+<section><h2>Hours</h2><table><tr><td>Tue - Fri</td><td>9:00 am - 7:00 pm</td></tr><tr><td>Saturday</td><td>8:00 am - 4:00 pm</td></tr><tr><td>Sun - Mon</td><td>Closed</td></tr></table></section>
+<section><h2>Services and prices</h2><table><tr><td>Women's cut and style</td><td>$62</td></tr><tr><td>Men's cut</td><td>$35</td></tr><tr><td>Kids' cut</td><td>$25</td></tr><tr><td>Single-process color</td><td>$95</td></tr><tr><td>Highlights</td><td>from $140</td></tr><tr><td>Blowout</td><td>$40</td></tr></table><p>Please give 24 hours notice to cancel an appointment.</p></section>
+<section><h2>Find us</h2><p>38 W Main Street, Westminster, MD 21157<br>Phone: <a href="tel:+14105550184">(410) 555-0184</a></p></section>
+<section><h2>Request an appointment</h2>
+<form onsubmit="document.getElementById('ok').style.display='block';return false;">
+<label for="n">Your name</label><input id="n" name="name" required>
+<label for="p">Phone</label><input id="p" name="phone" type="tel" required>
+<label for="m">Preferred day, time and service</label><textarea id="m" name="message" rows="4"></textarea>
+<button type="submit">Request appointment</button><div id="ok">Thanks! We'll call you back.</div>
+</form></section>
+</main>
+<footer>Fictional business for the MainStreet AI demo</footer>
+</body></html>
