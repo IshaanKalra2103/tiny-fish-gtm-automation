@@ -162,7 +162,7 @@ Running it weekly is the growth story. The 16-week version adds TinyFish Monitor
 
 ## 5. Demo businesses
 
-There are five fictional Maryland businesses, one per type, each with a one-page static site at `web/public/demo/<slug>/`:
+There are five fictional Maryland businesses, one per type, each with a one-page static site in `demo-sites/<slug>/`. The sites deploy as their own static Vercel project, so they have public URLs before the web app exists:
 - a diner (restaurant)
 - a coffee shop
 - a 2-van HVAC company
@@ -289,7 +289,7 @@ TinyFish Search and Fetch gather sources, and each claim is cited:
 3. On `aisb`, use this layout:
 
    ```
-   catalog/  sandbox/  api/  web/  imessage/  docs/  legacy/loopcast/
+   catalog/  sandbox/  api/  web/  demo-sites/  imessage/  docs/  legacy/loopcast/
    ```
 
 4. Move the following into `legacy/loopcast/`, and repoint or remove every reference to the old paths:
