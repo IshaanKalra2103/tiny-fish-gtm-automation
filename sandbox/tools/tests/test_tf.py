@@ -50,16 +50,56 @@ def test_search_returns_hits(env, monkeypatch, capsys):
     assert code == 0 and out["hits"][0]["url"] == "https://a.example"
 
 
+def approve(env, aid="ap_1", tool="chat-a", status="approved"):
+    d = env["work"] / "approvals"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / f"{aid}.json").write_text(json.dumps({"id": aid, "tool_id": tool, "summary": "s", "status": status,
+                                                "created_at": "2026-11-08T00:00:00Z"}))
+
+
+START = ("agent-start", "--url", "https://v.example", "--goal", "sign up", "--tool", "chat-a", "--approval", "ap_1")
+
+
+def test_agent_start_refuses_pending_approval(env, monkeypatch, capsys):
+    approve(env, status="pending")
+    fake = FakeClient()
+    code, out = call(monkeypatch, capsys, fake, *START)
+    assert code == 1 and "not approved" in out["error"] and fake.queued == []
+
+
+def test_agent_start_refuses_missing_approval(env, monkeypatch, capsys):
+    fake = FakeClient()
+    code, out = call(monkeypatch, capsys, fake, *START)
+    assert code == 1 and "approval request" in out["error"] and fake.queued == []
+
+
+def test_agent_start_refuses_approval_for_other_tool(env, monkeypatch, capsys):
+    approve(env, tool="chat-b")
+    fake = FakeClient()
+    code, out = call(monkeypatch, capsys, fake, *START)
+    assert code == 1 and "chat-b" in out["error"] and fake.queued == []
+
+
+def test_agent_start_refuses_reused_approval(env, monkeypatch, capsys):
+    approve(env)
+    fake = FakeClient()
+    assert call(monkeypatch, capsys, fake, *START)[0] == 0
+    code, out = call(monkeypatch, capsys, fake, *START)
+    assert code == 1 and "already used" in out["error"] and len(fake.queued) == 1
+
+
 def test_agent_start_refuses_when_budget_below_one_setup(env, monkeypatch, capsys):
+    approve(env)
     budget.charge(config.owner_budget(), "tinyfish_owner", 0.80, 1.50)
     fake = FakeClient()
-    code, out = call(monkeypatch, capsys, fake, "agent-start", "--url", "https://v.example", "--goal", "sign up")
+    code, out = call(monkeypatch, capsys, fake, *START)
     assert code == 1 and "Not enough budget" in out["error"] and fake.queued == []
 
 
 def test_agent_start_reserves_max_steps(env, monkeypatch, capsys):
+    approve(env)
     fake = FakeClient()
-    code, out = call(monkeypatch, capsys, fake, "agent-start", "--url", "https://v.example", "--goal", "sign up")
+    code, out = call(monkeypatch, capsys, fake, *START)
     assert code == 0 and out["run_id"] == "run_1"
     assert fake.queued[0]["agent_config"].max_steps == 45
     assert budget.spent(config.owner_budget(), "tinyfish_owner") == pytest.approx(0.72)

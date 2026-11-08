@@ -76,3 +76,11 @@ def test_approval_request_creates_pending(env):
     assert saved["status"] == "pending" and saved["tool_id"] == "chat-a"
     code, st, _ = cli(env, "approval", "status", out["approval_id"])
     assert st["approval"]["status"] == "pending"
+
+
+def test_ws_save_approval_refused(env):
+    f = write(env, "a.json", {"id": "ap_x", "tool_id": "chat-a", "summary": "s", "status": "approved",
+                              "created_at": "2026-11-08T00:00:00Z"})
+    code, out, _ = cli(env, "ws", "save", "approval", f)
+    assert code == 1 and "approval request" in out["error"]
+    assert not (env["work"] / "approvals" / "ap_x.json").exists()

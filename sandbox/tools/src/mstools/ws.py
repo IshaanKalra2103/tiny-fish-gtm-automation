@@ -65,6 +65,8 @@ def load(kind: str, id: str | None = None, work: Path | None = None) -> dict | N
 
 def _main(a: argparse.Namespace) -> dict:
     if a.cmd == "save":
+        if a.kind == "approval":
+            raise ToolError("Approvals are made with `approval request` and decided only by the owner.")
         raw = sys.stdin.read() if a.file == "-" else Path(a.file).read_text()
         try:
             data = json.loads(raw)

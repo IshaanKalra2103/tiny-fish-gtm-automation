@@ -15,10 +15,10 @@ When `ok` is false, read the error and tell the owner what it means in one plain
 
 | Command | Use it for |
 |---|---|
-| `ws save <kind> <file>`, `ws get <kind> [--id X]` | Save or read records: profile, needs, compare, preview, setup, approval. Write the JSON to `/work/tmp/<kind>.json` with the Write tool, then `ws save <kind> /work/tmp/<kind>.json`. |
+| `ws save <kind> <file>`, `ws get <kind> [--id X]` | Save or read records: profile, needs, compare, preview, setup (approvals are read-only: use `approval`). Write the JSON to `/work/tmp/<kind>.json` with the Write tool, then `ws save <kind> /work/tmp/<kind>.json`. |
 | `catalog needs --type T`, `catalog match --type T --need N [--works-with a,b]`, `catalog get <id>` | Jobs for a business type, and vetted tools for a job |
 | `tf fetch <url>...`, `tf search "<q>"` | Read the owner's website or a vendor page; search the web |
-| `tf agent-start --url U --goal G`, `tf agent-wait <run_id>` | A cloud browser that does a sign-up (setup skill only) |
+| `tf agent-start --url U --goal G --tool T --approval AP`, `tf agent-wait <run_id>` | A cloud browser that does a sign-up (setup skill only) |
 | `inbox create`, `inbox wait <addr> --since 10m` | A throwaway email inbox for a sign-up (setup skill only) |
 | `preview make --tool T --prompt P` | A short video of the tool doing its job in this business |
 | `approval request --tool T --summary S` | Ask the owner before creating any account |
