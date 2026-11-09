@@ -1,8 +1,8 @@
-# Recording brief: what Ishaan and [Friend] record
+# Recording brief: what Ishaan and Dylan record
 
 The video is due at 11:59 PM tonight. To leave time for the cut, render and upload, send footage by **9:45 PM**. Recording everything takes about 25 minutes.
 
-A = Ishaan. B = [Friend].
+A = Ishaan. B = Dylan.
 
 ## The film (9:45 total)
 
@@ -57,7 +57,7 @@ You don't need the exact words. Keep the meaning, and say every number exactly a
 
 **C2 (split screen: A records the A lines, B records the B lines)**:
 > A: I'm Ishaan.
-> B: And I'm [Friend]. We're Team Forge.
+> B: And I'm Dylan. We're Team Forge.
 > A: And we think this isn't a technology problem. It's a finding problem. One AI directory lists over fifty thousand tools, vendors pay for placement, and nobody helps you set anything up.
 > B: So we built MainStreet AI. Think Angie's List, but for AI tools. It reads your business, finds the jobs AI can take off your plate, compares tools we've actually checked, and if you say yes, it sets one up for you.
 
@@ -112,12 +112,10 @@ You don't need the exact words. Keep the meaning, and say every number exactly a
 **C7 (A, single)**:
 > Is this technically possible? It's running right now.
 
-**V12 (A)**, over a results card. Record both endings; I use the one that is true when I cut:
+**V12 (A)**, over a results card:
 > Today the live site ran real agent turns for a diner, an HVAC company and a salon, each in under a minute. The catalog went from 261 candidates to 85 approved tools. Our test coffee site has a planted instruction telling the agent to break its rules. It read it and ignored it.
 >
-> Ending 12a: And the setup agent signed up for a real tool, on its free plan, for our test business.
->
-> Ending 12b: And the setup agent got through a real sign-up, right up to the step that needs the owner.
+> And the setup agent filled in a real sign-up form in a cloud browser. When the site asked it to prove it was human, it stopped and handed that step to the owner, exactly as designed.
 
 **V13 (B)**, value:
 > Is it worth it? More than a quarter of home-services calls go unanswered, and each one can be a lost job. For the salon, our agent estimated that online booking alone would save about four hours a week. And owners who don't use AI told the Census they don't know what it can do. Finding, checking and setting up is exactly the gap we fill.
@@ -168,5 +166,5 @@ All on camera, singles, alternating. A timeline card builds beside you.
 
 ## Send me
 
-1. Ishaan: AirDrop your files to the Mac (they land in Downloads). [Friend]: upload yours to a Google Drive or iCloud folder and text Ishaan the link; he puts the files in `footage/` in the repo. Nobody renames anything: the clip numbers you said out loud are how I sort them.
-2. In the chat: [Friend]'s name as it should appear in the credits, and the coach's name and topic, or "no coach".
+1. Ishaan: AirDrop your files to the Mac (they land in Downloads). Dylan: upload yours to a Google Drive or iCloud folder and text Ishaan the link; he puts the files in `footage/` in the repo. Nobody renames anything: the clip numbers you said out loud are how I sort them.
+2. In the chat: Dylan's name as it should appear in the credits, and the coach's name and topic, or "no coach".
