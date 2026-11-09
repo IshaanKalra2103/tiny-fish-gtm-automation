@@ -308,7 +308,10 @@ do_start() {
       warn "could not set $VERCEL_VAR on Vercel; see scripts/.live/deploy.log"
     }
     if [[ $deploy_failed == 0 ]]; then
-      if deploy_url="$(cd "$ROOT/web" && without_secrets vercel deploy --prod --yes 2>>"$LIVE/deploy.log" | tail -1)" && [[ $deploy_url == https://* ]]; then
+      # Newer vercel CLIs end stdout with a JSON blob, so take the first deployment URL anywhere in it.
+      if deploy_out="$(cd "$ROOT/web" && without_secrets vercel deploy --prod --yes 2>>"$LIVE/deploy.log")" \
+        && printf '%s\n' "$deploy_out" >>"$LIVE/deploy.log" \
+        && deploy_url="$(grep -oE 'https://[a-z0-9.-]+\.vercel\.app' <<<"$deploy_out" | head -1)" && [[ -n $deploy_url ]]; then
         say "deployed: $deploy_url (production alias $WEB_URL)"
       else
         deploy_failed=1
