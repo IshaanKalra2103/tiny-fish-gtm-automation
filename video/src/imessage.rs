@@ -440,5 +440,18 @@ fn headline<'a>(frame: &mut Frame, ctx: &FFramesContext, p: &Value) -> Svgr<'a> 
     let sub_start = 0.25 + k as f32 * 0.11 + 0.15;
     let sy = y0 + lines.len() as f32 * lh + 30.0 + 38.0;
     let subtitle = reveal(frame, sub_start, lines_svg(&sub, x0 + 2.0, sy, 52.0, 40, 500, MUTED, "start", 0.0));
-    fframes::svgr!(<g>{words}{subtitle}</g>)
+    // optional footnote, bottom-left: a thin green rule and small muted text
+    let note = match sv(p, "note") {
+        Some(n) => {
+            let nl = wrap(frame, ctx, 24, 500, n, 760.0);
+            let nh = nl.len() as f32 * 34.0;
+            let ny = 1000.0 - nh;
+            reveal(frame, sub_start + 0.6, fframes::svgr!(<g>
+                <rect x={x0 + 2.0} y={ny - 4.0} width="4" height={nh} rx="2" fill={ACCENT} />
+                {lines_svg(&nl, x0 + 22.0, ny + 20.0, 34.0, 24, 500, MUTED, "start", 0.0)}
+            </g>))
+        }
+        None => Svgr::empty(),
+    };
+    fframes::svgr!(<g>{words}{subtitle}{note}</g>)
 }

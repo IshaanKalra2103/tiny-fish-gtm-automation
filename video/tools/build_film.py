@@ -407,8 +407,32 @@ else:
     missing.append("C2 split needs both C2 takes (Ishaan's and Dylan's); tag them C2A / C2B with --pick or rename")
 
 # ---- Part 1. The MVP ----------------------------------------------------------------------------
-section(1, "The MVP: a working product", "Live site, live agent, a real Maryland business")
+section(1, "Proof of concept: the MVP", "Text it or use the web: live agent, a real Maryland business")
 clip("C3", lower=ISHAAN)
+# iMessage first: it's the front door; the web is the view its link opens
+v8 = vo_parts("V8")
+IMSG = {"kind": "card", "style": "imessage", "contact": "MainStreet AI", "title": "Just text it.",
+        "subtitle": "No app, no login. The link opens the web view.", 
+        "note": "Demo note: our iMessage provider's free plan only answers numbers we approve, so iMessage is shown "
+                "here as a live demo and is not in the shareable link. Opening it to everyone needs a paid plan "
+                "(about $100). The web app link works for anyone.", "messages": [
+            {"from": "me", "type": True, "at": 1.6, "text": "I run a hair salon in Westminster MD, what AI could help me?"},
+            {"from": "them", "typing": 1.4, "at": 3.6, "text": "Here are four jobs AI can take off your plate at the salon:"},
+            {"from": "them", "at": 4.6, "list": ["Online booking and reminders (about 3 hrs a week)",
+                                                 "Social posts about your work (about 2 hrs a week)",
+                                                 "Replies to Google and Yelp reviews (about 1 hr a week)",
+                                                 "Texts to past clients (about 1 hr a week)"]},
+            {"from": "them", "at": 6.2, "text": "I'd start with booking. Want me to compare a few tools for it?"},
+            {"from": "them", "at": 7.6, "link": {"title": "Your salon's AI plan", "url": "mainstreet-ai-five.vercel.app"}}]}
+if v8:
+    IMSG["vo"] = vo_list(v8[0], 0.4)
+    IMSG["dur"] = round(max(11.0, v8[0]["dur"] + 1.0), 2)
+else:
+    IMSG["dur"] = 11.0
+if SFX.exists():
+    IMSG["sfx"] = [{"file": rel(SFX / ("send.wav" if m["from"] == "me" else "receive.wav")), "at": m["at"], "gain_db": -16}
+                   for m in IMSG["messages"]]
+seg("V8", **IMSG)
 v2 = vo_parts("V2")
 screen("V2", "intake", "focus box", "results", v2[0] if v2 else None)
 v3 = vo_parts("V3")
@@ -429,26 +453,6 @@ if v6:
 v7 = vo_or_silent("V7", 4.5)
 screen("V7", "helper", None, None, v7[0] if v7 else None,
        caption=None if v7 and v7[0].get("file") else "Prefer a person? A vetted local helper can set it up")
-v8 = vo_parts("V8")
-IMSG = {"kind": "card", "style": "imessage", "contact": "MainStreet AI", "title": "Or just text it.",
-        "subtitle": "No app. No login.", "messages": [
-            {"from": "me", "type": True, "at": 1.6, "text": "I run a hair salon in Westminster MD, what AI could help me?"},
-            {"from": "them", "typing": 1.4, "at": 3.6, "text": "Here are four jobs AI can take off your plate at the salon:"},
-            {"from": "them", "at": 4.6, "list": ["Online booking and reminders (about 3 hrs a week)",
-                                                 "Social posts about your work (about 2 hrs a week)",
-                                                 "Replies to Google and Yelp reviews (about 1 hr a week)",
-                                                 "Texts to past clients (about 1 hr a week)"]},
-            {"from": "them", "at": 6.2, "text": "I'd start with booking. Want me to compare a few tools for it?"},
-            {"from": "them", "at": 7.6, "link": {"title": "Your salon's AI plan", "url": "mainstreet-ai-five.vercel.app"}}]}
-if v8:
-    IMSG["vo"] = vo_list(v8[0], 0.4)
-    IMSG["dur"] = round(max(11.0, v8[0]["dur"] + 1.0), 2)
-else:
-    IMSG["dur"] = 11.0
-if SFX.exists():
-    IMSG["sfx"] = [{"file": rel(SFX / ("send.wav" if m["from"] == "me" else "receive.wav")), "at": m["at"], "gain_db": -16}
-                   for m in IMSG["messages"]]
-seg("V8", **IMSG)
 
 # ---- Part 2. How we approached building it ------------------------------------------------------
 section(2, "How we approached building it", "A checked catalog, an agent that does the work, rules in code")
@@ -477,13 +481,27 @@ if v11:
     ])
 clip("C6")
 
-# ---- Part 3. Evidence -------------------------------------------------------------------------
-section(3, "Evidence it works and is worth it")
+# ---- Part 3. The next 16 weeks ------------------------------------------------------------------
+section(3, "How we'd tackle it in 16 weeks", "Four blocks of four weeks")
+BLOCKS = [
+    {"label": "Weeks 1-4", "title": "Real owners", "line": "20 Maryland businesses with the SBDC"},
+    {"label": "Weeks 5-8", "title": "The catalog", "line": "Playbooks, owner reviews, monitoring"},
+    {"label": "Weeks 9-12", "title": "Scale", "line": "Hosted sandboxes, sign-in, Spanish"},
+    {"label": "Weeks 13-16", "title": "People", "line": "Local helpers and SBDC distribution"},
+]
+for k, cid in enumerate(["C9", "C10", "C11", "C12", "C13"]):
+    shown = [dict(b, at=0.0 if i < k - 1 else 0.6) for i, b in enumerate(BLOCKS) if i < k]
+    hidden = [dict(b, at=999.0) for i, b in enumerate(BLOCKS) if i >= k]
+    clip(cid, panel={"title": "The next 16 weeks", "blocks": shown + hidden})
+clip("C14")
+
+# ---- Part 4. Evidence -------------------------------------------------------------------------
+section(4, "Evidence it's technically possible and valuable", "It runs today, and it saves owners time")
 clip("C7")
 v12 = vo_parts("V12")
 if v12:
     p = v12[0]
-    seg("V12", kind="card", style="bullets", title="Tonight's real runs", check=True, vo=vo_list(p, 0.4), **cam_for(p, 0.4), items=[
+    seg("V12", kind="card", style="bullets", title="Proof it works: today's live runs", check=True, vo=vo_list(p, 0.4), **cam_for(p, 0.4), items=[
         {"text": "A diner, an HVAC company and a salon: each under a minute", "at": 0.8},
         {"text": "261 candidate tools in, 85 approved", "at": word_at(p, "catalog", 5.0) + 0.4},
         {"text": "A planted instruction to break the rules: read and ignored", "at": word_at(p, "planted", 9.0) + 0.4},
@@ -506,20 +524,6 @@ if take("C8"):
     clip("C8")
 elif "C8" in missing:
     missing.remove("C8")
-
-# ---- Part 4. The next 16 weeks ------------------------------------------------------------------
-section(4, "The next 16 weeks", "Four blocks of four weeks")
-BLOCKS = [
-    {"label": "Weeks 1-4", "title": "Real owners", "line": "20 Maryland businesses with the SBDC"},
-    {"label": "Weeks 5-8", "title": "The catalog", "line": "Playbooks, owner reviews, monitoring"},
-    {"label": "Weeks 9-12", "title": "Scale", "line": "Hosted sandboxes, sign-in, Spanish"},
-    {"label": "Weeks 13-16", "title": "People", "line": "Local helpers and SBDC distribution"},
-]
-for k, cid in enumerate(["C9", "C10", "C11", "C12", "C13"]):
-    shown = [dict(b, at=0.0 if i < k - 1 else 0.6) for i, b in enumerate(BLOCKS) if i < k]
-    hidden = [dict(b, at=999.0) for i, b in enumerate(BLOCKS) if i >= k]
-    clip(cid, panel={"title": "The next 16 weeks", "blocks": shown + hidden})
-clip("C14")
 
 # ---- Close --------------------------------------------------------------------------------------
 clip("C15", lower=ISHAAN)
