@@ -6,8 +6,8 @@ import { ApiError, decide, revealPassword } from "@/lib/api";
 
 export const HELPERS = [
   { name: "Maryland SBDC", url: "https://www.marylandsbdc.org", short: "Free one-on-one business advice.", what: "Free one-on-one business advice from the Maryland Small Business Development Center." },
-  { name: "SCORE", url: "https://www.score.org/find-mentor", short: "Free mentors who have run a business.", what: "Free mentors who have run their own businesses." },
-  { name: "SBA Baltimore District Office", url: "https://www.sba.gov/district/baltimore", short: "The U.S. small business office for Maryland.", what: "The U.S. Small Business Administration office that serves Maryland." },
+  { name: "SCORE", url: "https://www.score.org/find-mentor", short: "Free mentors who ran a business.", what: "Free mentors who have run their own businesses." },
+  { name: "SBA Baltimore District Office", url: "https://www.sba.gov/district/baltimore", short: "The U.S. small business office.", what: "The U.S. Small Business Administration office that serves Maryland." },
 ];
 
 const STATUS_TEXT: Record<string, string> = {

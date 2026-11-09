@@ -159,14 +159,14 @@ export default function BusinessView({ ownerId, demo }: { ownerId: string; demo?
 
   // A new approval waiting for the owner becomes the focused card.
   const pendingCount = pending.length;
-  const lastPending = useRef(pendingCount);
-  useEffect(() => {
-    if (live && pendingCount > lastPending.current) {
+  const [seenPending, setSeenPending] = useState(pendingCount);
+  if (pendingCount !== seenPending) {
+    setSeenPending(pendingCount);
+    if (live && pendingCount > seenPending) {
       const i = cards.findIndex((c) => c.kind === "setup");
       if (i >= 0) { setIndex(i); setMode("deck"); }
     }
-    lastPending.current = pendingCount;
-  }, [pendingCount, cards, live]);
+  }
 
   const at = Math.min(index, Math.max(cards.length - 1, 0));
   const go = useCallback((to: number) => {
@@ -196,6 +196,14 @@ export default function BusinessView({ ownerId, demo }: { ownerId: string; demo?
     try { await send("Set it up for me"); }
     catch (e) { setActionError(e instanceof ApiError ? e.message : "We could not reach our agent just now. Please try again in a minute."); }
     finally { setBusy(false); }
+  };
+
+  // Pinch in with two fingers on the deck to see every card at once, as in the reference video.
+  const pinch = useRef<number | null>(null);
+  const dist = (t: React.TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  const onTouchStart = (e: React.TouchEvent) => { pinch.current = e.touches.length === 2 ? dist(e.touches) : null; };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (pinch.current && e.touches.length === 2 && dist(e.touches) < pinch.current * 0.7) { pinch.current = null; setMode("overview"); }
   };
 
   const onDragEnd = (_: unknown, info: PanInfo) => {
@@ -376,7 +384,7 @@ export default function BusinessView({ ownerId, demo }: { ownerId: string; demo?
           <div><Pill>Free local help</Pill></div>
           <div className="mt-auto min-h-0 overflow-y-auto -mx-1 px-1 pt-1">
             <h2 className="text-[2.1rem] font-semibold text-white leading-[1.05]">Prefer a person?</h2>
-            <p className="mt-2 text-lg text-white/90">Free help from people in Maryland.</p>
+            <p className="mt-1 text-lg text-white/90">Free help in Maryland.</p>
             <ul className="mt-3 grid gap-2">
               {HELPERS.map((h) => (
                 <li key={h.name}>
@@ -404,7 +412,7 @@ export default function BusinessView({ ownerId, demo }: { ownerId: string; demo?
 
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="eyebrow truncate">MainStreet AI · {demo ? "Example business" : "Your business"}</p>
+            <p className="eyebrow truncate">{demo ? "Example business" : "Your business"}</p>
             <h1 className="text-2xl font-semibold mt-0.5 truncate">{profile?.name ?? "Getting to know your business"}</h1>
           </div>
           {bundle && !showWorking && mode === "deck" && (
@@ -467,7 +475,7 @@ export default function BusinessView({ ownerId, demo }: { ownerId: string; demo?
               </ol>
             </section>
           ) : current ? (
-            <section aria-label="Your cards" className="mt-4">
+            <section aria-label="Your cards" className="mt-4" onTouchStart={onTouchStart} onTouchMove={onTouchMove}>
               <div className="relative">
                 {/* The stacked edge: more cards are waiting behind this one. */}
                 {at < cards.length - 1 && <div aria-hidden className="absolute inset-x-5 -bottom-3 h-12 rounded-b-[28px] bg-[#2b2724] border border-white/10" />}
