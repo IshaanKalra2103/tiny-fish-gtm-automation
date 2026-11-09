@@ -211,9 +211,13 @@ rise 20 px and fade in with a spring; bullets and timeline blocks reveal on thei
 
 ## Speed
 
-Measured on the placeholder edit list (80.6 s, every kind): prep 12 s from cold, render 31 s
-(frames drawn on the GPU with Skia Metal; most of the time is libx264 at preset fast, CRF 18).
-A 10-minute film renders in roughly 4 minutes.
+- Placeholder edit list (83.6 s, every kind): prep 12 s from cold, render 31 s.
+- Stress test, 40 video segments (240 s of 1080p footage): render 104 s, peak memory 2.7 GB.
+- So a 10-minute film renders in about 4-5 minutes. Frames are drawn on the GPU (Skia Metal);
+  most of the time is the libx264 encode (preset fast, CRF 18).
+- Prep names intermediates by a hash of the ffmpeg command and source, so re-running after an
+  edit or a reorder only encodes what changed. It deletes intermediates the current film no
+  longer uses (so prepping another film.toml clears the first one's).
 
 ## Known limits
 

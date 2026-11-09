@@ -80,20 +80,23 @@ class Prep:
         return path
 
     def cached(self, name, cmd, sources):
-        """Run ffmpeg cmd producing media/<name> unless the cache key matches."""
-        out = self.media / name
-        self.used.add(name)
+        """Run ffmpeg cmd unless its output already exists. Files are named by a hash of the
+        command and the sources' size/mtime, so reordering segments rebuilds nothing; `name`
+        only picks the extension and a readable prefix."""
         key_src = [str(c) for c in cmd] + [f"{s}:{s.stat().st_size}:{s.stat().st_mtime}" for s in sources]
-        key = hashlib.sha1("\n".join(key_src).encode()).hexdigest()
-        keyf = self.media / (name + ".key")
-        self.used.add(name + ".key")
-        if out.exists() and keyf.exists() and keyf.read_text() == key:
-            return out
-        print(f"  build {name}", flush=True)
-        run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"] + [str(c) for c in cmd] + [str(out)])
-        keyf.write_text(key)
+        key = hashlib.sha1("\n".join(key_src).encode()).hexdigest()[:12]
+        stem, ext = os.path.splitext(name)
+        real = f"{stem.split('_', 1)[-1] if '_' in stem else 'v'}_{key}{ext}"
+        out = self.media / real
+        self.used.add(real)
+        if out.exists():
+            return real
+        print(f"  build {real}", flush=True)
+        tmp = self.media / f"tmp_{real}"
+        run(["ffmpeg", "-y", "-hide_banner", "-loglevel", "error"] + [str(c) for c in cmd] + [str(tmp)])
+        tmp.rename(out)
         self.n_built += 1
-        return out
+        return real
 
     # ---------------------------------------------------------------- video
     def fit_filter(self, info, tw, th):
@@ -129,8 +132,7 @@ class Prep:
         vf = f"[0:v]setpts=(PTS-STARTPTS)/{speed},fps={FPS},{fit},tpad=stop_mode=clone:stop_duration={length + 1}[v]"
         cmd = ["-ss", f"{t_in:.3f}", "-t", f"{src_len + 0.5:.3f}", "-i", path, "-filter_complex", vf, "-map", "[v]",
                "-t", f"{length:.4f}"] + self.venc()
-        self.cached(name, cmd, [path])
-        return tw, th
+        return self.cached(name, cmd, [path]), tw, th
 
     def split_video(self, name, seg, length):
         inputs, chains, sources = [], [], []
@@ -164,7 +166,7 @@ class Prep:
         chains.append(f"color=c=0x0e0e0e:s={W}x{H}:r={FPS}:d={length + 1:.3f}[bg]")
         chains.append(f"[bg][left]overlay=0:0:shortest=0[t];[t][right]overlay={W - SPLIT_W}:0,trim=duration={length:.4f}[v]")
         cmd = inputs + ["-filter_complex", ";".join(chains), "-map", "[v]", "-t", f"{length:.4f}"] + self.venc()
-        self.cached(name, cmd, sources)
+        return self.cached(name, cmd, sources)
 
     @staticmethod
     def split_pieces(side):
@@ -183,8 +185,8 @@ class Prep:
         cmd += ["-i", path, "-vn"]
         af = f"loudnorm=I={lufs}:TP=-2:LRA=11,aresample=48000" if normalize else "aresample=48000"
         cmd += ["-af", af, "-ac", "2", "-ar", "48000", "-c:a", "pcm_s16le"]
-        out = self.cached(name, cmd, [path])
-        return probe(out)["dur"]
+        real = self.cached(name, cmd, [path])
+        return real, probe(self.media / real)["dur"]
 
     def has_audio(self, file):
         return probe(self.src(file))["audio"]
@@ -208,7 +210,7 @@ class Prep:
                 for j, v in enumerate(seg.get(key, []) or []):
                     norm = key == "vo"
                     nm = f"{tag}_{key}{j}.wav"
-                    d = self.audio(nm, v["file"], normalize=norm)
+                    nm, d = self.audio(nm, v["file"], normalize=norm)
                     at = float(v.get("at", 0))
                     local_audio.append((nm, at, float(v.get("gain_db", default_gain)), voice))
                     ends.append(at + d)
@@ -226,12 +228,12 @@ class Prep:
                 dur = float(seg.get("dur", t_out - t_in))
                 panel = seg.get("panel")
                 tw = PANEL_W if panel else W
-                vw, vh = self.video(f"{tag}.mp4", seg["file"], t_in, dur, tw, H)
-                out.update(video=f"{tag}.mp4", vw=vw, vh=vh)
+                vname, vw, vh = self.video(f"{tag}_clip.mp4", seg["file"], t_in, dur, tw, H)
+                out.update(video=vname, vw=vw, vh=vh)
                 own = kind == "clip" or seg.get("audio", False)
                 if own and self.has_audio(seg["file"]):
                     nm = f"{tag}_a.wav"
-                    self.audio(nm, seg["file"], t_in, min(t_out, t_in + dur))
+                    nm, _ = self.audio(nm, seg["file"], t_in, min(t_out, t_in + dur))
                     local_audio.append((nm, 0.0, float(seg.get("gain_db", 0)), True))
                 if panel:
                     panel = dict(panel)
@@ -239,23 +241,23 @@ class Prep:
                     out["params"] = {**seg, "panel": panel}
             elif kind == "split":
                 dur = float(seg.get("dur") or die(f"seg {i}: split needs dur"))
-                self.split_video(f"{tag}.mp4", seg, dur)
-                out.update(video=f"{tag}.mp4", vw=W, vh=H)
+                vname = self.split_video(f"{tag}_split.mp4", seg, dur)
+                out.update(video=vname, vw=W, vh=H)
                 for side in ("left", "right"):
                     s = seg[side]
                     if not self.has_audio(s["file"]):
                         continue
                     for k, p in enumerate(self.split_pieces(s)):
                         nm = f"{tag}_{side}{k}.wav"
-                        self.audio(nm, s["file"], p["in"], p["out"])
+                        nm, _ = self.audio(nm, s["file"], p["in"], p["out"])
                         local_audio.append((nm, p["at"], float(s.get("gain_db", 0)), True))
             elif kind == "screen":
                 t_in = float(seg.get("in", 0))
                 speed = float(seg.get("speed", 1.0))
                 t_out = float(seg["out"]) if "out" in seg else probe(self.src(seg["file"]))["dur"]
                 dur = float(seg.get("dur", (t_out - t_in) / speed))
-                vw, vh = self.video(f"{tag}.mp4", seg["file"], t_in, dur, W, H, speed=speed, mode="screen")
-                out.update(video=f"{tag}.mp4", vw=vw, vh=vh)
+                vname, vw, vh = self.video(f"{tag}_screen.mp4", seg["file"], t_in, dur, W, H, speed=speed, mode="screen")
+                out.update(video=vname, vw=vw, vh=vh)
             elif kind == "card":
                 style = seg.get("style") or die(f"seg {i}: card needs style")
                 if "dur" in seg:
@@ -303,8 +305,8 @@ class Prep:
 
         music = film.get("music")
         if music:
-            self.audio("music.wav", music["file"], lufs=MUSIC_LUFS)
-            tracks.append({"file": "music.wav", "at": 0.0, "gain_db": float(music.get("gain_db", -20)),
+            mname, _ = self.audio("m_music.wav", music["file"], lufs=MUSIC_LUFS)
+            tracks.append({"file": mname, "at": 0.0, "gain_db": float(music.get("gain_db", -20)),
                            "voice": False, "music": True, "end": end / FPS})
         plan = {"source": str(self.film), "fps": FPS, "total_frames": end, "segments": plan_segs, "audio": tracks,
                 "dips": dips, "master_gain_db": float(film.get("master_gain_db", 2.0))}
