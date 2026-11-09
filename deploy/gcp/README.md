@@ -37,6 +37,7 @@ deploy/gcp/ctl.sh ssh [relay]           # shell on a VM through IAP
 deploy/gcp/ctl.sh logs [relay]          # msapi + idle timer logs, or relay logs
 deploy/gcp/ctl.sh relay-on | relay-off  # start or stop the iMessage relay (cutover)
 deploy/gcp/ctl.sh teardown --yes        # delete the budget and the whole project
+uv run --no-project deploy/gcp/smoke.py # health, POST /api/owners, one turn polled to done, with timings
 ```
 
 `push.sh` ships only what is committed: it runs `git archive HEAD`, copies the tarball over IAP, syncs it into
@@ -58,7 +59,10 @@ Response bodies are streamed (SSE and the poll route work). The waker passes hea
 X-Relay-Secret, ...) and sets `CF-Connecting-IP` to the last `X-Forwarded-For` hop, the client address Cloud Run
 appended, overwriting anything the client sent, because the API rate-limits per client on it.
 
-The iMessage relay calls the waker URL. A cold start (about 90 s) plus a turn can exceed the relay's 300 s timeout
+Measured on 2026-11-08: from a stopped VM, the waking health answer came back in 1 s, the API answered 56 s after
+the start, and a first turn finished 90 s after the first request (a warm turn took 28 s).
+
+The iMessage relay calls the waker URL. A cold start (about 60 s) plus a turn can exceed the relay's 300 s timeout
 (`imessage/src/relay.ts` `TIMEOUT_MS`). The unit sets `RELAY_TIMEOUT_MS=420000`, but `imessage/src/index.ts` does not
 read it yet: it needs `timeoutMs: Number(process.env.RELAY_TIMEOUT_MS) || undefined` in the `handleMessage` deps.
 

@@ -210,6 +210,10 @@ def create_app(waker: Waker, origins: set[str] | None = None) -> Starlette:
 
     async def handle(request: Request) -> Response:
         body = await request.body()
+        if request.method == "POST" and request.url.path == "/api/owners":
+            # Owner creation is rate-limited per client on this value, so log which address it was keyed on.
+            log.info("owner create: CF-Connecting-IP=%s (X-Forwarded-For has %d hop(s))", client_ip(request),
+                     len([h for h in request.headers.get("x-forwarded-for", "").split(",") if h.strip()]))
         if request.method == "GET" and request.url.path == HEALTH_PATH:
             return await health(request, body)
         for attempt in (1, 2):
