@@ -10,12 +10,12 @@ The four parts the rubric asks for each get a title card, so judges can check th
 
 | Time | Part | On screen | Voice |
 |---|---|---|---|
-| 0:00 to 1:15 | The problem | Ringing phone, number cards, both of you | B, then A |
+| 0:00 to 1:15 | The problem | Ringing phone, number cards, split screen of you both | B, then A |
 | 1:15 to 5:15 | 1. The MVP: proof of concept | Live site screen recordings, iMessage on a phone | A and B voice-over, 2 short camera bridges |
 | 5:15 to 6:45 | 2. How we approached building it | Architecture and catalog diagrams, code | A and B |
 | 6:45 to 7:55 | 3. Evidence it works and is worth it | Results cards from tonight's real runs | A and B |
 | 7:55 to 9:20 | 4. The next 16 weeks | You two on camera, a timeline card building beside you | A and B alternate |
-| 9:20 to 9:45 | Who built what | Both of you | A and B |
+| 9:20 to 9:45 | Who built what | Split screen of you both | A and B |
 
 About 3.5 minutes of this is you on camera. The rest is voice-over on screen recordings, which I capture myself.
 
@@ -26,7 +26,14 @@ Camera (on-camera clips, marked C):
 - Lens at eye level, about 1.2 m away. Frame from mid-chest up, with a little space above the head.
 - Face a window or lamp. Never put a window behind you.
 - Same spot and same clothes for every clip, so I can cut between them.
-- Two-shot clips (both of you): sit or stand side by side, A on the left.
+- Record 1080p, not 4K: smaller files upload faster and the film is 1080p anyway.
+
+Recording apart (you are not in the same place):
+- Each of you records only your own lines, on your own phone, whenever suits you. Nobody needs to be on a call.
+- Match each other so the cuts look like one film. Both stand (or both sit), lens at eye level, about 1.2 m away, light from a window in front, a plain wall or a tidy room behind, no strong colored light.
+- Sit or stand in the middle of the frame with space on both sides. The split-screen clips (C2 and C15) keep the middle half of each frame, so your head and shoulders must fit there.
+- Before recording, each of you takes one photo from your camera spot and texts it to the other. Fix anything that looks very different (one much darker, one much closer). It takes a minute.
+- Split-screen dialogue (C2, C15): say your own lines only, with a two-second pause between them, looking into the lens. I time the back-and-forth in the edit.
 
 Voice-over (clips marked V):
 - Record in the same quiet room with Voice Memos, phone about 30 cm from your mouth. Not AirPods: their mic sounds thin.
@@ -48,7 +55,7 @@ You don't need the exact words. Keep the meaning, and say every number exactly a
 **V1 (B)**, over the number cards:
 > Invoca, a call-tracking company, found that 27 percent of calls to home-services businesses go unanswered. AI can answer the phone today. So why isn't Dave using it? Census data says only about one in five U.S. businesses used AI in the past two weeks. And of the firms not planning to, 22 percent said they don't know what AI can do.
 
-**C2 (A and B, two-shot)**:
+**C2 (split screen: A records the A lines, B records the B lines)**:
 > A: I'm Ishaan.
 > B: And I'm [Friend]. We're Team Forge.
 > A: And we think this isn't a technology problem. It's a finding problem. One AI directory lists over fifty thousand tools, vendors pay for placement, and nobody helps you set anything up.
@@ -141,15 +148,15 @@ All on camera, singles, alternating. A timeline card builds beside you.
 
 ## Part 5. Who built what (9:20 to 9:45)
 
-**C15 (A and B, two-shot)**. Each says one plain sentence about their own part. The rubric scores each member's contribution.
+**C15 (split screen: each of you records your own lines)**. Each says one plain sentence about their own part. The rubric scores each member's contribution.
 > A: I built [your part, e.g. "the agent, the sandbox it runs in, and the setup flow"].
 > B: I built [your part].
 > A: Thanks to [Coach name] for coaching us on [topic]. (Drop this line if nobody coached you.)
-> Both: Thanks for watching.
+> A and B (each records it): Thanks for watching.
 
 ## B-roll (phone, 10 minutes)
 
-1. **Ringing phone.** A phone face up on a table or car seat, ringing, nobody answers. Call it from the other phone. 10 seconds, landscape. If easy, add 5 seconds of hands busy with tools or wiping a counter.
+1. **Ringing phone.** A phone face up on a table or car seat, ringing, nobody answers. Ishaan records it; anyone can call the phone (or set an alarm with a ringtone sound). 10 seconds, landscape. If easy, add 5 seconds of hands busy with tools or wiping a counter.
 2. **iMessage, as an iPhone screen recording** (B's phone). Text the MainStreet line, +1 415 225 0168: "I run a hair salon in Westminster MD, what AI could help me?" Keep recording until the replies arrive (about a minute), then tap the link and let the page load. The relay is running on the Mac now.
 3. **Optional.** Over the shoulder of both of you at a laptop on the site, 10 seconds.
 
@@ -161,5 +168,5 @@ All on camera, singles, alternating. A timeline card builds beside you.
 
 ## Send me
 
-1. AirDrop every file to the Mac (it lands in Downloads). Don't rename anything; the clip numbers you said out loud are how I sort them.
+1. Ishaan: AirDrop your files to the Mac (they land in Downloads). [Friend]: upload yours to a Google Drive or iCloud folder and text Ishaan the link; he puts the files in `footage/` in the repo. Nobody renames anything: the clip numbers you said out loud are how I sort them.
 2. In the chat: [Friend]'s name as it should appear in the credits, and the coach's name and topic, or "no coach".
