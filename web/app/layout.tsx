@@ -17,13 +17,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${fraunces.variable} ${source.variable}`}>
       <body className="min-h-screen flex flex-col overflow-x-hidden">
         <header className="border-b border-line">
-          <div className="mx-auto max-w-5xl px-4 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-1">
-            <Link href="/" className="font-serif text-2xl font-semibold text-ink no-underline py-2">
+          <div className="mx-auto max-w-5xl px-4 py-1 flex items-center justify-between gap-x-4">
+            <Link href="/" className="text-xl font-semibold text-ink no-underline py-2.5 whitespace-nowrap">
               {APP_NAME}
             </Link>
-            <nav aria-label="Main" className="flex gap-5">
-              <Link href="/demo" className="py-2 text-ink">Example businesses</Link>
-              <Link href="/catalog" className="py-2 text-ink">Tool catalog</Link>
+            <nav aria-label="Main" className="flex gap-4 text-base">
+              <Link href="/demo" className="py-2.5 text-ink/90 no-underline hover:underline">Examples</Link>
+              <Link href="/catalog" className="py-2.5 text-ink/90 no-underline hover:underline">Tool catalog</Link>
             </nav>
           </div>
         </header>

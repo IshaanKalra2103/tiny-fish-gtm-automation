@@ -4,10 +4,10 @@ import type { OwnerBundle } from "@/lib/types";
 import { toolById } from "@/lib/catalog";
 import { ApiError, decide, revealPassword } from "@/lib/api";
 
-const HELPERS = [
-  { name: "Maryland SBDC", url: "https://www.marylandsbdc.org", what: "Free one-on-one business advice from the Maryland Small Business Development Center." },
-  { name: "SCORE", url: "https://www.score.org/find-mentor", what: "Free mentors who have run their own businesses." },
-  { name: "SBA Baltimore District Office", url: "https://www.sba.gov/district/baltimore", what: "The U.S. Small Business Administration office that serves Maryland." },
+export const HELPERS = [
+  { name: "Maryland SBDC", url: "https://www.marylandsbdc.org", short: "Free one-on-one business advice.", what: "Free one-on-one business advice from the Maryland Small Business Development Center." },
+  { name: "SCORE", url: "https://www.score.org/find-mentor", short: "Free mentors who have run a business.", what: "Free mentors who have run their own businesses." },
+  { name: "SBA Baltimore District Office", url: "https://www.sba.gov/district/baltimore", short: "The U.S. small business office for Maryland.", what: "The U.S. Small Business Administration office that serves Maryland." },
 ];
 
 const STATUS_TEXT: Record<string, string> = {
@@ -19,7 +19,7 @@ const STATUS_TEXT: Record<string, string> = {
   failed: "This did not work",
 };
 
-function Approval({ ownerId, a, onTurn }: { ownerId: string; a: OwnerBundle["approvals"][number]; onTurn: (id: string) => void }) {
+export function Approval({ ownerId, a, onTurn }: { ownerId: string; a: OwnerBundle["approvals"][number]; onTurn: (id: string) => void }) {
   const [state, setState] = useState<"idle" | "busy" | "sent" | "already" | "error">("idle");
   const [already, setAlready] = useState("");
   const [problem, setProblem] = useState("");
@@ -40,7 +40,7 @@ function Approval({ ownerId, a, onTurn }: { ownerId: string; a: OwnerBundle["app
     }
   };
   return (
-    <div className="card p-5 border-2 border-accent">
+    <div className="rounded-2xl p-5 border-2 border-accent bg-black/40">
       <h3 className="text-xl font-semibold">Ready to set up {name}</h3>
       <p className="mt-2">{a.summary}</p>
       <div className="mt-4 flex flex-wrap gap-3">
@@ -54,12 +54,12 @@ function Approval({ ownerId, a, onTurn }: { ownerId: string; a: OwnerBundle["app
   );
 }
 
-function Record({ ownerId, s, live }: { ownerId: string; s: OwnerBundle["setups"][string]; live: boolean }) {
+export function SetupRecordView({ ownerId, s, live }: { ownerId: string; s: OwnerBundle["setups"][string]; live: boolean }) {
   const [pw, setPw] = useState<string | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const name = toolById(s.tool_id)?.name ?? s.tool_id;
   return (
-    <div className="card p-5">
+    <div className="rounded-2xl p-5 bg-black/40 border border-white/15">
       <p className="eyebrow">{name}</p>
       <h3 className="text-xl font-semibold mt-1">{STATUS_TEXT[s.status] ?? s.status}</h3>
       {s.status === "needs_owner" && s.handoff_reason && <p className="mt-2">{s.handoff_reason}</p>}
@@ -103,7 +103,7 @@ export default function SetupPanel({ ownerId, bundle, live, onTurn }: { ownerId:
   return (
     <div className="grid gap-4">
       {live && pending.map((a) => <Approval key={a.id} ownerId={ownerId} a={a} onTurn={onTurn} />)}
-      {records.map((s) => <Record key={s.tool_id} ownerId={ownerId} s={s} live={live} />)}
+      {records.map((s) => <SetupRecordView key={s.tool_id} ownerId={ownerId} s={s} live={live} />)}
       {!live && records.length === 0 && <p className="text-soft">In a live session, we can set a tool up for you after you say yes.</p>}
       <div className="card p-5">
         <h3 className="text-xl font-semibold">Find me a local helper</h3>

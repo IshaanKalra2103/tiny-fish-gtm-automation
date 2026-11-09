@@ -4,7 +4,11 @@ test("demo flow", async ({ page }) => {
   await page.goto("/demo");
   await page.getByRole("link", { name: /Bean & Brick Coffee/ }).click();
   await expect(page).toHaveURL(/\/b\/demo-coffee/);
+  // The owner page is a deck of cards; "See all" shows every job at once.
+  await page.getByRole("button", { name: "See all" }).click();
   expect(await page.getByTestId("need-item").count()).toBeGreaterThanOrEqual(3);
+  await page.getByTestId("need-item").first().click();
+  await page.getByRole("button", { name: "Compare tools" }).click();
   const cards = page.getByTestId("tool-card");
   expect(await cards.count()).toBeGreaterThanOrEqual(2);
   const n = await cards.count();
@@ -78,6 +82,7 @@ test("chat shows the API's 429 detail", async ({ page }) => {
     if (m === "POST" && p === "/api/owners/o_test000001/turns") return { status: 429, body: { detail: BUSY_ALL } };
   });
   await page.goto("/b/o_test000001");
+  await page.getByRole("button", { name: "Ask us a question" }).click();
   await page.getByLabel("Ask a follow-up").fill("hello");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByRole("alert").filter({ hasText: BUSY_ALL })).toBeVisible();

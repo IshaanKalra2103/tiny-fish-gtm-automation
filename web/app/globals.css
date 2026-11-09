@@ -1,53 +1,82 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-paper: #f7f3ea;
-  --color-card: #fffdf8;
-  --color-ink: #1d1b18;
-  --color-muted: #555047;
-  --color-soft: #565047;
-  --color-line: #ddd4c2;
-  --color-accent: #1f4d3a;
-  --color-accent-dark: #163a2b;
-  --color-accent-tint: #e3eee6;
-  --color-amber-tint: #fbeccb;
-  --color-amber-ink: #6a4200;
-  --color-grey-tint: #e8e4da;
-  --color-grey-ink: #3b3731;
-  --color-brick: #8f2d1d;
-  --font-serif: var(--font-fraunces), Georgia, serif;
+  --color-paper: #141312;
+  --color-card: #1f1d1b;
+  --color-ink: #f4f0e8;
+  --color-muted: #c4bdb0;
+  --color-soft: #bdb6a8;
+  --color-line: #3a3632;
+  --color-accent: #f39a4c;
+  --color-accent-dark: #ffc58f;
+  --color-accent-tint: #3b2716;
+  --color-amber-tint: #3a3014;
+  --color-amber-ink: #f6d684;
+  --color-grey-tint: #2d2a27;
+  --color-grey-ink: #e2dccf;
+  --color-brick: #ff9a85;
+  --font-serif: var(--font-source), system-ui, sans-serif;
   --font-sans: var(--font-source), system-ui, sans-serif;
 }
 
-html { font-size: 18px; }
+html { font-size: 18px; background: var(--color-paper); color-scheme: dark; }
 body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
   line-height: 1.6;
 }
-h1, h2, h3 { font-family: var(--font-serif); line-height: 1.15; letter-spacing: -0.01em; }
+h1, h2, h3 { font-family: var(--font-sans); line-height: 1.12; letter-spacing: -0.015em; }
 a { color: var(--color-accent); text-underline-offset: 3px; }
-:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; border-radius: 4px; }
+:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; border-radius: 6px; }
 img, video { max-width: 100%; }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
-  min-height: 48px; padding: .6rem 1.4rem; border-radius: 6px; font-weight: 600;
+  min-height: 52px; padding: .6rem 1.4rem; border-radius: 999px; font-weight: 600;
   border: 2px solid var(--color-accent); cursor: pointer; text-decoration: none; text-align: center;
+  transition: transform .15s ease, background-color .15s ease;
 }
-.btn-primary { background: var(--color-accent); color: #fff; }
-.btn-primary:hover { background: var(--color-accent-dark); }
-.btn-secondary { background: transparent; color: var(--color-accent); }
-.btn-secondary:hover { background: var(--color-accent-tint); }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--color-accent); color: #1a1109; }
+.btn-primary:hover { background: #ffad66; }
+.btn-secondary { background: transparent; color: var(--color-ink); border-color: #5a544c; }
+.btn-secondary:hover { background: #2a2724; }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 .field {
-  width: 100%; min-height: 48px; padding: .7rem .9rem; border: 2px solid #8a8272;
-  border-radius: 6px; background: #fff; color: var(--color-ink); font: inherit;
+  width: 100%; min-height: 52px; padding: .7rem 1rem; border: 2px solid #5a544c;
+  border-radius: 14px; background: #1a1917; color: var(--color-ink); font: inherit;
 }
-.card { background: var(--color-card); border: 1px solid var(--color-line); border-radius: 8px; }
+.field::placeholder { color: #9d968a; }
+.card { background: var(--color-card); border: 1px solid var(--color-line); border-radius: 20px; }
 .chip {
-  display: inline-block; padding: .1rem .6rem; border-radius: 999px; font-size: .85rem;
+  display: inline-block; padding: .15rem .7rem; border-radius: 999px; font-size: .85rem;
   background: var(--color-grey-tint); color: var(--color-grey-ink);
 }
 .eyebrow { font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--color-soft); font-weight: 600; }
+
+/* Frosted glass used on the owner deck. */
+.glass {
+  background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(255, 255, 255, .16);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+.glass-dark {
+  background: rgba(20, 19, 18, .72);
+  border: 1px solid rgba(255, 255, 255, .12);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+.warm-bg {
+  background:
+    radial-gradient(120% 80% at 20% 10%, #8a4a22 0%, transparent 60%),
+    radial-gradient(100% 70% at 90% 90%, #5a2f1a 0%, transparent 65%),
+    linear-gradient(160deg, #3a2a20, #1d1714);
+}
+@keyframes soft-pulse { 0%, 100% { opacity: .55; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.06); } }
+.soft-pulse { animation: soft-pulse 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .soft-pulse { animation: none; } .btn { transition: none; } }
+
+/* On a phone the owner deck needs the whole screen; the site header comes back on wider screens. */
+@media (max-width: 640px) { body:has([data-deck]) > header { display: none; } }
