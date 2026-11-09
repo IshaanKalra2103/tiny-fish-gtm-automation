@@ -1,50 +1,54 @@
-# photon
+# imessage: MainStreet AI iMessage relay
 
-The iMessage interface for the GTM harness, via [Photon Spectrum](https://photon.codes/docs/spectrum-ts) (Photon project `gtm-automation`, Free plan, shared-pool line).
+Owners can text the MainStreet AI agent at the Photon line (+1 415 225 0168). This folder is the relay between that line and the agent API, built on [Photon Spectrum](https://photon.codes/docs/spectrum-ts) (`spectrum-ts`). It carries no model logic.
 
-## How it fits the harness
+## What it does
 
-The harness is the brain, and the interface carries no model logic. Paperclip (v2026.916 and later) has a native, experimental `imessage-photon` chat channel:
+For each incoming text message:
 
-- **How messages arrive:** it streams iMessages from Photon over gRPC, so it needs no public URL or inbound port.
-- **Who handles them:** each conversation becomes a task for one bound agent. That's the **GTM Orchestrator**, so you can text it to start a campaign, check status or approve.
-- **What gets sent back:** the agent's replies go back to the thread. Board comments stay internal, and publishing still needs a board approval.
-- **Runtime:** the bound agent can use any adapter (`claude_local`, `codex_local`, ...). Nothing here depends on the model or runtime.
+1. `from_hash = sha256(message.sender.id)`. The sender id is the Apple address (phone number or email).
+2. `POST ${AGENT_API_URL}/api/imessage` with `{from_hash, text}` and the `X-Relay-Secret: $MS_RELAY_SECRET` header. The call waits up to 300 s, because the API gives a turn up to about 280 s.
+3. On 200 `{replies, link}`, it sends each reply (at most 3) 3 s apart, then the link to the owner's page (`/b/o_...`).
+4. On 429 it sends the `detail` text, for example "Give me a few seconds between texts."
+5. On any other error (401, 5xx, timeout, API down, bad response), it sends "Sorry, something broke on our side. Try again in a minute."
 
-`connect_paperclip.py` wires the channel. It's idempotent, prints one JSON line and never prints secrets:
+It ignores its own outgoing messages, non-text messages (attachments, reactions and so on) and empty texts. Texts longer than 2000 characters are cut to 2000, the API's limit. A typing indicator shows while the agent works, where Photon supports it.
 
-```sh
-uv run photon/connect_paperclip.py            # bind to the orchestrator
-uv run photon/connect_paperclip.py --status   # report only
-uv run photon/connect_paperclip.py --agent qa # bind to another org.yaml agent key
-```
+The logs carry only the first 12 characters of the sender hash, the outcome and the timing. They never contain a phone number, an email or message text.
 
-What it reads:
-- `harness/state/integration.env`, written by `harness/bootstrap.py`
-- `photon/.env`, which holds `PROJECT_ID` and `PROJECT_SECRET`
+## Files
 
-What it does:
-1. Turns on `enableChatConnectors`.
-2. Creates the endpoint and checks the Photon project.
-3. Configures the shared allocation. The secret goes only to Paperclip's vault.
-4. Sets short, human-sounding iMessage reply instructions and verifies the endpoint.
+- `src/relay.ts`: the handler, `handleMessage(message, {apiUrl, secret, fetch, send, sleep, typing, log})`. It has no Photon dependency, so it can be tested on its own.
+- `src/index.ts`: connects to Photon and calls `handleMessage` for each message, each in its own task so that a slow turn never blocks other senders.
+- `test/relay.test.ts`: unit tests with a fake `fetch`, `send` and `sleep`.
+- `test/api.test.ts`: tests against a real local API running the fake agent. They are skipped unless `RELAY_TEST_API_URL` is set.
+- `send_rich.mjs`, `send_image.mjs`, `connect_paperclip.py`: left over from the earlier GTM project, and not used by the relay.
 
-**One-time steps for the user:** text the line, confirm your identity from the link you get back, then finish the test at `http://localhost:3100/apps/chat/<endpointId>/settings`.
-
-## Smoke test (Spectrum echo)
-
-`src/index.ts` is a standalone echo loop for checking the Photon line and credentials. **Stop it before connecting the Paperclip channel**, or both will reply.
+## Run
 
 ```sh
 npm install
-npm run start   # tsx --env-file=.env; replies "echo: <text>"
+AGENT_API_URL=http://127.0.0.1:8787 MS_RELAY_SECRET=<same as the API> npm start
+```
+
+`scripts/live.sh` starts the relay for you, with a fresh secret shared with the API. Only one consumer may read the Photon line. Make sure the old `gtm-paperclip` container is stopped (`docker ps --format '{{.Names}}' | grep -x gtm-paperclip` should print nothing), or both will reply.
+
+## Test
+
+```sh
+npm test        # unit tests; the API tests are skipped
+npm run typecheck
+```
+
+To run the API tests too, start the API with the fake agent from the repo root, then run the tests:
+
+```sh
+MS_RUNNER=fake MS_API_PORT=8788 MS_WORKSPACES=/tmp/ms/ws MS_BUDGET_DIR=/tmp/ms/budget MS_RELAY_SECRET=test uv run msapi
+cd imessage && RELAY_TEST_API_URL=http://127.0.0.1:8788 RELAY_TEST_SECRET=test npm test
 ```
 
 ## Environment
 
-`.env` is gitignored, and `create-spectrum-project` fills it in through the Photon CLI. Don't echo it.
-
-- `PROJECT_ID`
-- `PROJECT_SECRET`
-
-These come from your project Settings on the [Photon dashboard](https://app.photon.codes). To manage the project from a terminal, use `npx -y @photon-ai/cli@latest` (`whoami`, `spectrum users list`, `spectrum lines list`, `projects regenerate-secret`).
+- `PROJECT_ID`, `PROJECT_SECRET`: the Photon project credentials, kept in `.env`. That file is gitignored; don't print it. Get the values from the [Photon dashboard](https://app.photon.codes).
+- `AGENT_API_URL`: the agent API. The default is `http://127.0.0.1:8787`.
+- `MS_RELAY_SECRET`: must match the API's `MS_RELAY_SECRET`. If it doesn't, the API answers 401 and owners get the sorry text.

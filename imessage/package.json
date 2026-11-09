@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "tsx --env-file=.env src/index.ts",
-    "dev": "tsx watch --env-file=.env src/index.ts"
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "spectrum-ts": "^12.10.1"
