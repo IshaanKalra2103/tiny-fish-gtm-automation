@@ -14,6 +14,7 @@ Numbers from tonight's catalog run. Each maps to a field printed by `mscatalog s
 
 | Placeholder | What it is |
 |---|---|
+| Team | Team Forge. No per-member workstreams: the credits name the team and its members together. |
 | `{{CANDIDATES}}` | `candidates N`: candidate tools found by discovery |
 | `{{VETTED}}` | `vetted N`: tools that got a trust score |
 | `{{FAILED_TRUST_PCT}}` | `stats` prints no percent, so compute it: `unknown` from the `badges (vetted)` line divided by `vetted`, times 100, rounded. That is the share scoring under 50 or with no identifiable builder. If you would rather count Caution too, change the narration to "didn't reach Verified". |
@@ -32,10 +33,6 @@ Team and demo details:
 
 | Placeholder | What it is |
 |---|---|
-| `[Name A]` | Workstream A, agent core: tool CLIs, sandbox, API (plan Tasks 1, 2, 3, 4, 5, 8, 9) |
-| `[Name B]` | Workstream B, catalog and research: discovery pipeline, human review, research doc (Tasks 10, 11) |
-| `[Name C]` | Workstream C, web and demos: demo sites, Next.js app, demo bundles (Tasks 6, 12, 13) |
-| `[Name D]` | Workstream D, adoption and launch: vendor playbook, iMessage, tunnel and deploy, video (Tasks 7, 14, 15, 16) |
 | `[Coach name]`, `[coaching topic]` | Anyone who coached the team. The rules require crediting coaching. If nobody did, delete the line and say so on the credits card. |
 | `[Real business name]`, `[Real business URL]`, `[town]` | The real Maryland small business used for live intake in beat 2a. Pick a public website that `tf fetch` can read (not Facebook-only). Intake only reads it; no account is created for a real business. |
 | `[Phone owner]` | Whoever holds the test phone in beat 2g |
@@ -225,9 +222,9 @@ Checked on https://mainstreet-ai-five.vercel.app at about 7:40 PM with headless 
 
 ### Beat 6. Who built what (9:30 to 10:00)
 
-> [Name A] built the agent core: the tools, the sandbox and the server. [Name B] built the catalog pipeline and did the research. [Name C] built the web app and the example businesses. [Name D] built the setup playbook, iMessage and the launch, and put this video together. Thanks to [Coach name] for coaching us on [coaching topic]. Thanks for watching.
+> MainStreet AI was built by Team Forge: the agent and its tools, the vetted catalog, the web app, iMessage and the launch. Thanks to [Coach name] for coaching us on [coaching topic]. Thanks for watching.
 
-- Show: credits card, one row per workstream: "[Name A]: agent core, tool CLIs, sandbox, API" / "[Name B]: catalog pipeline, human review, research" / "[Name C]: web app, demo businesses" / "[Name D]: setup playbook, iMessage, deploy, video" / "Coaching: [Coach name], [coaching topic]" / the judges' link `https://mainstreet-ai-five.vercel.app`.
+- Show: credits card: "Team Forge" with the members' names / "Coaching: [Coach name], [coaching topic]" / the judges' link `https://mainstreet-ai-five.vercel.app`.
 - Better, if time allows: each member says their own sentence on camera or in voice-over (the Presentation score asks for each member's contribution).
 - Fallback: none needed.
 
@@ -258,7 +255,7 @@ Checked on https://mainstreet-ai-five.vercel.app at about 7:40 PM with headless 
 | 19 | 7:05 | `settings.json`, `touch /decisions/x` refused, CLAUDE.md safety rules | Editor and terminal | No | Architecture diagram, zoomed on `/decisions` |
 | 20 | 7:45 | 16-week plan list card | Title card | No | None needed |
 | 21 | 9:00 | "Why not OpenAI or Anthropic" card | Title card | No | None needed |
-| 22 | 9:30 | Credits card with workstreams, coaching and the link | Title card | No | None needed |
+| 22 | 9:30 | Credits card with Team Forge, coaching and the link | Title card | No | None needed |
 
 ## Recording checklist
 
@@ -289,7 +286,7 @@ Have every fallback in place before you start:
 
 Fill the placeholders:
 - [ ] `{{CANDIDATES}}`, `{{VETTED}}`, `{{FAILED_TRUST_PCT}}`, `{{APPROVED}}`, `{{APPROVED_PER_JOB}}` in beat 3b and in `docs/video/catalog-pipeline.html`; `{{READ}}`, `{{EXTRACTED}}`, `{{SIMTESTED}}` in the HTML (or `""`).
-- [ ] `[Name A]` to `[Name D]`, `[Coach name]`, `[coaching topic]`, `[Real business name]`, `[Real business URL]`, `[town]`, `[Phone owner]`.
+- [ ] Team Forge member names on the credits card, `[Coach name]`, `[coaching topic]`, `[Real business name]`, `[Real business URL]`, `[town]`, `[Phone owner]`.
 - [ ] Search this file for `{{` and `[Name` before recording the narration.
 
 Record and edit:

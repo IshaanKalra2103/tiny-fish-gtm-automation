@@ -74,9 +74,9 @@ export async function decide(
   ownerId: string,
   approvalId: string,
   decision: "approve" | "reject",
-): Promise<{ turn_id?: string; already?: boolean }> {
-  const { status, json } = await post<{ turn_id?: string }>(`/api/owners/${ownerId}/approvals/${approvalId}`, { decision });
-  if (status === 409) return { already: true };
+): Promise<{ turn_id?: string; already?: string }> {
+  const { status, json } = await post<{ turn_id?: string; detail?: string }>(`/api/owners/${ownerId}/approvals/${approvalId}`, { decision });
+  if (status === 409) return { already: json?.detail ?? "Already decided" };
   if (status >= 400) throw new Error("Could not record your answer");
   return json ?? {};
 }

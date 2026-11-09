@@ -21,12 +21,16 @@ const STATUS_TEXT: Record<string, string> = {
 
 function Approval({ ownerId, a, onTurn }: { ownerId: string; a: OwnerBundle["approvals"][number]; onTurn: (id: string) => void }) {
   const [state, setState] = useState<"idle" | "busy" | "sent" | "already" | "error">("idle");
+  const [already, setAlready] = useState("");
   const name = toolById(a.tool_id)?.name ?? a.tool_id;
   const go = async (d: "approve" | "reject") => {
     setState("busy");
     try {
       const r = await decide(ownerId, a.id, d);
-      if (r.already) setState("already");
+      if (r.already) {
+        setAlready(/approved/i.test(r.already) ? "You already said yes to this." : /rejected/i.test(r.already) ? "You already said not now to this." : "You already answered this.");
+        setState("already");
+      }
       else { setState("sent"); if (r.turn_id) onTurn(r.turn_id); }
     } catch { setState("error"); }
   };
@@ -39,7 +43,7 @@ function Approval({ ownerId, a, onTurn }: { ownerId: string; a: OwnerBundle["app
         <button className="btn btn-secondary" disabled={state !== "idle"} onClick={() => go("reject")}>Not now</button>
       </div>
       {state === "sent" && <p className="mt-3 text-accent-dark font-semibold">Thank you. We are on it.</p>}
-      {state === "already" && <p className="mt-3 font-semibold">Already decided</p>}
+      {state === "already" && <p className="mt-3 font-semibold">{already}</p>}
       {state === "error" && <p className="mt-3 text-brick font-semibold">That did not go through. Please try again in a minute.</p>}
     </div>
   );

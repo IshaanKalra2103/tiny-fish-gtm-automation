@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { catalog, toolById, needById } from "@/lib/catalog";
 import ToolCard from "@/components/ToolCard";
-import TrustBreakdown from "@/components/TrustBreakdown";
 
 export function generateStaticParams() {
   return catalog.tools.map((t) => ({ id: t.id }));
@@ -39,10 +38,6 @@ export default async function Page({ params }: PageProps<"/tool/[id]">) {
           </dl>
         </section>
       )}
-      <section className="mt-10">
-        <h2 className="text-2xl font-semibold">How we scored it: {tool.trust.score} out of 100</h2>
-        <div className="mt-3"><TrustBreakdown trust={tool.trust} /></div>
-      </section>
       {tool.sources.length > 0 && (
         <section className="mt-10">
           <h2 className="text-2xl font-semibold">Where our information comes from</h2>
