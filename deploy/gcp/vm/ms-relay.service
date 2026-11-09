@@ -1,0 +1,22 @@
+# MainStreet AI iMessage relay on the ms-relay VM. Installed DISABLED by relay-deploy.sh: start it only
+# after the Mac relay is stopped, or both answer the Photon line (double replies).
+#   sudo systemctl enable --now ms-relay
+[Unit]
+Description=MainStreet AI iMessage relay (Photon line -> ms-waker)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=msrelay
+Group=msrelay
+WorkingDirectory=/opt/ms-relay/imessage
+Environment=HOME=/var/lib/msrelay
+# Writes /opt/ms-relay/imessage/.env (mode 600, owner msrelay): Photon credentials, MS_RELAY_SECRET,
+# AGENT_API_URL (the waker URL, from instance metadata agent-api-url). npm start loads it (tsx --env-file).
+ExecStartPre=+/usr/bin/python3 /usr/local/lib/mainstreet/fetch-secrets.py relay
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

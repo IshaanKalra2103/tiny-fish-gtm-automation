@@ -1,0 +1,31 @@
+# MainStreet AI agent API on the ms-agent VM. Installed by deploy/gcp/vm/agent-deploy.sh (push.sh).
+[Unit]
+Description=MainStreet AI agent API (uv run msapi on :8787)
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+User=mainstreet
+Group=mainstreet
+WorkingDirectory=/opt/mainstreet
+Environment=HOME=/home/mainstreet
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=MS_API_PORT=8787
+Environment=MS_API_HOST=0.0.0.0
+Environment=MS_WEB_URL=https://mainstreet-ai-five.vercel.app
+Environment="MS_WEB_ORIGINS=https://mainstreet-ai-five.vercel.app,http://localhost:3000"
+Environment=MS_WORKSPACES=/opt/mainstreet/workspaces
+Environment=MS_BUDGET_DIR=/opt/mainstreet/budget
+Environment=MS_SANDBOX_IMAGE=mainstreet-sandbox
+# "+": runs as root, so the env file can stay root-only (mode 600). systemd reads it for ExecStart.
+ExecStartPre=+/usr/bin/python3 /usr/local/lib/mainstreet/fetch-secrets.py agent
+EnvironmentFile=-/etc/mainstreet/agent.env
+# push.sh runs uv sync; --no-sync keeps a boot from touching the network or the lock.
+ExecStart=/usr/local/bin/uv run --no-sync msapi
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,6 @@
+[Unit]
+Description=Power off the MainStreet agent VM when idle
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/local/lib/mainstreet/ms-idle.sh
