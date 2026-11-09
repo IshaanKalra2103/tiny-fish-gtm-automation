@@ -262,6 +262,23 @@ KIN = {
            ("fixed both", [("fixed both", M), ("today", L)], {"punch": True})],
     "C7": [("Is this", [("is this", L), ("technically", B), ("possible?", B)], {}),
            ("running right", [("it's running", L), ("right now.", A)], {"punch": True})],
+    # Dylan (anchors use Whisper's spellings: "company in" Hagerstown, "of person" checks)
+    "C1": [("Dave runs", [("Dave runs a", L), ("two-van", B), ("HVAC company", L)], {}),
+           ("company in", [("in", L), ("Hagerstown", A)], {}),
+           ("under a", [("under a", L), ("furnace", B)], {}),
+           ("phone is", [("his phone is", L), ("ringing", H)], {"punch": True}),
+           ("Dave is made", [("Dave is", L), ("made up", B)], {}),
+           ("missed call", [("the missed call", L), ("isn't.", M)], {"punch": True})],
+    "C4": [("Every directory", [("every directory", L), ("stops at a list", B)], {}),
+           ("one step", [("we go", L), ("one step", A), ("further", B)], {}),
+           ("set the tool", [("and set", L), ("the tool up", B)], {}),
+           ("never without", [("never without", L), ("the owner's", L), ("yes", M)], {"punch": True})],
+    "C14": [("Why couldn't", [("why couldn't", L), ("a big AI company", B), ("do this?", L)], {}),
+            ("They could", [("they could build", L), ("the chat", B)], {}),
+            ("hard part", [("the", L), ("hard part", A)], {"punch": True}),
+            ("catalog of", [("a catalog", B), ("a person checks", L), ("every week", L)], {}),
+            ("Partners", [("partners", B), ("owners already trust", L)], {}),
+            ("actually setting", [("actually", L), ("setting it up", M)], {"punch": True})],
     "C15": [("Mainstreet AI", [("that's", L), ("MainStreet AI", B)], {}),
             ("find the", [("we find", L), ("the AI tools", B)], {}),
             ("check them", [("check them", B)], {}),
@@ -343,10 +360,13 @@ if v1:
             source="Source: U.S. Census Bureau, Business Trends and Outlook Survey", sfx=HIT, **kw)
 
 # C2: split screen, A = Ishaan (left), B = Dylan (right); each take holds two lines split by the longest pause.
-def two_lines(t: dict) -> list[tuple[float, float]]:
+def two_lines(t: dict, after: str | None = None) -> list[tuple[float, float]]:
     ws = line_words(t)
     if len(ws) < 2:
         return [(t["line_start"], t["line_end"])]
+    i = find(ws, after) if after else None
+    if i is not None and i < len(ws) - 1:   # pinned split: the end of the first line, by word
+        return [(ws[0]["s"], ws[i]["e"]), (ws[i + 1]["s"], ws[-1]["e"])]
     gaps = [(ws[i + 1]["s"] - ws[i]["e"], i) for i in range(len(ws) - 1)]
     g, i = max(gaps)
     if g < 0.6:
@@ -356,7 +376,7 @@ def two_lines(t: dict) -> list[tuple[float, float]]:
 
 ta, tb = take("C2A"), take("C2B")
 if ta and tb:
-    la, lb = two_lines(ta), two_lines(tb)
+    la, lb = two_lines(ta), two_lines(tb, after="Forge")   # Dylan pauses longer mid-line 2 than after line 1
     seq = [("A", la[0]), ("B", lb[0])] + ([("A", la[1])] if len(la) > 1 else []) + ([("B", lb[1])] if len(lb) > 1 else [])
     at, side_lines = 0.3, {"A": [], "B": []}
     for s, (a, b) in seq:
