@@ -6,7 +6,7 @@ Agent  -> goal-driven multi-step work on interactive pages ($0.016/step), queued
 """
 import time
 
-from tinyfish import AgentConfig, BrowserProfile, ProxyConfig, TinyFish
+from tinyfish import BrowserProfile, ProxyConfig, TinyFish
 
 from .cli import log
 
@@ -59,9 +59,10 @@ def fetch(urls: list[str], max_chars: int = 20_000) -> tuple[list[dict], list[st
 
 
 def queue_agent(url: str, goal: str, schema: dict | None, max_steps: int) -> str:
+    # max_steps only sizes our own budget reservation (tf.py): TinyFish refuses agent_config.max_steps
+    # ("not enabled for custom max steps") for accounts outside its beta.
     r = client().agent.queue(url=url, goal=goal, output_schema=schema, browser_profile=BrowserProfile.STEALTH,
-                             proxy_config=ProxyConfig(enabled=True, country_code="US"),
-                             agent_config=AgentConfig(max_steps=max_steps))
+                             proxy_config=ProxyConfig(enabled=True, country_code="US"))
     if not r.run_id:
         raise RuntimeError(getattr(r.error, "message", None) or "TinyFish did not start the run")
     return r.run_id

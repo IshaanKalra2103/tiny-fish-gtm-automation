@@ -119,7 +119,7 @@ def test_agent_start_reserves_max_steps(env, monkeypatch, capsys):
     fake = FakeClient()
     code, out = call(monkeypatch, capsys, fake, *START)
     assert code == 0 and out["run_id"] == "run_1"
-    assert fake.queued[0]["agent_config"].max_steps == 45
+    assert "agent_config" not in fake.queued[0]  # TinyFish refuses custom max steps outside its beta
     assert budget.spent(config.owner_budget(), "tinyfish_owner") == pytest.approx(0.72)
 
 
