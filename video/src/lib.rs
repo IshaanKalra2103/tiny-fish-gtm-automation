@@ -15,11 +15,11 @@ pub const WIDTH: usize = 1920;
 pub const HEIGHT: usize = 1080;
 pub const FPS: usize = 30;
 
-const BG: &str = "#141414";
-const FG: &str = "#f2efe9";
-const MUTED: &str = "#a8a39b";
-const DIM: &str = "#7d7972";
-const ACCENT: &str = "#f08a3c";
+const BG: &str = "#f3f5f7";
+const FG: &str = "#111214";
+const MUTED: &str = "#5f646b";
+const DIM: &str = "#8d939a";
+const ACCENT: &str = "#1f9d6b";
 const FONT: &str = "Inter";
 const PANEL_X: f32 = 1056.0;
 
@@ -212,8 +212,8 @@ fn caption<'a>(frame: &mut Frame, ctx: &FFramesContext, c: &str) -> Svgr<'a> {
     let x = 960.0 - w / 2.0;
     let (_, o) = enter(frame, 0.2);
     fframes::svgr!(<g opacity={o}>
-        <rect x={x} y="988" width={w} height="56" rx="28" fill="#000000" fill-opacity="0.72" />
-        <text x="960" y="1027" font-family="Inter" font-size="32" font-weight="500" fill={FG} text-anchor="middle">{c.to_string()}</text>
+        <rect x={x} y="988" width={w} height="56" rx="28" fill="#111214" fill-opacity="0.82" />
+        <text x="960" y="1027" font-family="Inter" font-size="32" font-weight="500" fill="#ffffff" text-anchor="middle">{c.to_string()}</text>
     </g>)
 }
 
@@ -289,7 +289,7 @@ impl Seg {
         let video = self.video_image(frame, ctx, bx, by, bw, bh);
         if full {
             return fframes::svgr!(<g>
-                <rect x="0" y="0" width="1920" height="1080" fill="#0e0e0e" />
+                <rect x="0" y="0" width="1920" height="1080" fill={BG} />
                 <g transform={tf}>{video}</g>
             </g>);
         }
@@ -302,8 +302,8 @@ impl Seg {
                 </clipPath>
             </defs>
             // soft shadow and bezel
-            <rect x={bx - 2.0} y={by + 14.0} width={bw + 4.0} height={bh + 10.0} rx={r + 6.0} fill="#000000" fill-opacity="0.35" />
-            <rect x={bx - 10.0} y={by - 10.0} width={bw + 20.0} height={bh + 20.0} rx={r + 8.0} fill="#232323" stroke="#2e2e2e" stroke-width="1.5" />
+            <rect x={bx - 2.0} y={by + 14.0} width={bw + 4.0} height={bh + 10.0} rx={r + 6.0} fill="#111214" fill-opacity="0.10" />
+            <rect x={bx - 10.0} y={by - 10.0} width={bw + 20.0} height={bh + 20.0} rx={r + 8.0} fill="#ffffff" stroke="#e3e6ea" stroke-width="1.5" />
             <g clip-path={format!("url(#scr{})", self.spec.start_frame)}>
                 <rect x={bx} y={by} width={bw} height={bh} fill="#000000" />
                 <g transform={tf}>{video}</g>
@@ -348,7 +348,7 @@ fn lower_third<'a>(frame: &mut Frame, ctx: &FFramesContext, lt: &Value) -> Svgr<
         animation_runtime: &AnimationRuntime::new(0.5, &Easing::CubicBezier(0.16, 1.0, 0.3, 1.0)),
     });
     fframes::svgr!(<g opacity={out}>
-        <rect x="72" y="846" width={w * bar} height="132" rx="12" fill="#0c0c0c" fill-opacity="0.74" />
+        <rect x="72" y="846" width={w * bar} height="132" rx="12" fill="#ffffff" fill-opacity="0.94" />
         <rect x="96" y="870" width="6" height="84" rx="3" fill={ACCENT} opacity={o1} />
         <g opacity={o1} transform={format!("translate(0 {dy1})")}>
             <text x="126" y="910" font-family="Inter" font-size="44" font-weight="600" fill={FG}>{name}</text>
@@ -382,10 +382,10 @@ fn timeline_panel<'a>(frame: &mut Frame, ctx: &FFramesContext, panel: &Value) ->
         items.push(fframes::svgr!(<g opacity={o} transform={format!("translate(0 {dy})")}>{body}</g>));
     }
     fframes::svgr!(<g>
-        <rect x={PANEL_X} y="0" width={1920.0 - PANEL_X} height="1080" fill="#161616" />
-        <rect x={PANEL_X} y="0" width="2" height="1080" fill="#262626" />
+        <rect x={PANEL_X} y="0" width={1920.0 - PANEL_X} height="1080" fill="#ffffff" />
+        <rect x={PANEL_X} y="0" width="2" height="1080" fill="#e3e6ea" />
         {title}
-        <rect x={x0 - 1.5} y={top} width="3" height={(rail_end - top).max(1.0)} fill="#2c2c2c" />
+        <rect x={x0 - 1.5} y={top} width="3" height={(rail_end - top).max(1.0)} fill="#e3e6ea" />
         {items}
     </g>)
 }
@@ -424,7 +424,7 @@ fn number<'a>(frame: &mut Frame, ctx: &FFramesContext, p: &Value) -> Svgr<'a> {
     let sy = ly + (line.len() as f32 - 1.0) * 58.0 + 30.0 + 50.0;
     let fig = sv(p, "figure").unwrap_or("").to_string();
     fframes::svgr!(<g>
-        {reveal(frame, 0.15, txt(960.0, fy, 220, 700, ACCENT, "middle", -6.0, fig))}
+        {reveal(frame, 0.15, txt(960.0, fy, 220, 700, FG, "middle", -6.0, fig))}
         {reveal(frame, 0.45, lines_svg(&line, 960.0, ly, 58.0, 44, 500, FG, "middle", 0.0))}
         {reveal(frame, 0.75, lines_svg(&src, 960.0, sy, 38.0, 28, 400, DIM, "middle", 0.0))}
     </g>)
@@ -439,13 +439,13 @@ fn pair<'a>(frame: &mut Frame, ctx: &FFramesContext, p: &Value) -> Svgr<'a> {
         let fig = sv(c, "figure").unwrap_or("").to_string();
         let start = 0.15 + i as f32 * 0.35;
         cols.push(fframes::svgr!(<g>
-            {reveal(frame, start, txt(cx, 470.0, 180, 700, ACCENT, "middle", -5.0, fig))}
+            {reveal(frame, start, txt(cx, 470.0, 180, 700, FG, "middle", -5.0, fig))}
             {reveal(frame, start + 0.2, lines_svg(&line, cx, 560.0, 54.0, 40, 500, FG, "middle", 0.0))}
         </g>));
     }
     let src = sv(p, "source").map(|s| wrap(frame, ctx, 28, 400, s, 1500.0)).unwrap_or_default();
     fframes::svgr!(<g>
-        <rect x="959" y="330" width="2" height="360" fill="#2a2a2a" />
+        <rect x="959" y="330" width="2" height="360" fill="#e3e6ea" />
         {cols}
         {reveal(frame, 1.0, lines_svg(&src, 960.0, 860.0, 38.0, 28, 400, DIM, "middle", 0.0))}
     </g>)
@@ -503,7 +503,7 @@ fn timeline<'a>(frame: &mut Frame, ctx: &FFramesContext, p: &Value) -> Svgr<'a> 
     }
     fframes::svgr!(<g>
         {title}
-        <rect x={x0} y={rail_y - 1.5} width={x1 - x0} height="3" fill="#2c2c2c" />
+        <rect x={x0} y={rail_y - 1.5} width={x1 - x0} height="3" fill="#e3e6ea" />
         {items}
     </g>)
 }
@@ -622,13 +622,13 @@ impl Video for Film {
             <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
                 <defs>
                     <radialGradient id="cardbg" cx="50%" cy="42%" r="78%">
-                        <stop offset="0" stop-color="#1c1c1c" />
-                        <stop offset="1" stop-color="#111111" />
+                        <stop offset="0" stop-color="#ffffff" />
+                        <stop offset="1" stop-color="#eef1f4" />
                     </radialGradient>
                 </defs>
                 <rect x="0" y="0" width="1920" height="1080" fill={BG} />
                 {scene}
-                <rect x="0" y="0" width="1920" height="1080" fill="#000000" opacity={dip} />
+                <rect x="0" y="0" width="1920" height="1080" fill={BG} opacity={dip} />
             </svg>
         )
     }
