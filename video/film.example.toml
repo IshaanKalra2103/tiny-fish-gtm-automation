@@ -1,0 +1,135 @@
+# Placeholder edit list that exercises every segment kind and card style.
+# Paths are relative to this file. Sources live in ../footage/placeholder (gitignored).
+#   uv run prep.py film.example.toml && FILM=film.example.toml cargo run --release -- render -o build/example.mp4
+
+music = { file = "../footage/placeholder/music.wav", gain_db = -24 }
+
+[[seg]]
+kind = "card"
+style = "section"
+eyebrow = "Part 1 of 4"
+title = "The MVP: a working product"
+subtitle = "Angie's List for AI tools, for Maryland small businesses"
+dur = 3.0
+
+[[seg]]
+kind = "clip"
+file = "../footage/placeholder/testpat.mp4"
+in = 1.0
+out = 6.0
+lower_third = { name = "Ishaan Kalra", line = "Team Forge" }
+
+[[seg]]
+kind = "split"
+dur = 8.5
+left = { file = "../footage/placeholder/camA.mp4", in = 0.0, out = 4.4, audio_at = 0.2 }
+right = { file = "../footage/placeholder/camB.mp4", in = 0.0, out = 4.0, audio_at = 4.5 }
+
+[[seg]]
+kind = "card"
+style = "number"
+figure = "27%"
+line = "of calls to home-services businesses go unanswered"
+source = "Source: Invoca, call-tracking data"
+vo = [{ file = "../footage/placeholder/vo2.wav", at = 0.3 }]
+
+[[seg]]
+kind = "card"
+style = "pair"
+left = { figure = "1 in 5", line = "U.S. businesses used AI in the past two weeks" }
+right = { figure = "22%", line = "of firms not planning to use AI don't know what it can do" }
+source = "Source: U.S. Census Bureau, Business Trends and Outlook Survey"
+dur = 4.5
+
+[[seg]]
+kind = "card"
+style = "section"
+eyebrow = "Part 2 of 4"
+title = "How we built it"
+
+[[seg]]
+kind = "screen"
+file = "../footage/placeholder/screen.mp4"
+in = 0.0
+out = 24.0
+speed = 4.0
+caption = "Sped up 4x"
+vo = [{ file = "../footage/placeholder/vo3.wav", at = 0.3 }]
+zoom = { x = 0.55, y = 0.1, w = 0.4, h = 0.4, at = 2.0, dur = 1.2, until = 4.6 }
+
+[[seg]]
+kind = "screen"
+file = "../footage/placeholder/screen.mp4"
+in = 2.0
+out = 8.5
+full = true
+fade = 0.3
+vo = [{ file = "../footage/placeholder/vo1.wav", at = 0.2 }]
+
+[[seg]]
+kind = "card"
+style = "bullets"
+title = "What the agent does"
+check = true
+items = [
+  "Reads the business: type, size, tools it already uses",
+  "Picks three to five jobs AI could take on",
+  { text = "Compares tools with trust scores", at = 2.4 },
+  { text = "Sets the tool up, then hands over the login", at = 3.2, check = false },
+]
+dur = 5.5
+
+[[seg]]
+kind = "card"
+style = "timeline"
+title = "The next 16 weeks"
+blocks = [
+  { label = "Weeks 1-4", title = "Real owners", line = "20 Maryland businesses with the SBDC" },
+  { label = "Weeks 5-8", title = "The catalog", line = "Playbooks, reviews and price monitoring" },
+  { label = "Weeks 9-12", title = "Scale", line = "Hosted sandboxes, sign-in, Spanish" },
+  { label = "Weeks 13-16", title = "People", line = "Local helpers and SBDC distribution" },
+]
+dur = 6.0
+
+[[seg]]
+kind = "clip"
+file = "../footage/placeholder/portrait.mp4"
+in = 0.0
+out = 8.0
+lower_third = { name = "Ishaan Kalra", line = "Team Forge" }
+panel = { title = "The next 16 weeks", blocks = [
+  { label = "Weeks 1-4", title = "Real owners", line = "20 Maryland businesses through it with the SBDC", at = 0.5 },
+  { label = "Weeks 5-8", title = "The catalog", line = "Setup playbooks, owner reviews, monitoring", at = 2.0 },
+  { label = "Weeks 9-12", title = "Scale", line = "Hosted sandboxes and sign-in, Spanish", at = 3.5 },
+  { label = "Weeks 13-16", title = "People", line = "A vetted network of local helpers", at = 5.0 },
+] }
+
+[[seg]]
+kind = "clip"
+file = "../footage/placeholder/portrait.mp4"
+in = 2.0
+out = 6.0
+fade = 0.3
+
+[[seg]]
+kind = "card"
+style = "image"
+file = "../docs/video/architecture.png"
+vo = [{ file = "../footage/placeholder/vo4.wav", at = 0.4 }]
+dur = 4.0
+
+[[seg]]
+kind = "broll"
+file = "../footage/placeholder/broll.mp4"
+in = 0.0
+out = 6.0
+vo = [{ file = "../footage/placeholder/vo5.wav", at = 0.5 }]
+sfx = [{ file = "../footage/placeholder/pop.wav", at = 1.0, gain_db = -12 }]
+
+[[seg]]
+kind = "card"
+style = "credits"
+title = "Team Forge"
+names = ["Ishaan Kalra", "Dylan"]
+coach = "With thanks to our coaches"
+dur = 5.0
