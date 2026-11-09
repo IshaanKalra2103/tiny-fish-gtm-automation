@@ -11,18 +11,18 @@
 <title>MainStreet AI architecture</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #f7f3ea; --card: #fffdf8; --ink: #1d1b18; --muted: #4a453d; --line: #cfc5b1;
-    --accent: #1f4d3a; --accent-dark: #163a2b; --tint: #e3eee6; --amber: #fbeccb; --amber-ink: #6a4200;
-    --serif: 'Fraunces', Georgia, serif; --sans: 'Source Sans 3', system-ui, sans-serif;
+    --paper: #f3f5f7; --card: #ffffff; --ink: #111214; --muted: #5f646b; --line: #e3e6ea;
+    --accent: #1f9d6b; --accent-dark: #157a52; --tint: #e7f6ef; --amber: #fbeccb; --amber-ink: #6a4200;
+    --serif: 'Inter', system-ui, sans-serif; --sans: 'Inter', system-ui, sans-serif;
     --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 1920px; height: 1080px; overflow: hidden; }
   body { background: var(--paper); color: var(--ink); font-family: var(--sans); position: relative; }
-  h1 { position: absolute; left: 80px; top: 52px; font-family: var(--serif); font-weight: 600; font-size: 56px; letter-spacing: -0.01em; }
+  h1 { position: absolute; left: 80px; top: 52px; font-family: var(--serif); font-weight: 700; font-size: 56px; letter-spacing: -0.02em; }
   .sub { position: absolute; left: 82px; top: 128px; font-size: 27px; color: var(--muted); }
   .box { position: absolute; background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: 22px 26px; }
   .box h2 { font-family: var(--serif); font-weight: 600; font-size: 32px; line-height: 1.1; }
@@ -33,14 +33,14 @@
   .box li::before { content: ""; position: absolute; left: 2px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
   .door { border-color: var(--accent); }
   .api { border-color: var(--accent); border-width: 3px; }
-  .sandbox { border: 3px dashed var(--accent); background: #fbf8f1; }
+  .sandbox { border: 3px dashed var(--accent); background: #f8faf9; }
   .cell { position: absolute; background: var(--card); border: 2px solid var(--line); border-radius: 10px; padding: 10px 16px; }
   .cell b { display: block; font-family: var(--mono); font-weight: 500; font-size: 22px; color: var(--accent-dark); }
   .cell span { display: block; font-size: 21px; line-height: 1.28; margin-top: 4px; }
   .cmd { position: absolute; font-family: var(--mono); font-size: 24px; background: var(--accent); color: #fff; border-radius: 8px; padding: 10px 18px; }
   .chips { position: absolute; display: flex; gap: 10px; align-items: center; }
   .chips .lab { font-size: 22px; font-weight: 700; margin-right: 6px; }
-  .chip { font-family: var(--mono); font-size: 21px; background: var(--tint); color: var(--accent-dark); border: 1.5px solid #b9d0c0; border-radius: 999px; padding: 4px 14px; }
+  .chip { font-family: var(--mono); font-size: 21px; background: var(--tint); color: var(--accent-dark); border: 1.5px solid #bfe5d2; border-radius: 999px; padding: 4px 14px; }
   .ro { position: absolute; background: var(--amber); border: 2px solid #e2c27a; border-radius: 10px; padding: 12px 18px; font-size: 22px; color: #3d2a00; }
   .ro b { font-family: var(--mono); font-weight: 500; }
   .svc h2 { font-size: 28px; }
@@ -72,7 +72,7 @@
   <!-- API -->
   <div class="box api" style="left:560px; top:200px; width:400px; height:510px;">
     <h2>Agent API</h2>
-    <div class="how">FastAPI on a Mac, public through a Cloudflare tunnel</div>
+    <div class="how">FastAPI on a Google Cloud VM that wakes when someone visits</div>
     <ul>
       <li>One workspace per owner</li>
       <li>Streams progress to the page as it happens</li>
@@ -121,10 +121,10 @@
   <svg width="1920" height="1080" viewBox="0 0 1920 1080">
     <defs>
       <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-        <path d="M0,0 L10,5 L0,10 z" fill="#1f4d3a"/>
+        <path d="M0,0 L10,5 L0,10 z" fill="#8d939a"/>
       </marker>
     </defs>
-    <g stroke="#1f4d3a" stroke-width="4" fill="none">
+    <g stroke="#8d939a" stroke-width="4" fill="none">
       <!-- web -> api -->
       <line x1="462" y1="325" x2="552" y2="325" marker-end="url(#ah)" marker-start="url(#ah)"/>
       <!-- imessage -> api -->

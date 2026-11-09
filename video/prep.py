@@ -115,7 +115,7 @@ class Prep:
     def venc(self):
         return ["-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "17", "-g", "30", "-pix_fmt", "yuv420p"]
 
-    def video(self, name, file, t_in, length, tw, th, speed=1.0, mode="cover"):
+    def video(self, name, file, t_in, length, tw, th, speed=1.0, mode="cover", src_max=None):
         path = self.src(file)
         info = probe(path)
         if mode == "screen":
@@ -129,8 +129,11 @@ class Prep:
         else:
             fit = self.fit_filter(info, tw, th)
         src_len = length * speed
+        slack = 0.5
+        if src_max is not None and src_len > src_max:   # hold the last frame instead of reading past `out`
+            src_len, slack = src_max, 0.0
         vf = f"[0:v]setpts=(PTS-STARTPTS)/{speed},fps={FPS},{fit},tpad=stop_mode=clone:stop_duration={length + 1}[v]"
-        cmd = ["-ss", f"{t_in:.3f}", "-t", f"{src_len + 0.5:.3f}", "-i", path, "-filter_complex", vf, "-map", "[v]",
+        cmd = ["-ss", f"{t_in:.3f}", "-t", f"{src_len + slack:.3f}", "-i", path, "-filter_complex", vf, "-map", "[v]",
                "-t", f"{length:.4f}"] + self.venc()
         return self.cached(name, cmd, [path]), tw, th
 
@@ -256,7 +259,8 @@ class Prep:
                 speed = float(seg.get("speed", 1.0))
                 t_out = float(seg["out"]) if "out" in seg else probe(self.src(seg["file"]))["dur"]
                 dur = float(seg.get("dur", (t_out - t_in) / speed))
-                vname, vw, vh = self.video(f"{tag}_screen.mp4", seg["file"], t_in, dur, W, H, speed=speed, mode="screen")
+                vname, vw, vh = self.video(f"{tag}_screen.mp4", seg["file"], t_in, dur, W, H, speed=speed, mode="screen",
+                                          src_max=t_out - t_in)
                 out.update(video=vname, vw=vw, vh=vh)
             elif kind == "card":
                 style = seg.get("style") or die(f"seg {i}: card needs style")
