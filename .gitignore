@@ -31,3 +31,4 @@ demo-sites/.vercel/
 
 # demo prerun output that failed validation
 web/data/demo/incomplete/
+footage/
