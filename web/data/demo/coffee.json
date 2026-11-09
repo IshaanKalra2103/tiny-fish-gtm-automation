@@ -1,0 +1,47 @@
+{
+ "owner_id": "demo-coffee",
+ "source": "https://beanandbrick.example",
+ "profile": {
+  "name": "Bean & Brick Coffee",
+  "business_type": "coffee_shop",
+  "city": "Frederick",
+  "state": "MD",
+  "size": "Owner plus 5 staff, one location",
+  "website": "https://beanandbrick.example",
+  "uses": ["square", "instagram", "website"],
+  "pains": ["Customers ask the same questions about hours and oat milk all day", "Evening calls and messages go unanswered", "Posting specials takes time the owner does not have"],
+  "summary": "A neighborhood coffee shop in downtown Frederick that takes card payments through Square and posts specials on Instagram. Most questions arrive after closing."
+ },
+ "needs": {"items": [
+  {"need_id": "website-chat", "title": "Website chat and FAQ", "why": "Customers keep asking about hours, parking and dairy-free options. A chat on your site can answer them while you work the counter.", "est_hours_saved_week": 4},
+  {"need_id": "missed-calls", "title": "AI phone receptionist", "why": "Catering and bulk-order calls come in during the morning rush and go to voicemail.", "est_hours_saved_week": 3},
+  {"need_id": "reviews", "title": "Review replies and reputation", "why": "You have 140 Google reviews and replying to each one takes real time.", "est_hours_saved_week": 1.5},
+  {"need_id": "social-posts", "title": "Social posts and specials", "why": "Your Instagram goes quiet in busy weeks. Drafted posts would keep it steady.", "est_hours_saved_week": 2}
+ ]},
+ "compares": {
+  "website-chat": {"need_id": "website-chat", "recommended_tool_id": "chat-a", "options": [
+   {"tool_id": "chat-a", "fit_sentence": "Free to start and connects to your website and Instagram, so it can answer the same questions in both places.", "works_with": ["website", "instagram"]},
+   {"tool_id": "chat-b", "fit_sentence": "A stronger tool with more reporting, but at $20 a month it is more than a one-shop cafe needs today.", "works_with": ["website"]},
+   {"tool_id": "chat-c", "fit_sentence": "Cheapest paid option, though its builder is less established, so check it first.", "works_with": ["website"]}
+  ]},
+  "missed-calls": {"need_id": "missed-calls", "recommended_tool_id": "recep-b", "options": [
+   {"tool_id": "recep-b", "fit_sentence": "Picks up when you are busy, takes the message and texts it to you.", "works_with": ["sms"]},
+   {"tool_id": "recep-a", "fit_sentence": "Can also book orders into a calendar, for a bit more money.", "works_with": ["sms", "gmail"]}
+  ]}
+ },
+ "previews": {
+  "chat-a": {"tool_id": "chat-a", "prompt": "A customer asks Bean & Brick's website chat if they have oat milk and when they close.", "status": "completed", "video_file": "chat-a.mp4", "cost_usd": 0.4, "video_url": "/demo-media/coffee/chat-a.mp4"}
+ },
+ "setups": {
+  "chat-a": {"tool_id": "chat-a", "status": "done", "approval_id": "ap_1", "run_id": null, "streaming_url": null, "inbox": "beanandbrick-demo@agentmail.example", "login_url": "https://chat-a.example/login", "username": "beanandbrick-demo@agentmail.example", "configured": ["Created your Chat-A account", "Added your hours, address and menu", "Turned on the chat bubble for your website draft"], "next_steps": ["Log in and read the sample answers", "Paste the one-line snippet onto your website", "Check the allergen answers before you turn it on"], "handoff_reason": null, "has_password": false}
+ },
+ "approvals": [
+  {"id": "ap_1", "tool_id": "chat-a", "summary": "Create a free Chat-A account using a new email inbox for Bean & Brick, and fill in your hours, address and menu. No payment details will be entered.", "status": "approved", "created_at": "2026-11-08T10:00:00Z", "decided_at": "2026-11-08T10:02:00Z"}
+ ],
+ "messages": [
+  {"role": "owner", "text": "Here is my business: https://beanandbrick.example. What should I try first?", "channel": "web", "at": "2026-11-08T09:50:00Z"},
+  {"role": "agent", "text": "Thanks. You are a coffee shop in Frederick that gets a lot of repeat questions. I would start with a website chat. It is free to try.", "channel": "web", "at": "2026-11-08T09:51:00Z"},
+  {"role": "owner", "text": "Set it up for me.", "channel": "web", "at": "2026-11-08T10:01:00Z"},
+  {"role": "agent", "text": "Done. Your Chat-A account is ready. Log in to check the answers before you turn it on.", "channel": "web", "at": "2026-11-08T10:06:00Z"}
+ ]
+}

@@ -1,0 +1,15 @@
+import type { OwnerBundle } from "@/lib/types";
+import coffee from "./coffee.json";
+
+// To add a business, drop <slug>.json here and add one line below.
+export const demoBundles: Record<string, OwnerBundle> = {
+  coffee: coffee as unknown as OwnerBundle,
+};
+
+export const DEMO_BUSINESSES: { slug: string; name: string; place: string; kind: string }[] = [
+  { slug: "diner", name: "Route 40 Diner", place: "Ellicott City, MD", kind: "Restaurant" },
+  { slug: "coffee", name: "Bean & Brick Coffee", place: "Frederick, MD", kind: "Coffee shop" },
+  { slug: "hvac", name: "Two Vans Heating & Cooling", place: "Hagerstown, MD", kind: "HVAC" },
+  { slug: "landscaping", name: "Chesapeake Green Landscaping", place: "Annapolis, MD", kind: "Landscaping" },
+  { slug: "salon", name: "Main Street Shears", place: "Westminster, MD", kind: "Hair salon" },
+];

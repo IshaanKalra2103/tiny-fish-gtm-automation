@@ -14,8 +14,8 @@ def _origins() -> list[str]:
 @dataclass
 class Settings:
     root: Path = ROOT
-    workspaces: Path = ROOT / "workspaces"
-    budget: Path = ROOT / "budget"
+    workspaces: Path = Path(os.environ.get("MS_WORKSPACES", ROOT / "workspaces"))
+    budget: Path = Path(os.environ.get("MS_BUDGET_DIR", ROOT / "budget"))
     web_url: str = os.environ.get("MS_WEB_URL", "https://mainstreet-ai-five.vercel.app")
     web_origins: list[str] = field(default_factory=_origins)
     max_concurrent: int = 2

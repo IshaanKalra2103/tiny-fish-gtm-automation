@@ -143,9 +143,10 @@ def main() -> None:
     import uvicorn
 
     logging.basicConfig(level=logging.INFO)
-    runner = None
+    runner, checks = None, {}
     if os.environ.get("MS_RUNNER") == "fake":
+        checks = {"check_docker": lambda: True, "check_token": lambda: True}
         runner = FakeRunner([{"type": "system", "subtype": "init"},
                              {"type": "result", "subtype": "success", "is_error": False,
                               "result": "This is the offline test agent. The real one runs in Docker."}], delay=0.5)
-    uvicorn.run(create_app(runner=runner), host="127.0.0.1", port=int(os.environ.get("MS_API_PORT", "8787")))
+    uvicorn.run(create_app(runner=runner, **checks), host="127.0.0.1", port=int(os.environ.get("MS_API_PORT", "8787")))
