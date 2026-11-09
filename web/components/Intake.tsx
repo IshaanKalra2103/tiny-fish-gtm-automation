@@ -43,20 +43,17 @@ export default function Intake() {
       className="mt-8 grid gap-4"
     >
       {online === false && <OfflineBanner />}
-      <label htmlFor="intake" className="text-xl font-semibold">
-        Paste your website or Google Maps link, or tell us about your business in a sentence
-      </label>
-      <textarea
-        id="intake" rows={3} className="field !text-xl !p-4" value={text} onChange={(e) => setText(e.target.value)}
-        placeholder="For example: a 2-van HVAC company in Frederick, MD" required={online === true}
+      <label htmlFor="intake" className="text-xl font-semibold">Paste your website</label>
+      <input
+        id="intake" type="text" className="field !text-xl !min-h-16 !px-5 !rounded-2xl" value={text} onChange={(e) => setText(e.target.value)}
+        placeholder="yourshop.com" required={online === true} autoComplete="url"
+        aria-describedby="intake-hint"
       />
+      <p id="intake-hint" className="-mt-2 text-base text-soft">No website? Write one sentence, like &quot;a 2-van HVAC company in Frederick, MD&quot;.</p>
       {error && <p role="alert" className="text-brick font-semibold">{error}</p>}
-      <div className="flex flex-wrap gap-3 items-center">
-        <button className="btn btn-primary !text-xl !min-h-14 !px-8" disabled={busy}>
-          {busy ? "One moment..." : "Show me what AI can do"}
-        </button>
-        <a href="/demo" className="btn btn-secondary !min-h-14">See an example business</a>
-      </div>
+      <button className="btn btn-primary w-full !text-xl !min-h-16" disabled={busy}>
+        {busy ? "One moment..." : "Show me what AI can do"}
+      </button>
     </form>
   );
 }
