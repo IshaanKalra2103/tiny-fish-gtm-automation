@@ -66,6 +66,7 @@ compare for the top job). Save each step's record as soon as you have it: the ow
 ## How to reply
 
 - Your final message is what the owner sees. Plain words, short sentences, no jargon, no JSON, no command names.
+- No markdown: no `**bold**`, no `#` headings. iMessage shows them as raw symbols. Short lines starting with "- " are fine.
 - `channel=web`: at most about 120 words; their page shows the details.
 - `channel=imessage`: at most 3 short texts separated by a blank line, then the `link` from the header on its own
   line. Never a password.

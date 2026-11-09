@@ -50,9 +50,13 @@ def _text(content) -> str:
     return ""
 
 
-def _short(text: str, n: int = 160) -> str:
-    first = text.strip().split("\n")[0]
-    return first if len(first) <= n else first[: n - 1].rstrip() + "…"
+
+
+def plain(text: str) -> str:
+    """Drop markdown bold and headings: the web bubble and iMessage both show them as raw symbols."""
+    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
+    text = re.sub(r"__(.+?)__", r"\1", text)
+    return re.sub(r"(?m)^#{1,6}\s+", "", text)
 
 
 class Translator:
@@ -65,10 +69,9 @@ class Translator:
         t = ev.get("type")
         out: list[dict] = []
         if t == "assistant":
+            # Assistant text is not shown: it is the agent talking to itself, and its last text repeats the reply.
             for c in (ev.get("message") or {}).get("content") or []:
-                if c.get("type") == "text" and c.get("text", "").strip():
-                    out.append({"type": "status", "text": _short(c["text"])})
-                elif c.get("type") == "tool_use" and c.get("name") == "Bash":
+                if c.get("type") == "tool_use" and c.get("name") == "Bash":
                     cmd = ((c.get("input") or {}).get("command") or "").strip()
                     label = next((s for p, s in STATUS if cmd.startswith(p)), None)
                     if label:
@@ -88,7 +91,7 @@ class Translator:
             if ev.get("is_error") or ev.get("subtype") != "success":
                 out.append({"type": "error", "message": FAILED, "detail": str(ev.get("result") or ev.get("subtype"))[:500]})
             else:
-                out.append({"type": "done", "reply": ev.get("result") or ""})
+                out.append({"type": "done", "reply": plain(ev.get("result") or "")})
         elif t == "runner_error":
             out.append({"type": "error", "message": FAILED, "detail": str(ev.get("message"))[:500]})
         return out

@@ -10,7 +10,7 @@ export default function NeedList({ needs }: { needs: Needs }) {
             <h3 className="text-xl font-semibold">{n.title}</h3>
             <p className="mt-1">{n.why}</p>
             <p className="mt-2 text-base font-semibold text-accent-dark">
-              About {n.est_hours_saved_week} hours saved each week
+              About {n.est_hours_saved_week} {n.est_hours_saved_week === 1 ? "hour" : "hours"} saved each week
             </p>
           </div>
         </li>

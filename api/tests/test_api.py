@@ -30,7 +30,7 @@ async def test_turn_streams_fake_events_to_done(make_client, settings):
     types = [e["type"] for e in events]
     assert types[-1] == "done" and events[-1]["reply"] == "Here is what I found."
     assert {"type": "files", "kinds": ["profile"]} in events
-    assert any(e["type"] == "status" and "website" in e["text"] for e in events)
+    assert not any(e["type"] == "status" and "Reading your website now" in e["text"] for e in events)
     bundle = (await c.get(f"/api/owners/{oid}")).json()
     assert [m["role"] for m in bundle["messages"]] == ["owner", "agent"]
     assert (settings.workspaces / oid / "turns" / f"{tid}.jsonl").exists()
