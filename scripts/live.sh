@@ -285,6 +285,8 @@ do_start() {
     die "the API did not answer on port $PORT within 90 s; see scripts/.live/api.log"
   say "API up"
 
+  # A fresh log: the URL and "Registered" checks below read it, and an old run's URL is dead.
+  [[ -f $LIVE/tunnel.log ]] && mv -f "$LIVE/tunnel.log" "$LIVE/tunnel.prev.log"
   # 127.0.0.1 rather than localhost: the API binds IPv4 only.
   launch tunnel "$ROOT" "$LIVE/tunnel.log" env "${NO_KEYS[@]}" -u MS_RELAY_SECRET \
     cloudflared tunnel --no-autoupdate --url "http://127.0.0.1:$PORT"
