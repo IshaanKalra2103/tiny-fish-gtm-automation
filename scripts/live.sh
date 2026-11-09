@@ -53,7 +53,7 @@ pattern_for() {
     caffeinate) echo 'caffeinate' ;;
     api) echo 'msapi' ;;
     tunnel) echo 'cloudflared' ;;
-    relay) echo 'npm|node|tsx' ;;
+    relay) echo '^npm start' ;;
     *) echo '^$' ;;
   esac
 }
@@ -62,7 +62,11 @@ alive() { # alive NAME PID
   local cmd
   kill -0 "$2" 2>/dev/null || return 1
   cmd="$(ps -p "$2" -o command= 2>/dev/null)" || return 1
-  grep -Eq "$(pattern_for "$1")" <<<"$cmd"
+  grep -Eq "$(pattern_for "$1")" <<<"$cmd" || return 1
+  # "npm start" alone is too common: the relay's npm also runs from imessage/.
+  if [[ $1 == relay ]]; then
+    lsof -a -p "$2" -d cwd -Fn 2>/dev/null | grep -q '/imessage$' || return 1
+  fi
 }
 
 descendants() { # every child, grandchild, ... of PID (deepest first)
