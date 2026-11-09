@@ -1,0 +1,124 @@
+<!--
+  MainStreet AI catalog pipeline funnel for the video (spec section 4.5). 1920x1080.
+  Fill the numbers in the NUMBERS object in the <script> at the bottom (from `mscatalog stats`),
+  then re-render from the repo root:
+    node docs/video/render.mjs docs/video/catalog-pipeline.html docs/video/catalog-pipeline.png
+  Set a stage to "" to show no number for it. Bars scale to CANDIDATES once every count is a number;
+  while any count is still a {{PLACEHOLDER}}, bars use fixed illustrative widths.
+  Needs network for Google Fonts (falls back to Georgia / system sans).
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Catalog pipeline funnel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f7f3ea; --card: #fffdf8; --ink: #1d1b18; --muted: #4a453d; --line: #cfc5b1;
+    --accent: #1f4d3a; --accent-dark: #163a2b; --tint: #cfe0d4; --brick: #8f2d1d;
+    --serif: 'Fraunces', Georgia, serif; --sans: 'Source Sans 3', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body { background: var(--paper); color: var(--ink); font-family: var(--sans); position: relative; }
+  h1 { position: absolute; left: 80px; top: 52px; font-family: var(--serif); font-weight: 600; font-size: 56px; letter-spacing: -0.01em; }
+  .sub { position: absolute; left: 82px; top: 128px; font-size: 27px; color: var(--muted); }
+  .rows { position: absolute; left: 80px; top: 205px; width: 1760px; }
+  .row { display: grid; grid-template-columns: 70px 560px 1fr; align-items: center; height: 122px; border-top: 2px solid var(--line); }
+  .row:last-child { border-bottom: 2px solid var(--line); }
+  .num { width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; font-size: 26px; display: flex; align-items: center; justify-content: center; }
+  .label h2 { font-family: var(--serif); font-weight: 600; font-size: 34px; line-height: 1.1; }
+  .label p { font-size: 22px; color: var(--muted); margin-top: 6px; line-height: 1.25; }
+  .barwrap { display: flex; align-items: center; gap: 22px; padding-left: 20px; }
+  .bar { height: 60px; border-radius: 6px; background: var(--tint); border: 2px solid var(--accent); flex: none; }
+  .row.final .bar { background: var(--accent); }
+  .count { font-size: 44px; font-weight: 700; color: var(--accent-dark); white-space: nowrap; }
+  .count small { font-size: 24px; font-weight: 600; color: var(--muted); margin-left: 8px; }
+  .note { font-size: 24px; font-weight: 700; color: var(--brick); white-space: nowrap; }
+  .foot { position: absolute; left: 80px; top: 960px; width: 1760px; font-size: 27px; color: var(--ink); }
+  .foot b { color: var(--accent-dark); }
+</style>
+</head>
+<body>
+  <h1>How a tool gets into our catalog</h1>
+  <div class="sub">Six steps. Only tools a person approves ever reach an owner.</div>
+
+  <div class="rows">
+    <div class="row" data-key="CANDIDATES" data-unit="candidate tools">
+      <div class="num">1</div>
+      <div class="label"><h2>Discover</h2><p>Web search for every business type and job, plus AI-tool directories</p></div>
+      <div class="barwrap"><div class="bar"></div><div class="count"></div></div>
+    </div>
+    <div class="row" data-key="READ" data-unit="sites read">
+      <div class="num">2</div>
+      <div class="label"><h2>Read</h2><p>Home, pricing, privacy, about and integrations pages</p></div>
+      <div class="barwrap"><div class="bar"></div><div class="count"></div></div>
+    </div>
+    <div class="row" data-key="EXTRACTED" data-unit="tool records">
+      <div class="num">3</div>
+      <div class="label"><h2>Extract</h2><p>An AI turns the pages into a checked tool record</p></div>
+      <div class="barwrap"><div class="bar"></div><div class="count"></div></div>
+    </div>
+    <div class="row" data-key="VETTED" data-unit="scored" data-note="FAILED_TRUST_PCT">
+      <div class="num">4</div>
+      <div class="label"><h2>Vet</h2><p>Six trust signals, each with an evidence link</p></div>
+      <div class="barwrap"><div class="bar"></div><div class="count"></div><div class="note"></div></div>
+    </div>
+    <div class="row" data-key="SIMTESTED" data-unit="tested">
+      <div class="num">5</div>
+      <div class="label"><h2>Simulated owner test</h2><p>A practice run as a busy owner, always labelled simulated</p></div>
+      <div class="barwrap"><div class="bar"></div><div class="count"></div></div>
+    </div>
+    <div class="row final" data-key="APPROVED" data-unit="approved" data-note2="APPROVED_PER_JOB">
+      <div class="num">6</div>
+      <div class="label"><h2>Human review</h2><p>A person reads the record and the evidence, then approves or rejects</p></div>
+      <div class="barwrap"><div class="bar"></div><div class="count"></div><div class="note" style="color:var(--accent-dark)"></div></div>
+    </div>
+  </div>
+
+  <div class="foot">The pipeline runs <b>every week</b>, so the catalog keeps growing.</div>
+
+<script>
+  // Fill these from `mscatalog stats`. Keep them as strings. "" hides a stage's number.
+  const NUMBERS = {
+    CANDIDATES: "{{CANDIDATES}}",
+    READ: "{{READ}}",
+    EXTRACTED: "{{EXTRACTED}}",
+    VETTED: "{{VETTED}}",
+    FAILED_TRUST_PCT: "{{FAILED_TRUST_PCT}}",
+    SIMTESTED: "{{SIMTESTED}}",
+    APPROVED: "{{APPROVED}}",
+    APPROVED_PER_JOB: "{{APPROVED_PER_JOB}}",
+  };
+
+  const MAX_BAR = 640;                        // px, the widest bar
+  const FIXED = [0.85, 0.72, 0.60, 0.45, 0.36, 0.28]; // illustrative widths while numbers are placeholders
+  const isNum = (v) => v !== "" && !isNaN(Number(String(v).replace(/,/g, "")));
+  const toNum = (v) => Number(String(v).replace(/,/g, ""));
+  const rows = [...document.querySelectorAll('.row')];
+  const counts = rows.map((r) => NUMBERS[r.dataset.key]);
+  const allNumeric = counts.every((v) => v === "" || isNum(v)) && isNum(NUMBERS.CANDIDATES);
+  const maxCount = allNumeric ? toNum(NUMBERS.CANDIDATES) : 1;
+
+  rows.forEach((r, i) => {
+    const v = NUMBERS[r.dataset.key];
+    const bar = r.querySelector('.bar');
+    const frac = allNumeric && isNum(v) ? Math.max(0.04, toNum(v) / maxCount) : FIXED[i];
+    bar.style.width = Math.round(MAX_BAR * frac) + 'px';
+    const c = r.querySelector('.count');
+    c.innerHTML = v === "" ? "" : `${isNum(v) ? toNum(v).toLocaleString('en-US') : v}<small>${r.dataset.unit}</small>`;
+    if (r.dataset.note) {
+      const p = NUMBERS[r.dataset.note];
+      r.querySelector('.note').textContent = p === "" ? "" : `${p}% failed the trust check`;
+    }
+    if (r.dataset.note2) {
+      const p = NUMBERS[r.dataset.note2];
+      r.querySelector('.note').textContent = p === "" ? "" : `about ${p} per job`;
+    }
+  });
+</script>
+</body>
+</html>

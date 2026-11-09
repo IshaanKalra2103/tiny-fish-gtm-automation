@@ -1,0 +1,145 @@
+<!--
+  MainStreet AI architecture diagram for the video (spec section 4). 1920x1080.
+  Re-render from the repo root:
+    node docs/video/render.mjs docs/video/architecture.html docs/video/architecture.png
+  Needs network for Google Fonts (falls back to Georgia / system sans).
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MainStreet AI architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f7f3ea; --card: #fffdf8; --ink: #1d1b18; --muted: #4a453d; --line: #cfc5b1;
+    --accent: #1f4d3a; --accent-dark: #163a2b; --tint: #e3eee6; --amber: #fbeccb; --amber-ink: #6a4200;
+    --serif: 'Fraunces', Georgia, serif; --sans: 'Source Sans 3', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body { background: var(--paper); color: var(--ink); font-family: var(--sans); position: relative; }
+  h1 { position: absolute; left: 80px; top: 52px; font-family: var(--serif); font-weight: 600; font-size: 56px; letter-spacing: -0.01em; }
+  .sub { position: absolute; left: 82px; top: 128px; font-size: 27px; color: var(--muted); }
+  .box { position: absolute; background: var(--card); border: 2px solid var(--line); border-radius: 12px; padding: 22px 26px; }
+  .box h2 { font-family: var(--serif); font-weight: 600; font-size: 32px; line-height: 1.1; }
+  .box .how { font-size: 22px; color: var(--muted); margin-top: 4px; font-weight: 600; }
+  .box p, .box li { font-size: 22px; line-height: 1.32; margin-top: 10px; }
+  .box ul { list-style: none; margin-top: 6px; }
+  .box li { margin-top: 8px; padding-left: 20px; position: relative; }
+  .box li::before { content: ""; position: absolute; left: 2px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .door { border-color: var(--accent); }
+  .api { border-color: var(--accent); border-width: 3px; }
+  .sandbox { border: 3px dashed var(--accent); background: #fbf8f1; }
+  .cell { position: absolute; background: var(--card); border: 2px solid var(--line); border-radius: 10px; padding: 10px 16px; }
+  .cell b { display: block; font-family: var(--mono); font-weight: 500; font-size: 22px; color: var(--accent-dark); }
+  .cell span { display: block; font-size: 21px; line-height: 1.28; margin-top: 4px; }
+  .cmd { position: absolute; font-family: var(--mono); font-size: 24px; background: var(--accent); color: #fff; border-radius: 8px; padding: 10px 18px; }
+  .chips { position: absolute; display: flex; gap: 10px; align-items: center; }
+  .chips .lab { font-size: 22px; font-weight: 700; margin-right: 6px; }
+  .chip { font-family: var(--mono); font-size: 21px; background: var(--tint); color: var(--accent-dark); border: 1.5px solid #b9d0c0; border-radius: 999px; padding: 4px 14px; }
+  .ro { position: absolute; background: var(--amber); border: 2px solid #e2c27a; border-radius: 10px; padding: 12px 18px; font-size: 22px; color: #3d2a00; }
+  .ro b { font-family: var(--mono); font-weight: 500; }
+  .svc h2 { font-size: 28px; }
+  .svc p { font-size: 21px; margin-top: 6px; }
+  .pipe { border-color: var(--accent); }
+  .steps { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; font-size: 22px; }
+  .steps span.s { background: var(--tint); border-radius: 6px; padding: 3px 10px; font-weight: 600; color: var(--accent-dark); }
+  .steps span.a { color: var(--accent); font-weight: 700; }
+  svg { position: absolute; left: 0; top: 0; pointer-events: none; }
+  .alabel { position: absolute; font-size: 20px; color: var(--accent-dark); font-weight: 700; background: var(--paper); padding: 0 6px; }
+</style>
+</head>
+<body>
+  <h1>How MainStreet AI is built</h1>
+  <div class="sub">Two ways in, one agent, and a fresh locked-down sandbox for every turn.</div>
+
+  <!-- Front doors -->
+  <div class="box door" style="left:80px; top:200px; width:380px; height:250px;">
+    <h2>Web app</h2>
+    <div class="how">Next.js on Vercel</div>
+    <p>The tool catalog and the example businesses ship inside the site, so they still work when the agent is offline.</p>
+  </div>
+  <div class="box door" style="left:80px; top:490px; width:380px; height:220px;">
+    <h2>iMessage</h2>
+    <div class="how">Photon relay</div>
+    <p>Text one sentence, get up to three short replies and a link to your page.</p>
+  </div>
+
+  <!-- API -->
+  <div class="box api" style="left:560px; top:200px; width:400px; height:510px;">
+    <h2>Agent API</h2>
+    <div class="how">FastAPI on a Mac, public through a Cloudflare tunnel</div>
+    <ul>
+      <li>One workspace per owner</li>
+      <li>Streams progress to the page as it happens</li>
+      <li>Records the owner's yes or no</li>
+      <li>Two sandboxes at a time; the rest wait in line</li>
+      <li>Spending caps per owner and per day</li>
+    </ul>
+  </div>
+
+  <!-- Sandbox -->
+  <div class="box sandbox" style="left:1050px; top:200px; width:790px; height:510px;">
+    <h2>Docker sandbox, a new one every turn</h2>
+  </div>
+  <div class="cmd" style="left:1080px; top:276px;">claude -p &nbsp;(Claude Code, headless)</div>
+  <div class="cell" style="left:1080px; top:344px; width:356px; height:104px;"><b>settings.json</b><span>Only our six tools. No web fetch, no curl.</span></div>
+  <div class="cell" style="left:1454px; top:344px; width:356px; height:104px;"><b>CLAUDE.md</b><span>Patient advisor, plain words, safety rules.</span></div>
+  <div class="cell" style="left:1080px; top:460px; width:356px; height:104px;"><b>skills/</b><span>intake, match, compare, preview, setup</span></div>
+  <div class="cell" style="left:1454px; top:460px; width:356px; height:104px;"><b>owner files</b><span>profile, needs, compare, preview, setup, as checked JSON</span></div>
+  <div class="chips" style="left:1080px; top:584px;">
+    <span class="lab">Tool CLIs</span>
+    <span class="chip">ws</span><span class="chip">catalog</span><span class="chip">tf</span><span class="chip">inbox</span><span class="chip">preview</span><span class="chip">approval</span>
+  </div>
+  <div class="ro" style="left:1080px; top:638px; width:730px; padding:8px 16px;"><b>/decisions</b> &nbsp;owner's yes or no, mounted read-only</div>
+
+  <!-- Bottom row -->
+  <div class="box pipe" style="left:80px; top:790px; width:880px; height:190px;">
+    <h2>Catalog pipeline, offline, weekly</h2>
+    <div class="steps">
+      <span class="s">discover</span><span class="a">&rarr;</span><span class="s">read</span><span class="a">&rarr;</span><span class="s">extract</span><span class="a">&rarr;</span><span class="s">vet</span><span class="a">&rarr;</span><span class="s">simulated test</span><span class="a">&rarr;</span><span class="s">human review</span>
+    </div>
+    <p>Writes <b style="font-family:var(--mono);font-weight:500">catalog.json</b>, approved tools only, into the web app and the sandbox.</p>
+  </div>
+  <div class="box svc" style="left:1050px; top:790px; width:252px; height:190px;">
+    <h2>TinyFish</h2>
+    <p>Search, page reading, and a cloud browser for sign-ups</p>
+  </div>
+  <div class="box svc" style="left:1319px; top:790px; width:252px; height:190px;">
+    <h2>AgentMail</h2>
+    <p>A fresh email inbox for each sign-up</p>
+  </div>
+  <div class="box svc" style="left:1588px; top:790px; width:252px; height:190px;">
+    <h2>OpenRouter</h2>
+    <p>6 to 8 second preview videos, $20 total cap</p>
+  </div>
+
+  <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#1f4d3a"/>
+      </marker>
+    </defs>
+    <g stroke="#1f4d3a" stroke-width="4" fill="none">
+      <!-- web -> api -->
+      <line x1="462" y1="325" x2="552" y2="325" marker-end="url(#ah)" marker-start="url(#ah)"/>
+      <!-- imessage -> api -->
+      <line x1="462" y1="600" x2="552" y2="600" marker-end="url(#ah)" marker-start="url(#ah)"/>
+      <!-- api <-> sandbox -->
+      <line x1="962" y1="455" x2="1042" y2="455" marker-end="url(#ah)" marker-start="url(#ah)"/>
+      <!-- pipeline -> web (catalog ships in the site) -->
+      <line x1="270" y1="788" x2="270" y2="718" marker-end="url(#ah)"/>
+      <!-- pipeline -> sandbox -->
+      <path d="M962,880 L1005,880 L1005,560 L1042,560" marker-end="url(#ah)"/>
+      <!-- services -> sandbox -->
+      <line x1="1176" y1="788" x2="1176" y2="718" marker-end="url(#ah)"/>
+      <line x1="1445" y1="788" x2="1445" y2="718" marker-end="url(#ah)"/>
+      <line x1="1714" y1="788" x2="1714" y2="718" marker-end="url(#ah)"/>
+    </g>
+  </svg>
+</body>
+</html>
