@@ -63,8 +63,8 @@ Measured on 2026-11-08: from a stopped VM, the waking health answer came back in
 the start, and a first turn finished 90 s after the first request (a warm turn took 28 s).
 
 The iMessage relay calls the waker URL. A cold start (about 60 s) plus a turn can exceed the relay's 300 s timeout
-(`imessage/src/relay.ts` `TIMEOUT_MS`). The unit sets `RELAY_TIMEOUT_MS=420000`, but `imessage/src/index.ts` does not
-read it yet: it needs `timeoutMs: Number(process.env.RELAY_TIMEOUT_MS) || undefined` in the `handleMessage` deps.
+(`imessage/src/relay.ts` `TIMEOUT_MS`), so the unit sets `RELAY_TIMEOUT_MS=420000`, which `imessage/src/index.ts`
+reads through `timeoutFromEnv`.
 
 ## Where secrets live
 

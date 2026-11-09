@@ -8,10 +8,11 @@
 // Docs: https://photon.codes/docs/spectrum-ts
 import { Spectrum } from "spectrum-ts";
 import { imessage } from "@spectrum-ts/imessage";
-import { handleMessage } from "./relay.ts";
+import { handleMessage, timeoutFromEnv } from "./relay.ts";
 
 const apiUrl = process.env.AGENT_API_URL || "http://127.0.0.1:8787";
 const secret = process.env.MS_RELAY_SECRET || undefined;
+const timeoutMs = timeoutFromEnv(process.env.RELAY_TIMEOUT_MS);
 const projectId = process.env.PROJECT_ID;
 const projectSecret = process.env.PROJECT_SECRET;
 
@@ -46,6 +47,7 @@ for await (const [space, message] of app.messages) {
   void handleMessage(message, {
     apiUrl,
     secret,
+    timeoutMs,
     fetch: (url, init) => fetch(url, init),
     send: (text) => space.send(text),
     typing: (on) => (on ? space.startTyping() : space.stopTyping()),

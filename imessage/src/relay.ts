@@ -10,6 +10,12 @@ import { createHash } from "node:crypto";
 export const SORRY = "Sorry, something broke on our side. Try again in a minute.";
 export const GAP_MS = 3_000;
 export const TIMEOUT_MS = 300_000; // the API waits up to ~280 s for a turn
+
+/** RELAY_TIMEOUT_MS as a positive number of ms, or undefined to keep TIMEOUT_MS (a cold GCP VM adds ~90 s). */
+export function timeoutFromEnv(v: string | undefined): number | undefined {
+  const n = Number(v);
+  return v && Number.isFinite(n) && n > 0 ? n : undefined;
+}
 export const MAX_TEXT = 2_000; // the API rejects longer texts with a 422
 export const MAX_REPLIES = 3;
 
