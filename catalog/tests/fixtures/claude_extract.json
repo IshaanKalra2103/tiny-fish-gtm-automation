@@ -1,0 +1,18 @@
+{"type": "result", "subtype": "success", "is_error": false, "result": "", "total_cost_usd": 0.03,
+ "structured_output": {
+  "is_tool": true,
+  "reason": "Vendor site for an AI website chatbot.",
+  "tool": {
+   "name": "Foo Chat", "vendor": "Foo Labs Inc", "url": "https://foo.com",
+   "need_ids": ["website-chat"], "business_types": ["restaurant", "coffee_shop"],
+   "what_it_does": "Answers customer questions on your website using your own pages.",
+   "price": {"free_plan": true, "from_usd_month": 29, "pricing_url": "https://foo.com/pricing", "notes": "Free plan with 100 messages."},
+   "setup": {"minutes": 15, "difficulty": "easy", "agent_setup": true, "playbook": "setup-foo"},
+   "integrations": ["website", "instagram"],
+   "sources": ["https://foo.com", "https://foo.com/pricing"],
+   "evidence": {"identity_url": "https://foo.com/about", "privacy_url": "https://foo.com/privacy", "pricing_url": "https://foo.com/pricing"},
+   "facts": {"company": "Foo Labs Inc", "people": ["Ann Lee"], "address": "1 Main St, Austin, TX",
+             "privacy_states_training_use": true, "training_statement": "We do not train on customer data.",
+             "prices_public": true, "contact_sales_only": false, "free_trial": false, "soc2": false}
+  }
+ }}

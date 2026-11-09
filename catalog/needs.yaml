@@ -1,0 +1,79 @@
+# The 9 jobs (spec 6.2), the default jobs per business type (same as Task 3's fixture),
+# search wording for the query grid, and one simtest persona per business type.
+needs:
+  - id: missed-calls
+    title: AI phone receptionist
+    plain: Answers the calls you miss and books the job.
+    query: phone receptionist
+    verb: answer missed calls for a
+  - id: reviews
+    title: Review replies and reputation
+    plain: Drafts replies to Google and Yelp reviews.
+    query: review reply and reputation management
+    verb: reply to Google reviews for a
+  - id: social-posts
+    title: Social posts and specials
+    plain: Writes and schedules posts about your specials.
+    query: social media post generator
+    verb: write social media posts for a
+  - id: booking
+    title: Booking and reminders
+    plain: Lets customers book online and reminds them.
+    query: appointment booking and reminders
+    verb: take online bookings for a
+  - id: website-chat
+    title: Website chat and FAQ
+    plain: Answers common questions on your website, day and night.
+    query: website chatbot
+    verb: answer website questions for a
+  - id: books
+    title: Invoicing and bookkeeping
+    plain: Sends invoices and sorts your receipts.
+    query: invoicing and bookkeeping
+    verb: do invoicing and bookkeeping for a
+  - id: marketing-msgs
+    title: Email and SMS marketing
+    plain: Sends offers to past customers.
+    query: email and SMS marketing
+    verb: send email and SMS offers for a
+  - id: quotes
+    title: Estimates and quotes
+    plain: Turns a site visit into a written quote fast.
+    query: estimates and quotes
+    verb: write estimates and quotes for a
+  - id: menu-inventory
+    title: Menu and inventory
+    plain: Keeps your menu and stock counts up to date.
+    query: menu and inventory management
+    verb: manage menu and inventory for a
+
+type_needs:
+  restaurant: [reviews, social-posts, menu-inventory, website-chat]
+  coffee_shop: [social-posts, reviews, website-chat, marketing-msgs]
+  hvac: [missed-calls, quotes, reviews, books]
+  landscaping: [quotes, missed-calls, books, reviews]
+  salon: [booking, reviews, social-posts, marketing-msgs]
+  other: [missed-calls, reviews, social-posts, booking, website-chat, books]
+
+# Wording used in search queries: "AI {query} for {plural}", "best AI tool to {verb} small {singular}".
+type_words:
+  restaurant: {plural: restaurants, singular: restaurant}
+  coffee_shop: {plural: coffee shops, singular: coffee shop}
+  hvac: {plural: HVAC companies, singular: HVAC business}
+  landscaping: {plural: landscaping companies, singular: landscaping business}
+  salon: {plural: hair salons, singular: hair salon}
+  other: {plural: small businesses, singular: local business}
+
+personas:
+  restaurant: Denise, 58, owns a family diner, uses Square for payments, checks email on her phone, not technical.
+  coffee_shop: Marcus, 34, runs one coffee shop, uses Square and Instagram daily, comfortable with apps but short on time.
+  hvac: Ray, 51, owns a 2-van HVAC company, answers calls from the truck, uses QuickBooks and paper notes, not technical.
+  landscaping: Luis, 45, runs a 6-person landscaping crew, quotes jobs on site from his phone, uses Gmail and texts, not technical.
+  salon: Tasha, 39, owns a 4-chair hair salon, books clients by text and Instagram DMs, uses a basic booking app, somewhat technical.
+  other: Pat, 47, owns a small local shop, uses Gmail and Facebook, has a simple website, not technical.
+
+# Always read and extract these, whatever the search finds. Chatling is the Task 7 setup vendor (docs/setup-vendor.md).
+seeds:
+  - domain: chatling.ai
+    name: Chatling
+    need_id: website-chat
