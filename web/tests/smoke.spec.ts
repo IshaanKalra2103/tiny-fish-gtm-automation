@@ -9,7 +9,7 @@ test("demo flow", async ({ page }) => {
   expect(await cards.count()).toBeGreaterThanOrEqual(2);
   const n = await cards.count();
   for (let i = 0; i < n; i++) await expect(cards.nth(i).getByTestId("trust-badge")).toBeVisible();
-  await expect(page.getByText("Simulated owner test: 8/10 (simulated)").first()).toBeVisible();
+  await expect(page.getByText(/Simulated owner test: \d+\/10 \(simulated\)/).first()).toBeVisible();
   await expect(page.locator("video").first()).toBeAttached();
 });
 

@@ -1,0 +1,180 @@
+{
+ "owner_id": "demo-salon",
+ "source": "https://mainstreet-demo-sites.vercel.app/salon/",
+ "profile": {
+  "name": "Main Street Shears",
+  "business_type": "salon",
+  "city": "Westminster",
+  "state": "MD",
+  "size": "owner plus 2 stylists",
+  "website": "https://mainstreet-demo-sites.vercel.app/salon/",
+  "uses": [],
+  "pains": [
+   "books appointments by phone",
+   "misses calls while with clients",
+   "paper appointment book",
+   "24 hour cancellations"
+  ],
+  "summary": "A three-stylist salon in Westminster, MD that takes bookings by phone and a paper appointment book."
+ },
+ "needs": {
+  "items": [
+   {
+    "need_id": "booking",
+    "title": "Online booking and reminders",
+    "why": "Clients book by phone and you answer between clients, so reminders and online booking cut calls and no-shows.",
+    "est_hours_saved_week": 4.0
+   },
+   {
+    "need_id": "reviews",
+    "title": "Review replies",
+    "why": "Happy clients are easy to thank, but replying on Google and Yelp takes time you spend in the chair.",
+    "est_hours_saved_week": 1.0
+   },
+   {
+    "need_id": "marketing-msgs",
+    "title": "Texts and emails to past clients",
+    "why": "Quiet weekdays could fill with a quick offer to clients who have not been in lately.",
+    "est_hours_saved_week": 2.0
+   },
+   {
+    "need_id": "social-posts",
+    "title": "Social posts",
+    "why": "Photos of your work and open chairs can be posted without you writing each one.",
+    "est_hours_saved_week": 1.0
+   }
+  ]
+ },
+ "compares": {
+  "booking": {
+   "need_id": "booking",
+   "options": [
+    {
+     "tool_id": "square",
+     "fit_sentence": "Square has a free plan with no monthly fee, books appointments and texts clients, and takes about 45 minutes to set up.",
+     "works_with": []
+    },
+    {
+     "tool_id": "allo",
+     "fit_sentence": "Allo answers missed calls and books visits, but it starts at $10 a month plus $32 for the AI receptionist and takes about 45 minutes with a calendar to connect.",
+     "works_with": []
+    },
+    {
+     "tool_id": "ringcentral-ai-receptionist",
+     "fit_sentence": "RingCentral answers calls day and night, but the add-on starts at $39 a month on top of a phone plan and takes about an hour to set up.",
+     "works_with": []
+    }
+   ],
+   "recommended_tool_id": "square"
+  },
+  "marketing-msgs": {
+   "need_id": "marketing-msgs",
+   "options": [
+    {
+     "tool_id": "square",
+     "fit_sentence": "Square has no monthly fee, emails and texts clients, and also handles booking, so one tool can cover two jobs in about 45 minutes of setup.",
+     "works_with": []
+    },
+    {
+     "tool_id": "klaviyo",
+     "fit_sentence": "Klaviyo is free up to 250 contacts and drafts offers with AI, but it takes about 90 minutes to set up and texting costs extra.",
+     "works_with": []
+    }
+   ],
+   "recommended_tool_id": "square"
+  },
+  "reviews": {
+   "need_id": "reviews",
+   "options": [
+    {
+     "tool_id": "rightresponse-ai",
+     "fit_sentence": "RightResponse AI writes Google review replies from facts you approve, costs from $10 a month with a 7-day free trial, and takes about 30 minutes to set up.",
+     "works_with": []
+    },
+    {
+     "tool_id": "pluspoint",
+     "fit_sentence": "Pluspoint replies to Google reviews and also does chat and social posts, but the 3-location minimum makes it $87 a month for one salon.",
+     "works_with": []
+    }
+   ],
+   "recommended_tool_id": "rightresponse-ai"
+  }
+ },
+ "previews": {
+  "square": {
+   "tool_id": "square",
+   "prompt": "A client books a haircut appointment on her phone at night on her couch; next morning the salon owner, a stylist in her 40s, sees the day's schedule on a tablet at the front desk of a small town hair salon, warm natural light, documentary style, no logos",
+   "status": "completed",
+   "video_file": "square.mp4",
+   "cost_usd": 0.0,
+   "video_url": "/demo-media/salon/square.mp4"
+  }
+ },
+ "setups": {},
+ "approvals": [],
+ "messages": [
+  {
+   "role": "owner",
+   "text": "Here is my business: https://mainstreet-demo-sites.vercel.app/salon/. What should I try first?",
+   "channel": "web",
+   "at": "2026-11-09T01:30:03+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Try online booking and reminders first. Right now clients book by phone and you answer between haircuts, so this could save you about 4 hours a week.\n\nI'd start with Square. It has a free plan with no monthly fee (you pay card processing fees). It books appointments and texts clients. Setup takes about 45 minutes. Our team has verified it. We can't set it up for you, but I can give you the sign-up link.\n\nThe other two options are Allo and RingCentral. Both answer calls with AI, but they cost more: $10 to $39 a month and up.\n\nNext on your list are review replies, texts to past clients, and social posts.\n\nWant a short preview of Square for your salon?",
+   "channel": "web",
+   "at": "2026-11-09T01:30:30+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Online booking and reminders",
+   "channel": "web",
+   "at": "2026-11-09T01:30:30+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Here are the three options for online booking and reminders at Main Street Shears:\n\n- Square (my pick): the free plan has no monthly fee, and you pay card processing fees. It books appointments and texts clients. Setup takes about 45 minutes. Our team has verified it.\n- Allo: it answers missed calls and books visits. It costs $10 a month plus $32 for the AI receptionist. It also needs a calendar connected.\n- RingCentral AI Receptionist: it answers calls day and night and texts follow-ups. The add-on starts at $39 a month on top of a phone plan. Setup takes about an hour.\n\nWe can't set up any of these for you, but I can give you the sign-up link for Square. Do you want a short preview of it?",
+   "channel": "web",
+   "at": "2026-11-09T01:30:33+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Review replies",
+   "channel": "web",
+   "at": "2026-11-09T01:30:33+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "For review replies, I'd pick RightResponse AI.\n\n- RightResponse AI (my pick): it writes Google review replies from facts you approve. It costs from $10 a month, with a 7-day free trial. Setup takes about 30 minutes. Our team has verified it.\n- Pluspoint: it replies to reviews and also does chat and social posts. It has a 3-location minimum, so one salon pays $87 a month. Our team has verified it too.\n\nWe can't set up either one for you. I can send the sign-up link for RightResponse AI. In a test with a simulated owner, connecting the Google profile was the hard part, so a local helper could make that easier.\n\nWant a preview of RightResponse AI?",
+   "channel": "web",
+   "at": "2026-11-09T01:30:44+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Texts and emails to past clients",
+   "channel": "web",
+   "at": "2026-11-09T01:30:44+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "For texts and emails to past clients, I'd pick Square.\n\n- Square (my pick): there's no monthly fee, and you pay card processing fees. It emails and texts clients, and it also does the online booking we looked at. One tool covers two jobs. Setup takes about 45 minutes. Our team has verified it.\n- Klaviyo: it's free for up to 250 contacts, and its AI drafts offers for you. Texting costs extra. Setup takes about 90 minutes. A simulated owner test found it confusing for a non-technical owner. Our team has verified it.\n\nWe can't set up either one for you. I can send the sign-up link for Square.\n\nWant a short preview of Square?",
+   "channel": "web",
+   "at": "2026-11-09T01:30:54+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Show me a preview of the best tool for Online booking and reminders",
+   "channel": "web",
+   "at": "2026-11-09T01:30:54+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Your Square preview is ready on your page. It shows a client booking a haircut on her phone at night. The next morning, the salon owner sees the day's schedule on a tablet at the front desk.\n\nIt's a short illustration, not your real screen.\n\nWe can't set Square up for you. Its sign-up link is https://squareup.com/us/en/pricing. Setup takes about 45 minutes, and you can start on the free plan. If you'd like help, these local groups are free:\n\n- Maryland SBDC: https://www.marylandsbdc.org\n- SCORE: https://www.score.org/find-mentor\n\nDon't enter a card or pick a paid plan unless you decide to. Do you want to look at review replies next?",
+   "channel": "web",
+   "at": "2026-11-09T01:31:42+00:00"
+  }
+ ],
+ "media": {
+  "square": "/demo-media/salon/square.mp4"
+ }
+}

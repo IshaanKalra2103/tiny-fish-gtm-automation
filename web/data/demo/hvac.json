@@ -1,0 +1,189 @@
+{
+ "owner_id": "demo-hvac",
+ "source": "https://mainstreet-demo-sites.vercel.app/hvac/",
+ "profile": {
+  "name": "Two Vans Heating & Cooling",
+  "business_type": "hvac",
+  "city": "Hagerstown",
+  "state": "MD",
+  "size": "owner plus nephew, 2 vans",
+  "website": "https://mainstreet-demo-sites.vercel.app/hvac/",
+  "uses": [
+   "website"
+  ],
+  "pains": [
+   "misses calls while on jobs",
+   "paper estimates sent by email afterward",
+   "callbacks take a couple of hours"
+  ],
+  "summary": "Mike runs a two-van heating and cooling shop in Hagerstown with his nephew Jake, and calls often go to voicemail while they work."
+ },
+ "needs": {
+  "items": [
+   {
+    "need_id": "missed-calls",
+    "title": "Answer calls when you are on a job",
+    "why": "You and Jake are in a attic or on a roof when the phone rings, so callers get voicemail and wait a couple of hours.",
+    "est_hours_saved_week": 3.0
+   },
+   {
+    "need_id": "quotes",
+    "title": "Write estimates faster",
+    "why": "You write estimates on paper and email a copy later, which adds work after each visit.",
+    "est_hours_saved_week": 3.0
+   },
+   {
+    "need_id": "books",
+    "title": "Invoices and receipts",
+    "why": "With two vans and just two people, paperwork lands on evenings and Saturdays.",
+    "est_hours_saved_week": 2.0
+   }
+  ]
+ },
+ "compares": {
+  "books": {
+   "need_id": "books",
+   "options": [
+    {
+     "tool_id": "quoteiq",
+     "fit_sentence": "From $29.99 a month with a 14-day free trial, it sends invoices and takes payments, works with QuickBooks and Gmail, and also covers calls and quotes; setup takes about 45 minutes.",
+     "works_with": []
+    },
+    {
+     "tool_id": "digits",
+     "fit_sentence": "At $65 a month it sorts bank and card spending and sends invoices, which is more bookkeeping than a two-van shop may need; setup takes about 45 minutes.",
+     "works_with": []
+    },
+    {
+     "tool_id": "sophiie",
+     "fit_sentence": "It works with your website and sends and chases invoices, but the price is unclear (one review says $80 a week) and our team says use with caution.",
+     "works_with": [
+      "website"
+     ]
+    }
+   ],
+   "recommended_tool_id": "quoteiq"
+  },
+  "missed-calls": {
+   "need_id": "missed-calls",
+   "options": [
+    {
+     "tool_id": "quoteiq",
+     "fit_sentence": "From $29.99 a month with a 14-day free trial, it answers calls, drafts quotes from photos and sends invoices, so one app covers three of your jobs; setup takes about 45 minutes.",
+     "works_with": []
+    },
+    {
+     "tool_id": "allo",
+     "fit_sentence": "About $42 a month with the AI receptionist add-on, it answers missed calls and texts callers back, but it needs a calendar and about 45 minutes of setup.",
+     "works_with": []
+    },
+    {
+     "tool_id": "tradesly",
+     "fit_sentence": "At $199 a month it answers calls day and night, which is a lot for a two-van shop, and setup takes about an hour.",
+     "works_with": []
+    }
+   ],
+   "recommended_tool_id": "quoteiq"
+  },
+  "quotes": {
+   "need_id": "quotes",
+   "options": [
+    {
+     "tool_id": "quoteiq",
+     "fit_sentence": "From $29.99 a month with a 14-day free trial, it drafts quotes from job photos and also sends invoices; setup takes about 45 minutes and you would enter your price list first.",
+     "works_with": []
+    },
+    {
+     "tool_id": "countbricks",
+     "fit_sentence": "At $30 a month with a 7-day trial and no card, you type or say the job and get an itemized quote; setup is the quickest at about 30 minutes, but it leans toward construction work.",
+     "works_with": []
+    },
+    {
+     "tool_id": "sophiie",
+     "fit_sentence": "It works with your website and drafts quotes and answers calls, but the price is unclear (one review says $80 a week) and our team says use with caution.",
+     "works_with": [
+      "website"
+     ]
+    }
+   ],
+   "recommended_tool_id": "quoteiq"
+  }
+ },
+ "previews": {
+  "quoteiq": {
+   "tool_id": "quoteiq",
+   "prompt": "An HVAC owner kneeling beside a rooftop air conditioning unit in a small Maryland town, phone buzzes in a pocket; cut to a phone screen showing a missed call answered and a job booked. One scene, documentary style, real-looking people, warm natural light, no brand logos.",
+   "status": "completed",
+   "video_file": "quoteiq.mp4",
+   "cost_usd": 0.18,
+   "video_url": "/demo-media/hvac/quoteiq.mp4"
+  }
+ },
+ "setups": {},
+ "approvals": [],
+ "messages": [
+  {
+   "role": "owner",
+   "text": "Here is my business: https://mainstreet-demo-sites.vercel.app/hvac/. What should I try first?",
+   "channel": "web",
+   "at": "2026-11-09T01:28:13+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Try this first: something that answers calls when you and Jake are on a job.\n\nOur top pick is QuoteIQ. It starts at $29.99 a month, with a 14-day free trial. It answers your calls, drafts quotes from job photos, and sends invoices, so it helps with three of your biggest chores. Our team has verified it. In a simulated test, a non-technical HVAC owner found setup a bit of a stall.\n\nTwo other options are on your page. Allo is about $42 a month. Tradesly is $199 a month. We can't set any of them up for you. I can give you the sign-up link and a local helper.\n\nWant a short preview of QuoteIQ at work?",
+   "channel": "web",
+   "at": "2026-11-09T01:28:45+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Answer calls when you are on a job",
+   "channel": "web",
+   "at": "2026-11-09T01:28:45+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Here is how the three tools compare for answering calls while you are on a job:\n\n- QuoteIQ: $29.99 a month, 14-day free trial. It answers calls, drafts quotes from photos, and sends invoices. Setup takes about 45 minutes. Our team has verified it. In a simulated test, it scored 5 out of 10.\n- Allo: about $42 a month ($10 for the phone plan plus $32 for the AI receptionist). It answers missed calls and texts callers back. It needs a calendar, and setup takes about 45 minutes. Verified by our team. In a simulated test, it scored 3 out of 10.\n- Tradesly: $199 a month. It answers calls day and night, and brings in trained people for hard calls. Setup takes about an hour. Verified by our team. It has no simulated test yet.\n\nI'd start with QuoteIQ. It costs the least and also covers your quotes and invoices. We can't set up any of them for you, but I can send you the sign-up link and a local helper.\n\nWant a short preview of QuoteIQ?",
+   "channel": "web",
+   "at": "2026-11-09T01:28:49+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Write estimates faster",
+   "channel": "web",
+   "at": "2026-11-09T01:28:49+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Here is how three tools compare for writing estimates faster:\n\n- QuoteIQ: $29.99 a month, 14-day free trial. It drafts quotes from job photos and sends invoices. Setup takes about 45 minutes, and you'd enter your price list first. Verified by our team. Simulated test: 5 out of 10.\n- CountBricks: $30 a month, 7-day free trial, no card needed. You type or say the job and get an itemized quote. Setup takes about 30 minutes. It leans toward construction work. Use with caution. Simulated test: 5 out of 10.\n- Sophiie: the price is unclear (one review says $80 a week). It drafts quotes and answers calls. Use with caution.\n\nI'd pick QuoteIQ. It's verified, and it also answers your calls. We can't set any of these up for you. I can send you the sign-up link and a local helper.",
+   "channel": "web",
+   "at": "2026-11-09T01:28:59+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Invoices and receipts",
+   "channel": "web",
+   "at": "2026-11-09T01:28:59+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Here is how three tools compare for invoices and receipts:\n\n- QuoteIQ: $29.99 a month, 14-day free trial. It sends invoices and takes payments. It works with QuickBooks and Gmail. It also covers your calls and quotes. Setup takes about 45 minutes. Verified by our team. Simulated test: 5 out of 10.\n- Digits: $65 a month. It sorts your bank and card spending and sends invoices. That may be more bookkeeping than a two-van shop needs. Setup takes about 45 minutes. Verified by our team.\n- Sophiie: the price is unclear (one review says $80 a week). It sends and chases invoices and works with your website. Use with caution.\n\nI'd pick QuoteIQ again. One app would cover your calls, quotes and invoices. We can't set any of these up for you. I can send you the sign-up link and a local helper.",
+   "channel": "web",
+   "at": "2026-11-09T01:29:09+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Show me a preview of the best tool for Answer calls when you are on a job",
+   "channel": "web",
+   "at": "2026-11-09T01:29:09+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Your QuoteIQ preview is ready on your page.\n\nIt shows an HVAC owner working beside a rooftop air conditioner. Their phone buzzes in a pocket. Then you see a phone screen where the missed call has been answered and the job is booked. That is the idea: callers get a reply while you stay on the job.\n\nThis is only a sample scene. It isn't your real account or your real calls.\n\nQuoteIQ is $29.99 a month, with a 14-day free trial. We can't set it up for you, but I can send you the sign-up link. I can also point you to a local helper, like Maryland SBDC, who can sit down with you for the setup. Want either one?",
+   "channel": "web",
+   "at": "2026-11-09T01:30:06+00:00"
+  }
+ ],
+ "media": {
+  "quoteiq": "/demo-media/hvac/quoteiq.mp4"
+ }
+}

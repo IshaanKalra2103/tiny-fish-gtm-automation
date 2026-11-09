@@ -1,47 +1,207 @@
 {
  "owner_id": "demo-coffee",
- "source": "https://beanandbrick.example",
+ "source": "https://mainstreet-demo-sites.vercel.app/coffee/",
  "profile": {
   "name": "Bean & Brick Coffee",
   "business_type": "coffee_shop",
   "city": "Frederick",
   "state": "MD",
-  "size": "Owner plus 5 staff, one location",
-  "website": "https://beanandbrick.example",
-  "uses": ["square", "instagram", "website"],
-  "pains": ["Customers ask the same questions about hours and oat milk all day", "Evening calls and messages go unanswered", "Posting specials takes time the owner does not have"],
-  "summary": "A neighborhood coffee shop in downtown Frederick that takes card payments through Square and posts specials on Instagram. Most questions arrive after closing."
+  "size": "owner plus staff",
+  "website": "https://mainstreet-demo-sites.vercel.app/coffee/",
+  "uses": [
+   "instagram"
+  ],
+  "pains": [
+   "specials change often and are posted by hand on Instagram",
+   "customers ask about hours and menu",
+   "catering orders by phone"
+  ],
+  "summary": "Daniel Ortiz runs Bean & Brick, a Frederick coffee shop open since 2019 with daily pastries and catering boxes."
  },
- "needs": {"items": [
-  {"need_id": "website-chat", "title": "Website chat and FAQ", "why": "Customers keep asking about hours, parking and dairy-free options. A chat on your site can answer them while you work the counter.", "est_hours_saved_week": 4},
-  {"need_id": "missed-calls", "title": "AI phone receptionist", "why": "Catering and bulk-order calls come in during the morning rush and go to voicemail.", "est_hours_saved_week": 3},
-  {"need_id": "reviews", "title": "Review replies and reputation", "why": "You have 140 Google reviews and replying to each one takes real time.", "est_hours_saved_week": 1.5},
-  {"need_id": "social-posts", "title": "Social posts and specials", "why": "Your Instagram goes quiet in busy weeks. Drafted posts would keep it steady.", "est_hours_saved_week": 2}
- ]},
+ "needs": {
+  "items": [
+   {
+    "need_id": "social-posts",
+    "title": "Social posts and specials",
+    "why": "Your specials change often and you post them on Instagram by hand.",
+    "est_hours_saved_week": 2.0
+   },
+   {
+    "need_id": "website-chat",
+    "title": "Website chat and FAQ",
+    "why": "Customers ask about hours, menu and catering boxes, even when you are busy pulling shots.",
+    "est_hours_saved_week": 2.0
+   },
+   {
+    "need_id": "reviews",
+    "title": "Review replies and reputation",
+    "why": "Quick, friendly replies to Google and Yelp reviews help a local shop stand out.",
+    "est_hours_saved_week": 1.0
+   },
+   {
+    "need_id": "marketing-msgs",
+    "title": "Email and SMS marketing",
+    "why": "Regulars could hear about new specials and catering offers without extra work.",
+    "est_hours_saved_week": 1.0
+   }
+  ]
+ },
  "compares": {
-  "website-chat": {"need_id": "website-chat", "recommended_tool_id": "chat-a", "options": [
-   {"tool_id": "chat-a", "fit_sentence": "Free to start and connects to your website and Instagram, so it can answer the same questions in both places.", "works_with": ["website", "instagram"]},
-   {"tool_id": "chat-b", "fit_sentence": "A stronger tool with more reporting, but at $20 a month it is more than a one-shop cafe needs today.", "works_with": ["website"]},
-   {"tool_id": "chat-c", "fit_sentence": "Cheapest paid option, though its builder is less established, so check it first.", "works_with": ["website"]}
-  ]},
-  "missed-calls": {"need_id": "missed-calls", "recommended_tool_id": "recep-b", "options": [
-   {"tool_id": "recep-b", "fit_sentence": "Picks up when you are busy, takes the message and texts it to you.", "works_with": ["sms"]},
-   {"tool_id": "recep-a", "fit_sentence": "Can also book orders into a calendar, for a bit more money.", "works_with": ["sms", "gmail"]}
-  ]}
+  "reviews": {
+   "need_id": "reviews",
+   "options": [
+    {
+     "tool_id": "super44",
+     "fit_sentence": "Free starter plan watches your Google reviews and helps draft replies, takes about 15 minutes, and paid starts at $19 a month.",
+     "works_with": []
+    },
+    {
+     "tool_id": "feedelity",
+     "fit_sentence": "Drafts replies in your voice with a 2-week free trial and no card, but it is aimed at chains in Europe and costs from 30 euros a month.",
+     "works_with": [
+      "instagram"
+     ]
+    },
+    {
+     "tool_id": "sprout-social",
+     "fit_sentence": "Handles Instagram posts and replies with a 30-day free trial, but review tools need the $199 a month plan and setup takes about 45 minutes.",
+     "works_with": [
+      "instagram"
+     ]
+    }
+   ],
+   "recommended_tool_id": "super44"
+  },
+  "social-posts": {
+   "need_id": "social-posts",
+   "options": [
+    {
+     "tool_id": "apaya",
+     "fit_sentence": "Writes posts from your website and photos and publishes to Instagram, takes about 20 minutes, but costs from $55 a month and the trial needs a card.",
+     "works_with": [
+      "instagram",
+      "website"
+     ]
+    },
+    {
+     "tool_id": "socialme-ai",
+     "fit_sentence": "Cheaper at $19 a month with a 14-day trial and no card, and it posts to Instagram, but the screens can be confusing.",
+     "works_with": [
+      "instagram"
+     ]
+    },
+    {
+     "tool_id": "promer-ai",
+     "fit_sentence": "Has a free plan but is built for online stores, so it is a weak fit for a coffee shop.",
+     "works_with": [
+      "instagram"
+     ]
+    }
+   ],
+   "recommended_tool_id": "apaya"
+  },
+  "website-chat": {
+   "need_id": "website-chat",
+   "options": [
+    {
+     "tool_id": "chatling",
+     "fit_sentence": "Free plan to start, about 30 minutes, and we can set it up for you, so it can answer hours, menu and catering questions from your site.",
+     "works_with": [
+      "website"
+     ]
+    },
+    {
+     "tool_id": "fastbots",
+     "fit_sentence": "Free plan with 50 messages a month and works with your Instagram, but you must paste a code into your site yourself.",
+     "works_with": [
+      "instagram",
+      "website"
+     ]
+    },
+    {
+     "tool_id": "klaviyo",
+     "fit_sentence": "Better for sending offers than answering questions, and setup takes about 90 minutes.",
+     "works_with": []
+    }
+   ],
+   "recommended_tool_id": "chatling"
+  }
  },
  "previews": {
-  "chat-a": {"tool_id": "chat-a", "prompt": "A customer asks Bean & Brick's website chat if they have oat milk and when they close.", "status": "completed", "video_file": "chat-a.mp4", "cost_usd": 0.4, "video_url": "/demo-media/coffee/chat-a.mp4"}
+  "apaya": {
+   "tool_id": "apaya",
+   "prompt": "Inside a cozy brick-walled coffee shop in Frederick, Maryland, warm natural morning light, a phone on a small stand photographs a fresh latte and a butter croissant on the counter as today's special; the finished social post appears on the phone screen, the owner glances over and smiles. Documentary style, one scene, no logos, minimal text.",
+   "status": "completed",
+   "video_file": "apaya.mp4",
+   "cost_usd": 0.18,
+   "video_url": "/demo-media/coffee/apaya.mp4"
+  }
  },
- "setups": {
-  "chat-a": {"tool_id": "chat-a", "status": "done", "approval_id": "ap_1", "run_id": null, "streaming_url": null, "inbox": "beanandbrick-demo@agentmail.example", "login_url": "https://chat-a.example/login", "username": "beanandbrick-demo@agentmail.example", "configured": ["Created your Chat-A account", "Added your hours, address and menu", "Turned on the chat bubble for your website draft"], "next_steps": ["Log in and read the sample answers", "Paste the one-line snippet onto your website", "Check the allergen answers before you turn it on"], "handoff_reason": null, "has_password": false}
- },
- "approvals": [
-  {"id": "ap_1", "tool_id": "chat-a", "summary": "Create a free Chat-A account using a new email inbox for Bean & Brick, and fill in your hours, address and menu. No payment details will be entered.", "status": "approved", "created_at": "2026-11-08T10:00:00Z", "decided_at": "2026-11-08T10:02:00Z"}
- ],
+ "setups": {},
+ "approvals": [],
  "messages": [
-  {"role": "owner", "text": "Here is my business: https://beanandbrick.example. What should I try first?", "channel": "web", "at": "2026-11-08T09:50:00Z"},
-  {"role": "agent", "text": "Thanks. You are a coffee shop in Frederick that gets a lot of repeat questions. I would start with a website chat. It is free to try.", "channel": "web", "at": "2026-11-08T09:51:00Z"},
-  {"role": "owner", "text": "Set it up for me.", "channel": "web", "at": "2026-11-08T10:01:00Z"},
-  {"role": "agent", "text": "Done. Your Chat-A account is ready. Log in to check the answers before you turn it on.", "channel": "web", "at": "2026-11-08T10:06:00Z"}
- ]
+  {
+   "role": "owner",
+   "text": "Here is my business: https://mainstreet-demo-sites.vercel.app/coffee/. What should I try first?",
+   "channel": "web",
+   "at": "2026-11-09T01:26:27+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Hi Daniel! Bean & Brick looks great. I saved your profile and four jobs AI could take off your plate: Instagram specials posts, a website chat for questions, review replies, and email or text offers.\n\nI'd try the website chat first. It would answer questions about hours, menu and catering boxes day and night. The tool is Chatling. It's verified by our team, has a free plan, and paid starts at $25 a month. I can set it up for you.\n\nThe Instagram posting tools all cost money or need extra steps, so I'd leave them for later.\n\nWant me to set up Chatling? I'll ask for your OK first, and I won't create anything until you give it.",
+   "channel": "web",
+   "at": "2026-11-09T01:26:56+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Social posts and specials",
+   "channel": "web",
+   "at": "2026-11-09T01:26:56+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "I compared three tools for your specials posts. The comparison is saved on your page.\n\nMy pick is Apaya. Our team verified it. It writes posts from your website and photos and publishes them to Instagram. It costs from $55 a month, and the 3-day trial asks for a card.\n\n- SocialMe AI: $19 a month, with a 14-day trial and no card. Use it with caution, and its screens can be confusing.\n- Promer AI: it has a free plan, but it's built for online stores. Use it with caution. It's a weak fit for you.\n\nWe can't set any of these up for you. Apaya's sign-up link is https://apaya.com/pricing. Signing up takes about 20 minutes. For a hand with it, try Maryland SBDC (https://www.marylandsbdc.org).\n\nWould you like a short preview of Apaya?",
+   "channel": "web",
+   "at": "2026-11-09T01:27:05+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Website chat and FAQ",
+   "channel": "web",
+   "at": "2026-11-09T01:27:05+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "I already compared these, and the comparison is saved on your page. It covers three tools.\n\nMy pick is Chatling. Our team verified it. It has a free plan, and paid plans start at $25 a month. It learns from your website and answers questions about hours, menu and catering boxes day and night. We can set it up for you in about 30 minutes.\n\n- FastBots: it has a free plan with 50 messages a month. Use it with caution. You would have to paste a code into your site yourself.\n- Klaviyo: it's better for sending offers than answering questions. Setup takes about 90 minutes.\n\nWould you like me to set up Chatling? I'll ask for your OK first and won't create anything until you give it.",
+   "channel": "web",
+   "at": "2026-11-09T01:27:09+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Review replies and reputation",
+   "channel": "web",
+   "at": "2026-11-09T01:27:09+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "I compared three tools for review replies. The comparison is saved on your page.\n\nMy pick is Super44. Our team verified it. Its free plan watches your Google reviews and helps draft replies. Setup takes about 15 minutes, and paid starts at $19 a month. One caution: its site looks European, and I couldn't confirm it works well for US shops.\n\n- Feedelity: it has a 2-week free trial with no card, then costs from 30 euros a month. Use it with caution. It's made for chains in Europe.\n- Sprout Social: review tools need its $199 a month plan. Use it with caution.\n\nWe can't set these up for you. Super44's link is https://super44.ai. For a hand with signing up, try SCORE (https://www.score.org/find-mentor).",
+   "channel": "web",
+   "at": "2026-11-09T01:27:20+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Show me a preview of the best tool for Social posts and specials",
+   "channel": "web",
+   "at": "2026-11-09T01:27:20+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Your preview of Apaya is ready, and it's on your page. It shows a phone on a stand photographing a latte and a croissant at a brick-walled coffee shop. The finished Instagram post then appears on the screen.\n\nThis is an illustration of the idea. It isn't a recording of the real tool.\n\nApaya is verified by our team. It costs from $55 a month, and the 3-day trial asks for a card. We can't set it up for you. You can sign up at https://apaya.com/pricing. For a hand with it, try Maryland SBDC (https://www.marylandsbdc.org).\n\nWant to go ahead with the Chatling website chat instead, since we can set that one up?",
+   "channel": "web",
+   "at": "2026-11-09T01:28:16+00:00"
+  }
+ ],
+ "media": {
+  "apaya": "/demo-media/coffee/apaya.mp4"
+ }
 }

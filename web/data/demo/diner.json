@@ -1,0 +1,210 @@
+{
+ "owner_id": "demo-diner",
+ "source": "https://mainstreet-demo-sites.vercel.app/diner/",
+ "profile": {
+  "name": "Route 40 Diner",
+  "business_type": "restaurant",
+  "city": "Ellicott City",
+  "state": "MD",
+  "size": "family-run diner, owner Carol plus staff",
+  "website": "https://mainstreet-demo-sites.vercel.app/diner/",
+  "uses": [
+   "square",
+   "website"
+  ],
+  "pains": [
+   "Saturday morning rush with 30 minute waits",
+   "large parties and catering quotes handled by phone",
+   "no online reservations"
+  ],
+  "summary": "Carol runs a family diner in Ellicott City that has a busy Saturday rush and takes large-party and catering requests by phone."
+ },
+ "needs": {
+  "items": [
+   {
+    "need_id": "website-chat",
+    "title": "Answer website questions day and night",
+    "why": "Large parties, catering and hours questions all come by phone now, and a chat on your site could answer them while you cook.",
+    "est_hours_saved_week": 3.0
+   },
+   {
+    "need_id": "reviews",
+    "title": "Reply to Google and Yelp reviews",
+    "why": "After 28 years you likely have many reviews, and quick friendly replies bring in more Saturday regulars.",
+    "est_hours_saved_week": 1.0
+   },
+   {
+    "need_id": "social-posts",
+    "title": "Post your specials and pie of the day",
+    "why": "Your pie case and daily favorites are easy to show off, but posting takes time during the rush.",
+    "est_hours_saved_week": 2.0
+   }
+  ]
+ },
+ "compares": {
+  "reviews": {
+   "need_id": "reviews",
+   "options": [
+    {
+     "tool_id": "rightresponse-ai",
+     "fit_sentence": "Highest trust score, from $10 a month with a 7-day free trial, replies to Google reviews in about 30 minutes, but setup is medium and you do it yourself.",
+     "works_with": [
+      "google_business",
+      "sms"
+     ]
+    },
+    {
+     "tool_id": "reviewflowz",
+     "fit_sentence": "Works with Square, Google and Yelp, easy 30-minute setup, but $45 a month and our team says use with caution.",
+     "works_with": [
+      "square",
+      "google_business",
+      "yelp",
+      "sms"
+     ]
+    },
+    {
+     "tool_id": "infi",
+     "fit_sentence": "Works with Square and Google, but it is custom-quoted, takes about an hour, and our team says use with caution.",
+     "works_with": [
+      "square",
+      "google_business",
+      "sms"
+     ]
+    }
+   ],
+   "recommended_tool_id": "rightresponse-ai"
+  },
+  "social-posts": {
+   "need_id": "social-posts",
+   "options": [
+    {
+     "tool_id": "apaya",
+     "fit_sentence": "Writes posts from your website and photos for Facebook and Instagram, $55 a month with a 3-day trial, easy 20-minute setup you do yourself.",
+     "works_with": [
+      "website"
+     ]
+    },
+    {
+     "tool_id": "pluspoint",
+     "fit_sentence": "Also schedules social posts and answers reviews, but costs $87 a month because of a 3-location minimum, with medium setup of about 45 minutes.",
+     "works_with": [
+      "yelp"
+     ]
+    },
+    {
+     "tool_id": "infi",
+     "fit_sentence": "Works with Square and writes local search posts, but is custom-quoted, takes about an hour, and our team says use with caution.",
+     "works_with": [
+      "square"
+     ]
+    }
+   ],
+   "recommended_tool_id": "apaya"
+  },
+  "website-chat": {
+   "need_id": "website-chat",
+   "options": [
+    {
+     "tool_id": "chatling",
+     "fit_sentence": "Free plan to start, works with your website, about 30 minutes, and we can set it up for you.",
+     "works_with": [
+      "website"
+     ]
+    },
+    {
+     "tool_id": "tidio-lyro-ai-agent",
+     "fit_sentence": "Free plan with 50 conversations and about 30 minutes, but you would sign up and add it to your site yourself.",
+     "works_with": [
+      "website"
+     ]
+    },
+    {
+     "tool_id": "chatbot",
+     "fit_sentence": "No free plan, from $19 a month after a 14-day trial, about 20 minutes, and you would set it up yourself.",
+     "works_with": [
+      "website"
+     ]
+    }
+   ],
+   "recommended_tool_id": "chatling"
+  }
+ },
+ "previews": {
+  "chatling": {
+   "tool_id": "chatling",
+   "prompt": "Carol, owner of a busy family diner in Ellicott City, hurries between booths with coffee pots; on a tablet on the counter a chat assistant answers a customer's question about Saturday hours; warm natural light, one scene, documentary style, no brand logos",
+   "status": "completed",
+   "video_file": "chatling.mp4",
+   "cost_usd": 0.18,
+   "video_url": "/demo-media/diner/chatling.mp4"
+  }
+ },
+ "setups": {},
+ "approvals": [],
+ "messages": [
+  {
+   "role": "owner",
+   "text": "Here is my business: https://mainstreet-demo-sites.vercel.app/diner/. What should I try first?",
+   "channel": "web",
+   "at": "2026-11-09T01:26:27+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Hi Carol! I'd try a website chat helper first. It answers questions about hours, large parties and catering while you're busy cooking. I saved a few other ideas on your page too: review replies and specials posts.\n\nMy pick is Chatling. It has a free plan, and our team has verified it. It takes about 30 minutes, and I can set it up for you.\n\nOne catch: after it's trained on your pages, someone has to paste a small code snippet into your website. Whoever manages your site can do that.\n\nWant me to set it up for you? I'll ask your approval first. I won't create anything until you say yes.",
+   "channel": "web",
+   "at": "2026-11-09T01:26:50+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Answer website questions day and night",
+   "channel": "web",
+   "at": "2026-11-09T01:26:50+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Here are your three choices for website chat:\n\n- Chatling: free plan, paid from $25 a month. About 30 minutes, and I can set it up for you. Verified by our team.\n- Tidio (Lyro AI Agent): free plan with 50 chats, paid from about $29 a month. About 30 minutes, and you'd set it up yourself. Also verified.\n- ChatBot: no free plan, from $19 a month after a 14-day trial. About 20 minutes, and you'd set it up yourself. Also verified.\n\nI'd pick Chatling because it's free to start and I can do the sign-up. In our simulated owner test, the hard part for all three was adding the chat box to the website.\n\nWant me to set up Chatling for you?",
+   "channel": "web",
+   "at": "2026-11-09T01:26:54+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Reply to Google and Yelp reviews",
+   "channel": "web",
+   "at": "2026-11-09T01:26:54+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Here are three choices for review replies:\n\n- RightResponse AI: from $10 a month, with a 7-day free trial. It covers Google reviews only. Verified by our team, with the best trust score. About 30 minutes, and you'd set it up yourself.\n- Reviewflowz: $45 a month. It covers Google and Yelp. Our team says use with caution. Easy setup, about 30 minutes.\n- INFI: price on request. It covers Google. Our team says use with caution. About an hour.\n\nI'd pick RightResponse AI because it's the most trusted and the cheapest. In our simulated owner test, setup was the hard part, so a local helper could assist.\n\nI can't set up any of these for you. Want a sign-up link, or help from a local helper?",
+   "channel": "web",
+   "at": "2026-11-09T01:27:05+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Post your specials and pie of the day",
+   "channel": "web",
+   "at": "2026-11-09T01:27:05+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Here are three choices for posting your specials:\n\n- Apaya: $55 a month, with a 3-day trial. It writes and schedules Facebook and Instagram posts from your website and photos. Verified by our team. Easy, about 20 minutes.\n- Pluspoint: $87 a month, because it requires 3 locations. It does posts, review replies and chat. Verified. Medium setup, about 45 minutes.\n- INFI: price on request. It writes Google posts and texts offers. Our team says use with caution. About an hour.\n\nI'd pick Apaya because it's the easiest and the best fit for posts. In our simulated owner test, connecting Facebook and Instagram was the likely sticking point. It also asks for a card to start the trial.\n\nI can't set these up for you. Want the sign-up link, or help from a local helper?",
+   "channel": "web",
+   "at": "2026-11-09T01:27:15+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Show me a preview of the best tool for Answer website questions day and night",
+   "channel": "web",
+   "at": "2026-11-09T01:27:15+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Your preview of Chatling is ready, and it's on your page now.\n\nIt shows a busy diner like yours. You're hurrying between booths, and a tablet on the counter answers a customer's question about Saturday hours. The video is made up to show the idea. It isn't a real recording of your diner.\n\nChatling is free to start, and our team has verified it. I can set it up for you. Want me to go ahead? I'll ask for your approval first.",
+   "channel": "web",
+   "at": "2026-11-09T01:28:13+00:00"
+  }
+ ],
+ "media": {
+  "chatling": "/demo-media/diner/chatling.mp4"
+ }
+}

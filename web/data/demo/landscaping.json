@@ -1,0 +1,190 @@
+{
+ "owner_id": "demo-landscaping",
+ "source": "https://mainstreet-demo-sites.vercel.app/landscaping/",
+ "profile": {
+  "name": "Chesapeake Green Landscaping",
+  "business_type": "landscaping",
+  "city": "Annapolis",
+  "state": "MD",
+  "size": "owner plus crew of 4",
+  "website": "https://mainstreet-demo-sites.vercel.app/landscaping/",
+  "uses": [],
+  "pains": [
+   "paper invoices",
+   "relies on word of mouth",
+   "spring and fall fill up fast",
+   "quotes need a site visit by phone call"
+  ],
+  "summary": "Tom Reyes runs a four-person landscaping crew in Annapolis that works by word of mouth and paper invoices."
+ },
+ "needs": {
+  "items": [
+   {
+    "need_id": "books",
+    "title": "Invoicing and bookkeeping",
+    "why": "You work from a stack of paper invoices, so billing and receipts eat evenings.",
+    "est_hours_saved_week": 3.0
+   },
+   {
+    "need_id": "missed-calls",
+    "title": "AI phone receptionist",
+    "why": "Jobs come by phone, and your crew is out in yards when it rings, especially in the spring and fall rush.",
+    "est_hours_saved_week": 3.0
+   },
+   {
+    "need_id": "quotes",
+    "title": "Estimates and quotes",
+    "why": "After each free walk-through, a written quote can go out the same day.",
+    "est_hours_saved_week": 2.0
+   },
+   {
+    "need_id": "reviews",
+    "title": "Review replies and reputation",
+    "why": "You grow by word of mouth, so good online reviews help new neighbors find you.",
+    "est_hours_saved_week": 1.0
+   }
+  ]
+ },
+ "compares": {
+  "books": {
+   "need_id": "books",
+   "options": [
+    {
+     "tool_id": "quoteiq",
+     "fit_sentence": "Sends invoices, drafts quotes and answers calls for a crew like yours, from $29.99 a month with a 14-day free trial, but setup takes about 45 minutes.",
+     "works_with": []
+    },
+    {
+     "tool_id": "square",
+     "fit_sentence": "Free plan with no monthly fee for sending estimates and invoices, but it asks for bank and tax details and does little real bookkeeping.",
+     "works_with": []
+    },
+    {
+     "tool_id": "digits",
+     "fit_sentence": "Sorts receipts and transactions automatically and sends invoices, but it costs from $65 a month and takes about 45 minutes to set up.",
+     "works_with": []
+    }
+   ],
+   "recommended_tool_id": "quoteiq"
+  },
+  "missed-calls": {
+   "need_id": "missed-calls",
+   "options": [
+    {
+     "tool_id": "quoteiq",
+     "fit_sentence": "The AI call team comes with every plan from $29.99 a month, plus quotes and invoices, with a 14-day free trial and about 45 minutes of setup.",
+     "works_with": []
+    },
+    {
+     "tool_id": "allo",
+     "fit_sentence": "A phone system from $10 a month, but the AI receptionist is a $32 a month add-on, and you would need to forward your number and connect a calendar.",
+     "works_with": []
+    },
+    {
+     "tool_id": "tradesly",
+     "fit_sentence": "Answers calls day and night and can bring in real people for tough calls, but it starts at $199 a month and takes about an hour to set up.",
+     "works_with": []
+    }
+   ],
+   "recommended_tool_id": "quoteiq"
+  },
+  "quotes": {
+   "need_id": "quotes",
+   "options": [
+    {
+     "tool_id": "quoteiq",
+     "fit_sentence": "Drafts quotes from job photos and also sends invoices, from $29.99 a month with a 14-day free trial and about 45 minutes of setup.",
+     "works_with": []
+    },
+    {
+     "tool_id": "satquote",
+     "fit_sentence": "Measures a yard from aerial images and builds an estimate, from $22 a month with about 30 minutes of setup, but it is marked use with caution.",
+     "works_with": []
+    },
+    {
+     "tool_id": "thryv",
+     "fit_sentence": "Has estimate tools, but it is mostly marketing software, costs from $99 a month and is marked use with caution.",
+     "works_with": []
+    }
+   ],
+   "recommended_tool_id": "quoteiq"
+  }
+ },
+ "previews": {
+  "quoteiq": {
+   "tool_id": "quoteiq",
+   "prompt": "A landscaping owner in work gloves sits on the tailgate of a truck beside a freshly mulched garden in Annapolis, finishing an invoice in seconds on a tablet and tapping send; warm natural morning light, documentary style, one scene, no logos",
+   "status": "completed",
+   "video_file": "quoteiq.mp4",
+   "cost_usd": 0.18,
+   "video_url": "/demo-media/landscaping/quoteiq.mp4"
+  }
+ },
+ "setups": {},
+ "approvals": [],
+ "messages": [
+  {
+   "role": "owner",
+   "text": "Here is my business: https://mainstreet-demo-sites.vercel.app/landscaping/. What should I try first?",
+   "channel": "web",
+   "at": "2026-11-09T01:28:16+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Start with QuoteIQ. It's the best fit for Chesapeake Green because one app covers your paper invoices, written quotes after your free walk-throughs, and an AI receptionist for the calls you miss in the field.\n\n- Price: from $29.99 a month, with a 14-day free trial. There's no free plan.\n- Trust: verified by our team.\n- Setup takes about 45 minutes. We can't set it up for you, so you'd sign up yourself at https://myquoteiq.com/pricing/.\n- A simulated test with an HVAC owner found the setup a bit much at first.\n\nSquare is a free-plan option for invoices. It asks for bank and tax details, and it does little real bookkeeping.\n\nYour page now shows your profile, four jobs AI could take off your plate, and this comparison. I can show you a short preview of QuoteIQ in action, or point you to a local helper like Maryland SBDC for setup.",
+   "channel": "web",
+   "at": "2026-11-09T01:28:43+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Invoicing and bookkeeping",
+   "channel": "web",
+   "at": "2026-11-09T01:28:43+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Here's the comparison for Invoicing and bookkeeping. It's saved on your page.\n\n- QuoteIQ (my top pick): from $29.99 a month, with a 14-day free trial. It sends invoices, writes quotes and answers missed calls. It's verified by our team. Setup takes about 45 minutes.\n- Square: a free plan with no monthly fee, though you pay processing fees. It sends estimates and invoices. It asks for bank and tax details, and it does little real bookkeeping.\n- Digits: from $65 a month. It sorts receipts and transactions on its own and sends invoices. Setup takes about 45 minutes.\n\nWe can't set up any of these for you. Each one has its own sign-up page, and I can give you the link. I can also show a short preview of QuoteIQ, or point you to a local helper like Maryland SBDC (https://www.marylandsbdc.org).\n\nWhich one would you like to look at?",
+   "channel": "web",
+   "at": "2026-11-09T01:28:47+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for AI phone receptionist",
+   "channel": "web",
+   "at": "2026-11-09T01:28:47+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Here's the comparison for the AI phone receptionist. It's saved on your page.\n\n- QuoteIQ (my top pick): from $29.99 a month, with a 14-day free trial. The AI call answering is on every plan, and you also get quotes and invoices. It's verified by our team.\n- Allo: the phone system starts at $10 a month. The AI receptionist is a $32 a month add-on. You'd also need to forward your number and connect a calendar. It's verified by our team. A simulated test with an HVAC owner found it hard to set up.\n- Tradesly: from $199 a month. It answers day and night and brings in real people for tough calls. Setup takes about an hour. It's verified by our team.\n\nWe can't set up any of these for you. Each has its own sign-up page, and I can give you the link. I can also show a short preview of QuoteIQ taking a call, or point you to a local helper like Maryland SBDC (https://www.marylandsbdc.org).",
+   "channel": "web",
+   "at": "2026-11-09T01:28:57+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Compare tools for Estimates and quotes",
+   "channel": "web",
+   "at": "2026-11-09T01:28:57+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Here's the comparison for Estimates and quotes. It's saved on your page.\n\n- QuoteIQ (my top pick): from $29.99 a month, with a 14-day free trial. It drafts quotes from job photos and also sends invoices. It's verified by our team.\n- SatQuote: from $22 a month. It measures a yard from aerial photos and builds an estimate. Setup takes about 30 minutes. Use it with caution. A simulated test with a landscaper found its plans confusing.\n- Thryv: from $99 a month. It's mostly marketing software, with estimate tools on the side. Use it with caution.\n\nWe can't set up any of these for you. Each has its own sign-up page, and I can give you the link. I can also show a short preview of QuoteIQ, or point you to a local helper like Maryland SBDC (https://www.marylandsbdc.org).",
+   "channel": "web",
+   "at": "2026-11-09T01:29:07+00:00"
+  },
+  {
+   "role": "owner",
+   "text": "Show me a preview of the best tool for Invoicing and bookkeeping",
+   "channel": "web",
+   "at": "2026-11-09T01:29:07+00:00"
+  },
+  {
+   "role": "agent",
+   "text": "Your preview of QuoteIQ is ready, and it's on your page. QuoteIQ is the top pick for Invoicing and bookkeeping.\n\nIt shows a landscaper on a truck tailgate, next to a freshly mulched garden. They finish an invoice on a tablet and send it in seconds. This is an illustration, not a recording of the real app.\n\nQuoteIQ costs from $29.99 a month, with a 14-day free trial. It's verified by our team. We can't set it up for you, so you'd sign up yourself at https://myquoteiq.com/pricing/. A local helper can also walk you through it: Maryland SBDC (https://www.marylandsbdc.org).",
+   "channel": "web",
+   "at": "2026-11-09T01:30:03+00:00"
+  }
+ ],
+ "media": {
+  "quoteiq": "/demo-media/landscaping/quoteiq.mp4"
+ }
+}
