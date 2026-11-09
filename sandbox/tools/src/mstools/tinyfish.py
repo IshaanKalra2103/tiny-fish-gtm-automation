@@ -4,7 +4,13 @@ Search -> discover URLs we don't have yet (free)
 Fetch  -> read known URLs as clean markdown (free)
 Agent  -> goal-driven multi-step work on interactive pages ($0.016/step), queued and polled
 """
+import time
+
 from tinyfish import AgentConfig, BrowserProfile, ProxyConfig, TinyFish
+
+from .cli import log
+
+RETRY_WAITS = (2.0, 5.0)  # seconds before the 2nd and 3rd attempt
 
 _client: TinyFish | None = None
 
@@ -29,9 +35,17 @@ def fetch(urls: list[str], max_chars: int = 20_000) -> tuple[list[dict], list[st
     failed: list[str] = []
     for i in range(0, len(urls), 10):
         chunk = urls[i:i + 10]
-        try:
-            res = client().fetch.get_contents(urls=chunk)
-        except Exception:
+        res = None
+        for attempt, wait in enumerate(RETRY_WAITS + (None,)):
+            try:
+                res = client().fetch.get_contents(urls=chunk)
+                break
+            except Exception as e:  # rate limits and blips while other runs share the key
+                log(f"fetch attempt {attempt + 1} failed: {type(e).__name__}: {str(e)[:120]}")
+                if wait is None:
+                    break
+                time.sleep(wait)
+        if res is None:
             failed += chunk
             continue
         for r in res.results:

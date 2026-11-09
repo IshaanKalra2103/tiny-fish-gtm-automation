@@ -25,6 +25,7 @@ class FakeClient:
 
 def call(monkeypatch, capsys, fake, *argv):
     monkeypatch.setattr(tinyfish, "client", lambda: fake)
+    monkeypatch.setattr(tinyfish.time, "sleep", lambda s: None)
     monkeypatch.setattr(sys, "argv", ["tf", *argv])
     with pytest.raises(SystemExit) as e:
         tf.main()
@@ -135,3 +136,20 @@ def test_agent_wait_completed_with_result_is_done(env, monkeypatch, capsys):
     monkeypatch.setenv("MS_POLL_SECONDS", "0")
     code, out = call(monkeypatch, capsys, FakeClient(result={"account_created": True}), "agent-wait", "run_1")
     assert out["outcome"] == "done" and out["result"]["account_created"] is True
+
+
+def test_fetch_retries_transient_error(env, monkeypatch, capsys):
+    calls = {"n": 0}
+
+    def flaky(urls, **kw):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("429 Too Many Requests")
+        return NS(results=[NS(url=u, title="Page", text="hello " * 10) for u in urls], errors=[])
+
+    fake = FakeClient()
+    fake.fetch = NS(get_contents=flaky)
+    monkeypatch.setattr(tinyfish.time, "sleep", lambda s: None)
+    code, out = call(monkeypatch, capsys, fake, "fetch", "https://ok.example")
+    assert code == 0 and out["failed"] == [] and out["docs"][0]["url"] == "https://ok.example"
+    assert calls["n"] == 2
