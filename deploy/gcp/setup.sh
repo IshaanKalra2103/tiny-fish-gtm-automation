@@ -145,14 +145,16 @@ for s in photon-project-id photon-project-secret ms-relay-secret; do grant_secre
 
 # ---- 5. VMs --------------------------------------------------------------------------------------
 
+# block-project-ssh-keys: SSH keys go into ms-agent's own metadata, so no login user exists on its first boot
+# and the bootstrap's mainstreet user gets uid 1000 (see vm/agent-bootstrap.sh).
 if [[ $(vm_status "$AGENT_VM") == MISSING ]]; then
   say "creating $AGENT_VM (e2-standard-2, Debian 12, 30 GB pd-balanced)"
   gcloud compute instances create "$AGENT_VM" --zone "$ZONE" --machine-type e2-standard-2 \
     --image-family debian-12 --image-project debian-cloud --boot-disk-size 30GB --boot-disk-type pd-balanced \
-    --tags ms-agent --service-account "$AGENT_SA" --scopes cloud-platform \
+    --tags ms-agent --service-account "$AGENT_SA" --scopes cloud-platform --metadata block-project-ssh-keys=TRUE \
     --metadata-from-file startup-script="$GCP_DIR/vm/agent-bootstrap.sh" >/dev/null
 else
-  gcloud compute instances add-metadata "$AGENT_VM" --zone "$ZONE" \
+  gcloud compute instances add-metadata "$AGENT_VM" --zone "$ZONE" --metadata block-project-ssh-keys=TRUE \
     --metadata-from-file startup-script="$GCP_DIR/vm/agent-bootstrap.sh" >/dev/null
 fi
 AGENT_IP="$(gcloud compute instances describe "$AGENT_VM" --zone "$ZONE" --format='value(networkInterfaces[0].networkIP)')"
