@@ -28,3 +28,6 @@ web/.next/
 web/.vercel/
 demo-sites/.vercel/
 .superpowers/
+
+# demo prerun output that failed validation
+web/data/demo/incomplete/
