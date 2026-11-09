@@ -129,6 +129,10 @@ class Prep:
                 sh, sw = 1920, round(1920 * iw / ih / 2) * 2
             fit = f"{pre}scale={sw}:{sh}:flags=lanczos,setsar=1"
             tw, th = sw, sh
+        elif mode == "cam":
+            # crop = [x, y, w, h] square around the speaker's face -> 480x480 for the round face-cam bubble
+            x, y, w, h = crop
+            fit = f"crop={w}:{h}:{x}:{y},scale={tw}:{th}:flags=lanczos,setsar=1"
         else:
             fit = self.fit_filter(info, tw, th)
         src_len = length * speed
@@ -298,6 +302,12 @@ class Prep:
             else:
                 die(f"seg {i}: unknown kind {kind}")
 
+            cam = seg.get("cam")
+            if cam:
+                cl = min(dur, float(cam.get("until", dur)) + 0.5)
+                cname, _, _ = self.video(f"{tag}_cam.mp4", cam["file"], float(cam.get("in", 0)), cl, 480, 480,
+                                         mode="cam", crop=cam.get("crop", [620, 40, 760, 760]))
+                out["cam"] = cname
             frames = max(1, round(dur * FPS))
             fade = 0 if i == 0 else round(float(seg.get("fade", 0)) * FPS)
             fade = min(fade, frames - 1)

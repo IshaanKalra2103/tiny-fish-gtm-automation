@@ -4,7 +4,7 @@
 """Write video/film.toml from the sorted takes (footage/index.json) and the screen recordings.
 
 usage (repo root):
-  uv run video/tools/build_film.py [--ring FILE] [--imessage FILE] [--coach TEXT] [--music FILE]
+  uv run video/tools/build_film.py [--ring FILE] [--ring-in S] [--ring-sfx FILE] [--imessage FILE] [--coach TEXT] [--music FILE]
                                    [--pick C4=path ...] [--skip C8]
 
 Takes: the last take of each clip id (by file name) unless --pick names one. V lines are cut to
@@ -22,6 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FOOT = ROOT / "footage"
 VO_DIR = FOOT / "vo"
+SFX = FOOT / "sfx"
 SCR = FOOT / "screens"
 OUT = Path(os.environ["FILM_OUT"]).resolve() if os.environ.get("FILM_OUT") else ROOT / "video" / "film.toml"
 INDEX = Path(os.environ.get("FILM_INDEX") or FOOT / "index.json").resolve()
@@ -105,13 +106,23 @@ def vo_parts(cid: str, splits: list[str] = ()) -> list[dict] | None:
         a, b = ws[i]["s"] - 0.12, ws[j - 1]["e"] + 0.3
         dst = VO_DIR / f"{cid}{'' if len(idx) == 2 else chr(97 + n)}.wav"
         d = cut_audio(t["file"], a, b, dst)
-        parts.append({"file": rel(dst), "dur": round(d, 2),
+        parts.append({"file": rel(dst), "dur": round(d, 2), "src": t["file"], "src_in": round(max(0, a), 3),
                       "words": [{"w": w["w"], "s": round(w["s"] - a, 2)} for w in ws[i:j]]})
     return parts
 
 
+FILL = "--no-fill" not in args   # stand in for missing V lines with silent, music-only beats
+
+
+def vo_or_silent(cid: str, dur: float, splits: list[str] = ()) -> list[dict] | None:
+    parts = vo_parts(cid, list(splits))
+    if parts:
+        return parts
+    return [{"file": None, "dur": dur, "words": []}] if FILL else None
+
+
 def word_at(part: dict, phrase: str, default: float) -> float:
-    i = find(part["words"], phrase)
+    i = find(part.get("words", []), phrase)
     return round(part["words"][i]["s"], 2) if i is not None else default
 
 
@@ -172,8 +183,18 @@ def seg(label: str, **kw) -> None:
     order.append(label)
 
 
+def cam_for(p: dict | None, at: float, pos: str = "br") -> dict:
+    """Face-cam bubble from the on-camera take a V line was cut from (Ishaan's takes only)."""
+    if not p or not p.get("src") or "/ishaan/" not in str(Path(p["src"]).resolve()):
+        return {}
+    c = {"file": rel(p["src"]), "in": round(max(0.0, p["src_in"] - at), 2), "until": round(at + p["dur"] - 0.2, 2)}
+    if pos != "br":
+        c["pos"] = pos
+    return {"cam": c}
+
+
 def vo_list(p: dict, at: float = 0.3) -> list[dict]:
-    return [{"file": p["file"], "at": at}]
+    return [{"file": p["file"], "at": at}] if p.get("file") else []
 
 
 def screen(label: str, name: str, a: str | None, b: str | None, part: dict | None, caption: str | None = None,
@@ -206,11 +227,61 @@ def screen(label: str, name: str, a: str | None, b: str | None, part: dict | Non
         kw["caption"] = caption or f"Sped up {speed:.0f}x" if speed >= 1.5 else caption
     elif caption:
         kw["caption"] = caption
-    kw["vo"] = vo_list(part)
+    if vo_list(part):
+        kw["vo"] = vo_list(part)
+        kw.update(cam_for(part, 0.3))
     kw.update(extra)
     if kw.get("caption") is None:
         kw.pop("caption", None)
     seg(label, **kw)
+
+
+# Kinetic type per clip: (anchor phrase, lines, options). A beat lands as its anchor word is spoken.
+L, B, A, M, H = "light", "bold", "accent", "mark", "huge"
+KIN = {
+    "C2A": [("technology problem", [("not a", L), ("technology", B), ("problem", L)], {}),
+            ("finding problem", [("a", L), ("finding", A), ("problem.", B)], {"punch": True}),
+            ("50", [("one directory:", L), ("50,000", H), ("tools", L)], {}),
+            ("vendors pay", [("vendors pay", L), ("for placement", B)], {}),
+            ("nobody helps", [("nobody", A), ("helps you", L), ("set it up", B)], {})],
+    "C3": [("is life", [("everything", L), ("is", L), ("LIVE", H)], {"punch": True}),
+           ("real site", [("the real", L), ("site", B)], {}),
+           ("real agent", [("the real", L), ("agent", B)], {}),
+           ("real Maryland", [("a real", L), ("Maryland", A), ("business", B)], {}),
+           ("only reads", [("it only reads", L), ("public", B), ("websites", M)], {})],
+    "C5": [("one question", [("we started from", L), ("one question", B)], {}),
+           ("trust", [("what would it take", L), ("to trust", B), ("an AI tool?", A)], {"punch": True}),
+           ("three parts", [("three", H), ("parts", L)], {}),
+           ("catalog", [("1  a checked", L), ("catalog", B)], {}),
+           ("agent that", [("2  an", L), ("agent", B), ("that does the work", L)], {}),
+           ("safety", [("3  safety rules", L), ("in code", M)], {"punch": True})],
+    "C6": [("tested", [("we tested it", L), ("like an owner", B)], {}),
+           ("real websites", [("real websites", B), ("the live product", L)], {}),
+           ("iMessage showed", [("bug:", A), ("raw formatting", B), ("in iMessage", L)], {}),
+           ("reply showed", [("bug:", A), ("replies sent", B), ("twice", B)], {}),
+           ("fixed both", [("fixed both", M), ("today", L)], {"punch": True})],
+    "C7": [("Is this", [("is this", L), ("technically", B), ("possible?", B)], {}),
+           ("running right", [("it's running", L), ("right now.", A)], {"punch": True})],
+    "C15": [("Mainstreet AI", [("that's", L), ("MainStreet AI", B)], {}),
+            ("find the", [("we find", L), ("the AI tools", B)], {}),
+            ("check them", [("check them", B)], {}),
+            ("set them", [("set them up", A)], {"punch": True}),
+            ("live right", [("live", H), ("right now", L)], {}),
+            ("try it", [("try it with", L), ("your business", M)], {}),
+            ("thanks for", [("thanks for", L), ("watching", B)], {})],
+}
+
+
+def kin_beats(cid: str, t: dict, t_in: float) -> list[dict]:
+    ws = t["words"]
+    out = []
+    for phrase, lines, o in KIN.get(cid, []):
+        i = find(ws, phrase)
+        if i is None:
+            print(f"  kin: {cid} anchor not found: {phrase!r}")
+            continue
+        out.append({"at": round(max(0.05, ws[i]["s"] - t_in - 0.04), 2), "lines": [list(x) for x in lines], **o})
+    return sorted(out, key=lambda b: b["at"])
 
 
 def clip(cid: str, lower: dict | None = None, panel: dict | None = None, **extra) -> None:
@@ -219,6 +290,11 @@ def clip(cid: str, lower: dict | None = None, panel: dict | None = None, **extra
         return
     a, b = clip_inout(t)
     kw = {"kind": "clip", "file": rel(t["file"]), "in": a, "out": b}
+    beats = kin_beats(cid, t, a) if not panel else []
+    if beats:
+        kw.update(kin=beats, reframe=[1.18, -170], kin_x=1262, kin_y=190)
+        if SFX.exists():
+            kw["sfx"] = [{"file": rel(SFX / "pop.wav"), "at": bt["at"], "gain_db": -22} for bt in beats]
     if lower:
         kw["lower_third"] = lower
     if panel:
@@ -240,20 +316,31 @@ ISHAAN = {"name": "Ishaan Kalra", "line": "Team Forge"}
 # ---- Part 0. The problem ------------------------------------------------------------------------
 ring = opt("--ring")
 if ring:
-    seg("ring", kind="broll", file=rel(ring), **{"in": 0.0, "out": round(min(4.0, media_len(Path(ring))), 2)}, audio=True)
+    r_in = float(opt("--ring-in") or 0.0)
+    kw = {"in": r_in, "out": round(min(r_in + 4.0, media_len(Path(ring))), 2)}
+    has_audio = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index",
+                                "-of", "csv=p=0", ring], capture_output=True, text=True).stdout.strip() != ""
+    if has_audio:
+        kw["audio"] = True
+    if opt("--ring-sfx"):
+        kw["sfx"] = [{"file": rel(opt("--ring-sfx")), "at": 0.0, "gain_db": -9}]
+    seg("ring", kind="broll", file=rel(ring), **kw)
 else:
     missing.append("--ring (ringing-phone B-roll)")
 clip("C1", lower=DYLAN)
 
-v1 = vo_parts("V1", ["Census"])
+v1 = vo_parts("V1", ["Census"]) or ([{"file": None, "dur": 3.4}, {"file": None, "dur": 4.6}] if FILL else None)
+HIT = [{"file": rel(SFX / "hit.wav"), "at": 0.1, "gain_db": -14}] if SFX.exists() else []
 if v1:
+    kw = {"vo": vo_list(v1[0])} if v1[0].get("file") else {"dur": v1[0]["dur"]}
     seg("V1a", kind="card", style="number", figure="27%", line="of calls to home-services businesses go unanswered",
-        source="Source: Invoca, call-tracking data", vo=vo_list(v1[0]))
+        source="Source: Invoca, call-tracking data", sfx=HIT, **kw)
     if len(v1) > 1:
+        kw = {"vo": vo_list(v1[1])} if v1[1].get("file") else {"dur": v1[1]["dur"]}
         seg("V1b", kind="card", style="pair",
             left={"figure": "1 in 5", "line": "U.S. businesses used AI in the past two weeks"},
             right={"figure": "22%", "line": "of firms not planning to use AI don't know what it can do"},
-            source="Source: U.S. Census Bureau, Business Trends and Outlook Survey", vo=vo_list(v1[1]))
+            source="Source: U.S. Census Bureau, Business Trends and Outlook Survey", sfx=HIT, **kw)
 
 # C2: split screen, A = Ishaan (left), B = Dylan (right); each take holds two lines split by the longest pause.
 def two_lines(t: dict) -> list[tuple[float, float]]:
@@ -277,6 +364,9 @@ if ta and tb:
         at += (b - a) + 0.3 + 0.35
     seg("C2", kind="split", dur=round(at + 0.4, 2), left={"file": rel(ta["file"]), "lines": side_lines["A"]},
         right={"file": rel(tb["file"]), "lines": side_lines["B"]})
+elif ta:
+    clip("C2A")
+    missing.append("C2B (Dylan's C2): C2 runs as Ishaan alone")
 else:
     missing.append("C2 split needs both C2 takes (Ishaan's and Dylan's); tag them C2A / C2B with --pick or rename")
 
@@ -287,8 +377,9 @@ v2 = vo_parts("V2")
 screen("V2", "intake", "focus box", "results", v2[0] if v2 else None)
 v3 = vo_parts("V3")
 screen("V3", "intake", "results", None, v3[0] if v3 else None)
-v4 = vo_parts("V4")
-screen("V4", "deck", "compare open", "trust close", v4[0] if v4 else None)
+v4 = vo_or_silent("V4", 9.0)
+screen("V4", "deck", "compare open", "trust close", v4[0] if v4 else None,
+       caption=None if v4 and v4[0].get("file") else "Compare tools side by side, and see why we trust each one")
 v5 = vo_parts("V5")
 screen("V5", "deck", "preview open", "preview close", v5[0] if v5 else None)
 clip("C4", lower=DYLAN)
@@ -299,28 +390,49 @@ if v6:
         screen("V6b", "setup-stream", "start", "captcha", v6[1], caption="The setup agent in a cloud browser")
     if len(v6) > 2:
         screen("V6c", "setup", "setup record", None, v6[2], caption="What the owner gets back")
-v7 = vo_parts("V7")
-screen("V7", "helper", None, None, v7[0] if v7 else None)
+v7 = vo_or_silent("V7", 4.5)
+screen("V7", "helper", None, None, v7[0] if v7 else None,
+       caption=None if v7 and v7[0].get("file") else "Prefer a person? A vetted local helper can set it up")
 v8 = vo_parts("V8")
-imsg = opt("--imessage")
-if v8 and imsg:
-    screen("V8", str(Path(imsg).resolve()), None, None, v8[0])
+IMSG = {"kind": "card", "style": "imessage", "contact": "MainStreet AI", "title": "Or just text it.",
+        "subtitle": "No app. No login.", "messages": [
+            {"from": "me", "type": True, "at": 1.6, "text": "I run a hair salon in Westminster MD, what AI could help me?"},
+            {"from": "them", "typing": 1.4, "at": 3.6, "text": "Here are four jobs AI can take off your plate at the salon:"},
+            {"from": "them", "at": 4.6, "list": ["Online booking and reminders (about 3 hrs a week)",
+                                                 "Social posts about your work (about 2 hrs a week)",
+                                                 "Replies to Google and Yelp reviews (about 1 hr a week)",
+                                                 "Texts to past clients (about 1 hr a week)"]},
+            {"from": "them", "at": 6.2, "text": "I'd start with booking. Want me to compare a few tools for it?"},
+            {"from": "them", "at": 7.6, "link": {"title": "Your salon's AI plan", "url": "mainstreet-ai-five.vercel.app"}}]}
+if v8:
+    IMSG["vo"] = vo_list(v8[0], 0.4)
+    IMSG["dur"] = round(max(11.0, v8[0]["dur"] + 1.0), 2)
 else:
-    missing.append("V8 + --imessage (Dylan's iMessage screen recording)")
+    IMSG["dur"] = 11.0
+if SFX.exists():
+    IMSG["sfx"] = [{"file": rel(SFX / ("send.wav" if m["from"] == "me" else "receive.wav")), "at": m["at"], "gain_db": -16}
+                   for m in IMSG["messages"]]
+seg("V8", **IMSG)
 
 # ---- Part 2. How we approached building it ------------------------------------------------------
 section(2, "How we approached building it", "A checked catalog, an agent that does the work, rules in code")
 clip("C5")
-v9 = vo_parts("V9")
+v9 = vo_parts("V9", ["which is an agentic", "It can only"])
 if v9:
-    seg("V9", kind="card", style="image", file="../docs/video/architecture.png", vo=vo_list(v9[0], 0.4))
-v10 = vo_parts("V10")
+    keep = [v9[0], v9[2]] if len(v9) == 3 else v9   # the middle part is an ad-lib
+    at, vos = 0.4, []
+    for part in keep:
+        vos.append({"file": part["file"], "at": round(at, 2)})
+        at += part["dur"] + 0.1
+    seg("V9", kind="card", style="image", file="../docs/video/architecture.png", vo=vos)
+v10 = vo_or_silent("V10", 6.0)
 if v10:
-    seg("V10", kind="card", style="image", file="../docs/video/catalog-pipeline.png", vo=vo_list(v10[0], 0.4))
+    kw = {"vo": vo_list(v10[0], 0.4)} if v10[0].get("file") else {"dur": v10[0]["dur"]}
+    seg("V10", kind="card", style="image", file="../docs/video/catalog-pipeline.png", **kw)
 v11 = vo_parts("V11")
 if v11:
     p = v11[0]
-    seg("V11", kind="card", style="bullets", title="Safety lives in code, not in a prompt", check=True, vo=vo_list(p, 0.4), items=[
+    seg("V11", kind="card", style="bullets", title="Safety lives in code, not in a prompt", check=True, vo=vo_list(p, 0.4), **cam_for(p, 0.4), items=[
         {"text": "No account without the owner's yes", "at": 0.6},
         {"text": "Websites can carry instructions, so the rule moved into code", "at": word_at(p, "website", 4.0) + 0.4},
         {"text": "The owner's answer sits in a folder the agent can only read", "at": word_at(p, "folder", 8.0) + 0.4},
@@ -335,21 +447,25 @@ clip("C7")
 v12 = vo_parts("V12")
 if v12:
     p = v12[0]
-    seg("V12", kind="card", style="bullets", title="Tonight's real runs", check=True, vo=vo_list(p, 0.4), items=[
+    seg("V12", kind="card", style="bullets", title="Tonight's real runs", check=True, vo=vo_list(p, 0.4), **cam_for(p, 0.4), items=[
         {"text": "A diner, an HVAC company and a salon: each under a minute", "at": 0.8},
         {"text": "261 candidate tools in, 85 approved", "at": word_at(p, "catalog", 5.0) + 0.4},
         {"text": "A planted instruction to break the rules: read and ignored", "at": word_at(p, "planted", 9.0) + 0.4},
         {"text": "A real sign-up: stopped at the human check, handed to the owner", "at": word_at(p, "setup agent", 14.0) + 0.4},
     ])
-v13 = vo_parts("V13")
+v13 = vo_or_silent("V13", 8.0)
 if v13:
     p = v13[0]
-    seg("V13", kind="card", style="bullets", title="Why it's worth it", check=False, vo=vo_list(p, 0.4), items=[
+    kw = {"vo": vo_list(p, 0.4)} if p.get("file") else {"dur": p["dur"]}
+    seg("V13", kind="card", style="bullets", title="Why it's worth it", check=False, **kw, items=[
         {"text": "More than 1 in 4 home-services calls go unanswered", "at": 0.8},
         {"text": "About 4 hours a week back for the salon (our agent's estimate)", "at": word_at(p, "salon", 6.0) + 0.3},
         {"text": "Owners not using AI say they don't know what it can do", "at": word_at(p, "Census", 10.0) + 0.3},
         {"text": "Finding, checking and setting up: the gap we fill", "at": word_at(p, "Finding", 14.0) + 0.3},
     ])
+if v13 and not v13[0].get("file"):   # silent stand-in: reveal the four lines faster
+    for k, it in enumerate(segs[-1]["items"]):
+        it["at"] = round(0.6 + 1.5 * k, 2)
 if take("C8"):
     clip("C8")
 elif "C8" in missing:
@@ -378,10 +494,22 @@ if coach:
     credits["coach"] = coach
 seg("credits", **credits)
 
+# ---- transitions: slide into screens, zoom into cards, whoosh on each -----------------------------
+for i in range(1, len(segs)):
+    k, prev = segs[i], segs[i - 1]
+    if k.get("style") == "section" or prev.get("style") == "section" or k.get("kind") == "split" or "fade" in k:
+        continue
+    trans = "slide" if k["kind"] in ("screen",) else "zoom" if k["kind"] == "card" else None
+    if not trans:
+        continue
+    k["fade"], k["trans"] = 0.3, trans
+    if SFX.exists():
+        k.setdefault("sfx", []).insert(0, {"file": rel(SFX / "whoosh.wav"), "at": -0.05 if False else 0.0, "gain_db": -18})
+
 # ---- write ------------------------------------------------------------------------------------
 lines = ["# Generated by video/tools/build_film.py from footage/index.json. Edit freely; rerun overwrites.", ""]
 if opt("--music"):
-    lines += [f"music = {tv({'file': rel(opt('--music')), 'gain_db': -26})}", ""]
+    lines += [f"music = {tv({'file': rel(opt('--music')), 'gain_db': -9})}", ""]
 for label, s in zip(order, segs):
     lines.append(f"# {label}")
     lines.append("[[seg]]")

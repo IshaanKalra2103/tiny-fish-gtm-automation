@@ -9,6 +9,7 @@ use fframes::{
 use serde::Deserialize;
 use serde_json::Value;
 
+mod imessage;
 fframes::include_media_dir!(pub struct FilmMedia, "media");
 
 pub const WIDTH: usize = 1920;
@@ -22,6 +23,8 @@ const DIM: &str = "#8d939a";
 const ACCENT: &str = "#1f9d6b";
 const FONT: &str = "Inter";
 const PANEL_X: f32 = 1056.0;
+const KIN_LIGHT: u16 = 300;
+const KIN_HEAVY: u16 = 900;
 
 #[derive(Deserialize, Debug)]
 pub struct Plan {
@@ -48,6 +51,8 @@ pub struct SegSpec {
     pub vw: f32,
     #[serde(default)]
     pub vh: f32,
+    #[serde(default)]
+    pub cam: Option<String>,
     pub params: Value,
 }
 
@@ -202,8 +207,28 @@ impl Scene for Seg {
             (Some(c), k) if k != "card" => caption(&mut frame, ctx, c),
             _ => Svgr::empty(),
         };
-        let fade = if self.spec.fade_frames > 0 { clamp01(frame.index as f32 / self.spec.fade_frames as f32) } else { 1.0 };
-        fframes::svgr!(<g opacity={fade}>{body}{caption}</g>)
+        let kin = if p.get("kin").is_some() { kinetic(&mut frame, ctx, p) } else { Svgr::empty() };
+        let cam = self.cam_bubble(&frame, ctx);
+        let body = fframes::svgr!(<g>{body}{cam}</g>);
+        let k = if self.spec.fade_frames > 0 { clamp01(frame.index as f32 / self.spec.fade_frames as f32) } else { 1.0 };
+        match sv(p, "trans").unwrap_or("fade") {
+            "slide" if self.spec.fade_frames > 0 => {
+                let e = 1.0 - (1.0 - k).powi(3);
+                let x = 1920.0 * (1.0 - e);
+                fframes::svgr!(<g transform={format!("translate({x} 0)")}>
+                    <rect x="0" y="0" width="1920" height="1080" fill={BG} />{body}{kin}{caption}
+                    <rect x="-24" y="0" width="24" height="1080" fill="#111214" fill-opacity={0.10 * (1.0 - k)} />
+                </g>)
+            }
+            "zoom" if self.spec.fade_frames > 0 => {
+                let e = 1.0 - (1.0 - k).powi(3);
+                let sc = 1.12 - 0.12 * e;
+                fframes::svgr!(<g opacity={e} transform={format!("translate(960 540) scale({sc}) translate(-960 -540)")}>
+                    <rect x="0" y="0" width="1920" height="1080" fill={BG} />{body}{kin}{caption}
+                </g>)
+            }
+            _ => fframes::svgr!(<g opacity={k}>{body}{kin}{caption}</g>),
+        }
     }
 }
 
@@ -218,6 +243,35 @@ fn caption<'a>(frame: &mut Frame, ctx: &FFramesContext, c: &str) -> Svgr<'a> {
 }
 
 impl Seg {
+    /// Round face-cam: the speaker's own take, springing in at the start and out at `cam.until`.
+    fn cam_bubble<'a>(&'a self, frame: &Frame, ctx: &FFramesContext<'a, '_>) -> Svgr<'a> {
+        let Some(name) = self.spec.cam.as_deref() else { return Svgr::empty() };
+        let c = self.spec.params.get("cam");
+        let until = c.and_then(|c| fv(c, "until")).unwrap_or(f32::MAX);
+        let t = frame.seconds();
+        let k_in = frame.animate_runtime(AnimateRuntimeInput { on_second: 0.25, from: 0.0_f32, to: 1.0, animation_runtime: &AnimationRuntime::new(3.0, &Easing::Spring { mass: 1.0, stiffness: 240.0, damping: 16.0 }) });
+        let k_out = ease_in_out((t - until) / 0.3);
+        let sc = k_in * (1.0 - k_out);
+        if sc <= 0.002 {
+            return Svgr::empty();
+        }
+        let input = SyncVideoFrameInput { start_from: 0., looping: false, editor_fallback_image: None };
+        let Some(clip) = frame.get_synced_video_frame(ctx, name, &input) else { return Svgr::empty() };
+        let img = clip.into_image();
+        let left = c.and_then(|c| sv(c, "pos")) == Some("bl");
+        let (cx, cy, r) = if left { (226.0, 846.0, 156.0) } else { (1694.0, 846.0, 156.0) };
+        let id = format!("cam{}", self.spec.start_frame);
+        fframes::svgr!(<g transform={format!("translate({cx} {cy}) scale({sc}) translate({} {})", -cx, -cy)}>
+            <defs><clipPath id={id.clone()}><circle cx={cx} cy={cy} r={r} /></clipPath></defs>
+            <circle cx={cx} cy={cy + 12.0} r={r + 10.0} fill="#111214" fill-opacity="0.16" />
+            <circle cx={cx} cy={cy} r={r + 8.0} fill="#ffffff" />
+            <g clip-path={format!("url(#{id})")}>
+                <image href={img.href()} x={cx - r} y={cy - r} width={2.0 * r} height={2.0 * r} preserveAspectRatio="xMidYMid slice" />
+            </g>
+            <circle cx={cx} cy={cy} r={r + 8.0} fill="none" stroke={ACCENT} stroke-width="3" />
+        </g>)
+    }
+
     fn video_image<'a>(&'a self, frame: &Frame, ctx: &FFramesContext<'a, '_>, x: f32, y: f32, w: f32, h: f32) -> Svgr<'a> {
         let Some(name) = self.spec.video.as_deref() else { return Svgr::empty() };
         let input = SyncVideoFrameInput { start_from: 0., looping: false, editor_fallback_image: None };
@@ -237,6 +291,26 @@ impl Seg {
         let (video, panel) = match p.get("panel") {
             Some(panel) => (self.full_video(frame, ctx, 0.0, PANEL_X), timeline_panel(frame, ctx, panel)),
             None => (self.full_video(frame, ctx, 0.0, 1920.0), Svgr::empty()),
+        };
+        // reframe = [scale, shift_x]: push in and slide the speaker over to make room for kinetic type.
+        // A slow drift adds 3% over the clip; a beat with punch = true jumps in another 7% while it shows.
+        let video = match p.get("reframe").and_then(|r| r.as_array()) {
+            Some(r) if r.len() == 2 => {
+                let (s0, dx) = (r[0].as_f64().unwrap_or(1.0) as f32, r[1].as_f64().unwrap_or(0.0) as f32);
+                let dur = self.spec.frames as f32 / FPS as f32;
+                let t = frame.seconds();
+                let punch = arr(p, "kin").iter().enumerate().any(|(i, b)| {
+                    let at = fv(b, "at").unwrap_or(0.0);
+                    let end = beat_end(p, i, b);
+                    bv(b, "punch") && t >= at && t < end
+                });
+                let sc = (s0 + 0.03 * clamp01(t / dur.max(0.1))) * if punch { 1.07 } else { 1.0 };
+                // keep the image covering the frame horizontally
+                let maxdx = (1920.0 * (sc - 1.0) / 2.0).max(0.0);
+                let dx = dx.clamp(-maxdx, maxdx);
+                fframes::svgr!(<g transform={format!("translate({} 540) scale({sc}) translate(-960 -540)", 960.0 + dx)}>{video}</g>)
+            }
+            _ => video,
         };
         let lt = match p.get("lower_third") {
             Some(lt) => lower_third(frame, ctx, lt),
@@ -294,8 +368,15 @@ impl Seg {
             </g>);
         }
         let r = 14.0;
+        let t = frame.seconds();
+        let ent = frame.animate_runtime(AnimateRuntimeInput { on_second: 0.0, from: 0.0_f32, to: 1.0, animation_runtime: &AnimationRuntime::new(3.0, &SPRING) });
+        let dur = self.spec.frames as f32 / FPS as f32;
+        let es = if bv(p, "still") { 1.0 } else { 0.93 + 0.07 * ent + 0.025 * clamp01(t / dur.max(0.1)) };
+        let ey = if bv(p, "still") { 0.0 } else { 60.0 * (1.0 - ent) };
+        let wrap_tf = format!("translate(960 {}) scale({es}) translate(-960 -540)", 540.0 + ey);
         fframes::svgr!(<g>
             {card_bg()}
+            <g transform={wrap_tf}>
             <defs>
                 <clipPath id={format!("scr{}", self.spec.start_frame)}>
                     <rect x={bx} y={by} width={bw} height={bh} rx={r} />
@@ -307,6 +388,7 @@ impl Seg {
             <g clip-path={format!("url(#scr{})", self.spec.start_frame)}>
                 <rect x={bx} y={by} width={bw} height={bh} fill="#000000" />
                 <g transform={tf}>{video}</g>
+            </g>
             </g>
         </g>)
     }
@@ -322,6 +404,7 @@ impl Seg {
             "timeline" => timeline(frame, ctx, p),
             "image" => image(frame, ctx, p, dur),
             "credits" => credits(frame, ctx, p),
+            "imessage" => imessage::imessage(frame, ctx, p, dur),
             _ => Svgr::empty(),
         };
         fframes::svgr!(<g>{card_bg()}{body}</g>)
@@ -390,6 +473,106 @@ fn timeline_panel<'a>(frame: &mut Frame, ctx: &FFramesContext, panel: &Value) ->
     </g>)
 }
 
+/// "27%" at progress t/dur -> "0%".."27%"; keeps prefix/suffix and thousands separators.
+fn count_up(fig: &str, t: f32, dur: f32) -> String {
+    let start = fig.find(|c: char| c.is_ascii_digit());
+    let Some(a) = start else { return fig.to_string() };
+    let rest = &fig[a..];
+    let len = rest.find(|c: char| !(c.is_ascii_digit() || c == ',' || c == '.')).unwrap_or(rest.len());
+    let num_s = rest[..len].trim_end_matches(['.', ',']);
+    let len = num_s.len();
+    let (pre, suf) = (&fig[..a], &rest[len..]);
+    let commas = num_s.contains(',');
+    let dec = num_s.split('.').nth(1).map(|d| d.len()).unwrap_or(0);
+    let Ok(v) = num_s.replace(',', "").parse::<f64>() else { return fig.to_string() };
+    let k = clamp01(t / dur.max(0.01));
+    let e = 1.0 - (1.0 - k).powi(4);
+    let x = v * e as f64;
+    let mut body = format!("{:.*}", dec, x);
+    if commas {
+        let (int, frac) = body.split_once('.').map(|(i, f)| (i.to_string(), format!(".{f}"))).unwrap_or((body.clone(), String::new()));
+        let mut out = String::new();
+        for (i, ch) in int.chars().enumerate() {
+            if i > 0 && (int.len() - i) % 3 == 0 {
+                out.push(',');
+            }
+            out.push(ch);
+        }
+        body = out + &frac;
+    }
+    format!("{pre}{body}{suf}")
+}
+
+/// When a kinetic beat leaves: its `until`, else just before the next beat, capped at 3.6 s on screen.
+fn beat_end(p: &Value, i: usize, b: &Value) -> f32 {
+    let at = fv(b, "at").unwrap_or(0.0);
+    if let Some(u) = fv(b, "until") {
+        return u;
+    }
+    let next = arr(p, "kin").get(i + 1).and_then(|n| fv(n, "at")).map(|n| n - 0.08).unwrap_or(f32::MAX);
+    next.min(at + 3.6)
+}
+
+/// Kinetic type: `kin = [{ at, lines = [["is what", "light"], ["this morning", "bold"]], x?, y?, until?, punch? }]`.
+/// Styles: light (thin, 64), bold (heavy, 112), accent (heavy, green), mark (white on a green bar), small (muted, 40).
+fn kinetic<'a>(frame: &mut Frame, ctx: &FFramesContext, p: &Value) -> Svgr<'a> {
+    let t = frame.seconds();
+    let x0 = fv(p, "kin_x").unwrap_or(1330.0);
+    let max_w = fv(p, "kin_w").unwrap_or(1880.0 - x0);
+    let mut out = Vec::new();
+    for (i, b) in arr(p, "kin").iter().enumerate() {
+        let at = fv(b, "at").unwrap_or(0.0);
+        let end = beat_end(p, i, b);
+        if t < at - 0.01 || t > end + 0.22 {
+            continue;
+        }
+        let ex = clamp01((t - end) / 0.2);
+        let x = fv(b, "x").unwrap_or(x0);
+        let mut y = fv(b, "y").unwrap_or(fv(p, "kin_y").unwrap_or(330.0));
+        let mut rows = Vec::new();
+        for (j, l) in arr(b, "lines").iter().enumerate() {
+            let (text, style) = match l.as_array() {
+                Some(a) => (a.first().and_then(|v| v.as_str()).unwrap_or(""), a.get(1).and_then(|v| v.as_str()).unwrap_or("bold")),
+                None => (l.as_str().unwrap_or(""), "bold"),
+            };
+            let (size, weight, fill, ls): (usize, u16, &'static str, f32) = match style {
+                "light" => (66, KIN_LIGHT, FG, -1.0),
+                "accent" => (112, KIN_HEAVY, ACCENT, -3.5),
+                "mark" => (96, KIN_HEAVY, "#ffffff", -3.0),
+                "small" => (40, 500, MUTED, 0.0),
+                "huge" => (170, KIN_HEAVY, FG, -6.0),
+                _ => (112, KIN_HEAVY, FG, -3.5),
+            };
+            let w = width_of(frame, ctx, size, weight, text) + ls * text.chars().count() as f32;
+            let fit = if w > max_w { max_w / w } else { 1.0 };
+            let sz = ((size as f32) * fit).floor().max(18.0) as usize;
+            let w = w * fit;
+            let lh = sz as f32 * if style == "light" || style == "small" { 1.08 } else { 0.98 };
+            y += lh;
+            let start = at + j as f32 * 0.085;
+            let k = frame.animate_runtime(AnimateRuntimeInput { on_second: start, from: 0.0_f32, to: 1.0, animation_runtime: &AnimationRuntime::new(3.0, &Easing::Spring { mass: 1.0, stiffness: 260.0, damping: 20.0 }) });
+            let o = clamp01((t - start) / 0.12);
+            let dy = 46.0 * (1.0 - k);
+            let sc = 0.86 + 0.14 * k;
+            let base = y - lh * 0.22;
+            let body = if style == "mark" {
+                let bar = clamp01((t - start) / 0.22);
+                let bar = 1.0 - (1.0 - bar).powi(3);
+                fframes::svgr!(<g>
+                    <rect x={x - 14.0} y={base - lh * 0.78} width={((w + 28.0) * bar).max(0.5)} height={lh * 0.98} rx="10" fill={ACCENT} />
+                    {txt(x, base, sz, weight, fill, "start", ls * fit, text.to_string())}
+                </g>)
+            } else {
+                txt(x, base, sz, weight, fill, "start", ls * fit, text.to_string())
+            };
+            rows.push(fframes::svgr!(<g opacity={o} transform={format!("translate({x} {}) scale({sc}) translate({} {})", base + dy, -x, -base)}>{body}</g>));
+            y += if style == "mark" { 18.0 } else { 0.0 };
+        }
+        out.push(fframes::svgr!(<g opacity={1.0 - ex} transform={format!("translate(0 {})", -40.0 * ex)}>{rows}</g>));
+    }
+    fframes::svgr!(<g>{out}</g>)
+}
+
 // ------------------------------------------------------------------ cards
 fn section<'a>(frame: &mut Frame, ctx: &FFramesContext, p: &Value) -> Svgr<'a> {
     let x = 192.0;
@@ -422,9 +605,13 @@ fn number<'a>(frame: &mut Frame, ctx: &FFramesContext, p: &Value) -> Svgr<'a> {
     let fy = y0 + 180.0;
     let ly = y0 + 220.0 + 40.0 + 30.0;
     let sy = ly + (line.len() as f32 - 1.0) * 58.0 + 30.0 + 50.0;
-    let fig = sv(p, "figure").unwrap_or("").to_string();
+    let fig = count_up(sv(p, "figure").unwrap_or(""), frame.seconds() - 0.15, 1.1);
+    let pop = frame.animate_runtime(AnimateRuntimeInput { on_second: 0.1, from: 0.0_f32, to: 1.0, animation_runtime: &AnimationRuntime::new(3.0, &Easing::Spring { mass: 1.0, stiffness: 220.0, damping: 14.0 }) });
+    let fsc = 0.7 + 0.3 * pop;
     fframes::svgr!(<g>
-        {reveal(frame, 0.15, txt(960.0, fy, 220, 700, FG, "middle", -6.0, fig))}
+        <g opacity={clamp01(pop * 3.0)} transform={format!("translate(960 {}) scale({fsc}) translate(-960 {})", fy - 80.0, -(fy - 80.0))}>
+            {txt(960.0, fy, 220, 800, FG, "middle", -6.0, fig)}
+        </g>
         {reveal(frame, 0.45, lines_svg(&line, 960.0, ly, 58.0, 44, 500, FG, "middle", 0.0))}
         {reveal(frame, 0.75, lines_svg(&src, 960.0, sy, 38.0, 28, 400, DIM, "middle", 0.0))}
     </g>)
@@ -436,8 +623,8 @@ fn pair<'a>(frame: &mut Frame, ctx: &FFramesContext, p: &Value) -> Svgr<'a> {
         let Some(c) = p.get(*k) else { continue };
         let cx = if i == 0 { 540.0 } else { 1380.0 };
         let line = wrap(frame, ctx, 40, 500, sv(c, "line").unwrap_or(""), 680.0);
-        let fig = sv(c, "figure").unwrap_or("").to_string();
         let start = 0.15 + i as f32 * 0.35;
+        let fig = count_up(sv(c, "figure").unwrap_or(""), frame.seconds() - start, 1.0);
         cols.push(fframes::svgr!(<g>
             {reveal(frame, start, txt(cx, 470.0, 180, 700, FG, "middle", -5.0, fig))}
             {reveal(frame, start + 0.2, lines_svg(&line, cx, 560.0, 54.0, 40, 500, FG, "middle", 0.0))}
@@ -452,29 +639,58 @@ fn pair<'a>(frame: &mut Frame, ctx: &FFramesContext, p: &Value) -> Svgr<'a> {
 }
 
 fn bullets<'a>(frame: &mut Frame, ctx: &FFramesContext, p: &Value) -> Svgr<'a> {
-    let x = 192.0;
-    let title = wrap(frame, ctx, 72, 700, sv(p, "title").unwrap_or(""), 1500.0);
+    // Each item is a white card that springs in from the right; the newest one is lit (green edge,
+    // ink text), earlier ones settle back to muted so the eye follows the voice.
+    let x = 176.0;
+    let t = frame.seconds();
+    let title = wrap(frame, ctx, 84, 800, sv(p, "title").unwrap_or(""), 1500.0);
     let items = arr(p, "items");
     let mut rows: Vec<(Vec<String>, bool, f32)> = Vec::new();
     for it in items {
         let text = sv(it, "text").unwrap_or("");
-        rows.push((wrap(frame, ctx, 44, 500, text, 1380.0), bv(it, "check"), fv(it, "at").unwrap_or(0.5)));
+        rows.push((wrap(frame, ctx, 46, 600, text, 1160.0), bv(it, "check"), fv(it, "at").unwrap_or(0.5)));
     }
-    let body_h: f32 = rows.iter().map(|(l, _, _)| l.len() as f32 * 56.0 + 36.0).sum::<f32>() - 36.0;
-    let h = title.len() as f32 * 86.0 + 60.0 + body_h.max(0.0);
-    let y0 = (540.0 - h / 2.0).max(120.0);
-    let mut y = y0 + 64.0 + title.len() as f32 * 86.0 + 40.0;
+    let lh = 58.0;
+    let row_h = |n: usize| n as f32 * lh + 44.0;
+    let gap = 22.0;
+    let body_h: f32 = rows.iter().map(|(l, _, _)| row_h(l.len()) + gap).sum::<f32>() - gap;
+    let h = title.len() as f32 * 96.0 + 56.0 + body_h.max(0.0);
+    let y0 = (540.0 - h / 2.0).max(90.0);
+    let mut y = y0 + 40.0 + title.len() as f32 * 96.0 + 30.0;
+    let newest = rows.iter().rposition(|(_, _, at)| *at <= t);
     let mut out = Vec::new();
-    for (lines, check, at) in rows {
-        let row = fframes::svgr!(<g>
-            {check_mark(x, y, check)}
-            {lines_svg(&lines, x + 70.0, y, 56.0, 44, 500, FG, "start", 0.0)}
-        </g>);
-        out.push(reveal(frame, at, row));
-        y += lines.len() as f32 * 56.0 + 36.0;
+    for (i, (lines, check, at)) in rows.iter().enumerate() {
+        let rh = row_h(lines.len());
+        if t >= at - 0.01 {
+            let k = frame.animate_runtime(AnimateRuntimeInput { on_second: *at, from: 0.0_f32, to: 1.0, animation_runtime: &AnimationRuntime::new(3.0, &Easing::Spring { mass: 1.0, stiffness: 230.0, damping: 19.0 }) });
+            let o = clamp01((t - at) / 0.15);
+            let lit = Some(i) == newest;
+            let tw = lines.iter().map(|l| width_of(frame, ctx, 46, 600, l)).fold(0.0_f32, f32::max);
+            let w = (tw + 150.0).min(1340.0);
+            let dx = 90.0 * (1.0 - k);
+            let sc = 0.92 + 0.08 * k;
+            let fill = if lit { FG } else { MUTED };
+            let edge = if lit { ACCENT } else { "#e3e6ea" };
+            let cy = y + rh / 2.0;
+            let mark = if *check {
+                fframes::svgr!(<g>
+                    <circle cx={x + 52.0} cy={cy} r="20" fill={if lit { ACCENT } else { "#cfe9dd" }} />
+                    <path d={format!("M{} {} l8 8 l15 -17", x + 42.0, cy)} fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+                </g>)
+            } else {
+                fframes::svgr!(<circle cx={x + 52.0} cy={cy} r="9" fill={if lit { ACCENT } else { "#b9bec4" }} />)
+            };
+            out.push(fframes::svgr!(<g opacity={o} transform={format!("translate({} {cy}) scale({sc}) translate({} {})", x + dx, -x, -cy)}>
+                <rect x={x} y={y + 6.0} width={w} height={rh} rx="20" fill="#111214" fill-opacity="0.05" />
+                <rect x={x} y={y} width={w} height={rh} rx="20" fill="#ffffff" stroke={edge} stroke-width={if lit { 3.0 } else { 1.5 }} />
+                {mark}
+                {lines_svg(lines, x + 100.0, y + 22.0 + lh * 0.72, lh, 46, 600, fill, "start", -0.5)}
+            </g>));
+        }
+        y += rh + gap;
     }
     fframes::svgr!(<g>
-        {reveal(frame, 0.1, lines_svg(&title, x, y0 + 64.0, 86.0, 72, 700, FG, "start", -1.5))}
+        {reveal(frame, 0.1, lines_svg(&title, x, y0 + 40.0 + 76.0, 96.0, 84, 800, FG, "start", -2.5))}
         {out}
     </g>)
 }
