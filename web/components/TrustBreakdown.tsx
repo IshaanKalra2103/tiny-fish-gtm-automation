@@ -7,9 +7,9 @@ export const BADGE_TEXT: Record<Badge, string> = {
   unknown: "Unknown builder",
 };
 const BADGE_CLASS: Record<Badge, string> = {
-  verified: "bg-accent-tint text-accent-dark border-accent",
-  caution: "bg-amber-tint text-amber-ink border-[#c9a24a]",
-  unknown: "bg-grey-tint text-grey-ink border-[#8a8272]",
+  verified: "bg-accent-tint text-accent-dark border-transparent",
+  caution: "bg-amber-tint text-amber-ink border-transparent",
+  unknown: "bg-grey-tint text-grey-ink border-transparent",
 };
 
 export function BadgePill({ badge }: { badge: Badge }) {
@@ -23,7 +23,7 @@ export function BadgePill({ badge }: { badge: Badge }) {
 export default function TrustBreakdown({ trust }: { trust: Trust }) {
   const entries = Object.entries(trust.signals);
   if (entries.length === 0)
-    return <p className="text-soft text-base">The detailed checks for this tool have not been written up yet.</p>;
+    return <p className="text-muted text-base">The detailed checks for this tool have not been written up yet.</p>;
   return (
     <ul className="divide-y divide-line border-y border-line">
       {entries.map(([key, s]) => (
@@ -33,11 +33,11 @@ export default function TrustBreakdown({ trust }: { trust: Trust }) {
             <span className="whitespace-nowrap">{s.points} / {s.max}</span>
           </div>
           <div className="mt-1 h-2 rounded bg-grey-tint" aria-hidden>
-            <div className="h-2 rounded bg-accent" style={{ width: `${s.max ? (s.points / s.max) * 100 : 0}%` }} />
+            <div className="h-2 rounded bg-ink/70" style={{ width: `${s.max ? (s.points / s.max) * 100 : 0}%` }} />
           </div>
-          <p className="mt-2 text-base">{s.value}</p>
+          <p className="mt-2 text-base text-muted">{s.value}</p>
           {s.evidence_url && (
-            <a href={s.evidence_url} target="_blank" rel="noopener noreferrer" className="text-base">
+            <a href={s.evidence_url} target="_blank" rel="noopener noreferrer" className="text-base font-semibold">
               See the evidence
             </a>
           )}

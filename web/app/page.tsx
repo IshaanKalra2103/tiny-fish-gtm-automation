@@ -12,7 +12,7 @@ export default function Home() {
       </p>
       <Intake />
       <p className="mt-10 text-lg text-soft">
-        Just looking? <Link href="/demo">See five example businesses</Link>
+        Just looking? <Link href="/demo" className="font-semibold">See five example businesses</Link>
       </p>
     </section>
   );

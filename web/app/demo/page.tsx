@@ -19,15 +19,15 @@ export default function DemoPage() {
               <p className="eyebrow">{b.kind}</p>
               <h2 className="text-2xl font-semibold mt-1">{b.name}</h2>
               <p className="text-soft">{b.place}</p>
-              <p className={`mt-3 font-semibold ${ready ? "text-accent" : "text-soft"}`}>{ready ? "See what AI can do for them" : "Coming soon"}</p>
+              <p className={`mt-4 font-semibold ${ready ? "text-ink" : "text-muted"}`}>{ready ? "See what AI can do for them" : "Coming soon"}</p>
             </>
           );
           return (
             <li key={b.slug}>
               {ready ? (
-                <Link href={`/b/demo-${b.slug}`} className="card p-6 block h-full text-ink no-underline hover:border-accent">{inner}</Link>
+                <Link href={`/b/demo-${b.slug}`} className="card p-6 block h-full text-ink hover:no-underline hover:!border-ink/20 transition-colors">{inner}</Link>
               ) : (
-                <div className="card p-6 h-full opacity-80">{inner}</div>
+                <div className="card p-6 h-full opacity-70">{inner}</div>
               )}
             </li>
           );

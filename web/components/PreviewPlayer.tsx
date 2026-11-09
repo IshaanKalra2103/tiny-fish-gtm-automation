@@ -19,7 +19,7 @@ export default function PreviewPlayer({ preview }: { preview: P }) {
   }
   return (
     <figure className="card p-4 sm:p-5">
-      <video src={`${src}#t=0.5`} muted controls playsInline preload="metadata" className="w-full rounded bg-black max-h-[70vh]" />
+      <video src={`${src}#t=0.5`} muted controls playsInline preload="metadata" className="w-full rounded-2xl bg-black max-h-[70vh]" />
       <figcaption className="mt-3 text-base text-soft">
         AI-generated preview of how {name} would work in your business
       </figcaption>

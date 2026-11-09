@@ -28,7 +28,7 @@ export default function ChatBox({
       {messages.length > 0 && (
         <ul className="grid gap-3 mb-5 max-h-96 overflow-y-auto" aria-label="Conversation">
           {messages.map((m, i) => (
-            <li key={i} className={`whitespace-pre-line rounded-lg px-4 py-2 max-w-[92%] ${m.role === "owner" ? "bg-accent-tint ml-auto" : "bg-grey-tint"}`}>
+            <li key={i} className={`whitespace-pre-line rounded-lg px-4 py-2 max-w-[92%] ${m.role === "owner" ? "bg-ink text-white ml-auto" : "bg-grey-tint"}`}>
               <span className="sr-only">{m.role === "owner" ? "You: " : "MainStreet: "}</span>{m.text}
             </li>
           ))}

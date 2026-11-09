@@ -40,9 +40,9 @@ export function Approval({ ownerId, a, onTurn }: { ownerId: string; a: OwnerBund
     }
   };
   return (
-    <div className="rounded-2xl p-5 border-2 border-accent bg-black/40">
+    <div className="rounded-2xl p-5 bg-raised border border-line">
       <h3 className="text-xl font-semibold">Ready to set up {name}</h3>
-      <p className="mt-2">{a.summary}</p>
+      <p className="mt-2 text-muted">{a.summary}</p>
       <div className="mt-4 flex flex-wrap gap-3">
         <button className="btn btn-primary" disabled={state !== "idle" && state !== "error"} onClick={() => go("approve")}>Yes, set it up</button>
         <button className="btn btn-secondary" disabled={state !== "idle" && state !== "error"} onClick={() => go("reject")}>Not now</button>
@@ -59,7 +59,7 @@ export function SetupRecordView({ ownerId, s, live }: { ownerId: string; s: Owne
   const [busy, setBusy] = useState(false);
   const name = toolById(s.tool_id)?.name ?? s.tool_id;
   return (
-    <div className="rounded-2xl p-5 bg-black/40 border border-white/15">
+    <div className="rounded-2xl p-5 bg-raised border border-line">
       <p className="eyebrow">{name}</p>
       <h3 className="text-xl font-semibold mt-1">{STATUS_TEXT[s.status] ?? s.status}</h3>
       {s.status === "needs_owner" && s.handoff_reason && <p className="mt-2">{s.handoff_reason}</p>}

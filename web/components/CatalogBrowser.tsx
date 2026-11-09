@@ -51,20 +51,20 @@ export default function CatalogBrowser() {
           </select>
         </div>
         <label className="flex items-center gap-3 min-h-12 font-semibold">
-          <input type="checkbox" className="size-6 accent-[#1f4d3a]" checked={free} onChange={(e) => setFree(e.target.checked)} />
+          <input type="checkbox" className="size-6 accent-[#111214]" checked={free} onChange={(e) => setFree(e.target.checked)} />
           Free plan only
         </label>
         <label className="flex items-center gap-3 min-h-12 font-semibold">
-          <input type="checkbox" className="size-6 accent-[#1f4d3a]" checked={unvetted} onChange={(e) => { setUnvetted(e.target.checked); if (!e.target.checked && badge === "unknown") setBadge(""); }} />
+          <input type="checkbox" className="size-6 accent-[#111214]" checked={unvetted} onChange={(e) => { setUnvetted(e.target.checked); if (!e.target.checked && badge === "unknown") setBadge(""); }} />
           Show unvetted tools
         </label>
       </div>
       {unvetted && (
-        <p role="alert" className="mt-4 rounded-lg border border-[#c9a24a] bg-amber-tint text-amber-ink px-4 py-3">
+        <p role="alert" className="mt-4 rounded-2xl border border-amber-ink/20 bg-amber-tint text-amber-ink px-4 py-3">
           Careful: tools marked &quot;Unknown builder&quot; scored under 50 or we could not find out who makes them. We do not recommend them.
         </p>
       )}
-      <p className="mt-6 text-soft" aria-live="polite">{shown.length} {shown.length === 1 ? "tool" : "tools"}</p>
+      <p className="mt-6 text-muted" aria-live="polite">{shown.length} {shown.length === 1 ? "tool" : "tools"}</p>
       <div className="mt-3 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {shown.map((t) => <ToolCard key={t.id} tool={t} />)}
       </div>

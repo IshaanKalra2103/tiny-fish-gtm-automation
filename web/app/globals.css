@@ -1,79 +1,91 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-paper: #141312;
-  --color-card: #1f1d1b;
-  --color-ink: #f4f0e8;
-  --color-muted: #c4bdb0;
-  --color-soft: #bdb6a8;
-  --color-line: #3a3632;
-  --color-accent: #f39a4c;
-  --color-accent-dark: #ffc58f;
-  --color-accent-tint: #3b2716;
-  --color-amber-tint: #3a3014;
-  --color-amber-ink: #f6d684;
-  --color-grey-tint: #2d2a27;
-  --color-grey-ink: #e2dccf;
-  --color-brick: #ff9a85;
+  --color-paper: #f3f5f7;
+  --color-card: #ffffff;
+  --color-raised: #f6f7f9;
+  --color-ink: #111214;
+  --color-muted: #5f646b;
+  --color-soft: #5f646b;
+  --color-faint: #8d939a;
+  --color-line: #e3e6ea;
+  --color-accent: #1f9d6b;
+  --color-accent-dark: #157a52;
+  --color-accent-tint: #e7f6ef;
+  --color-amber-tint: #fdf3dc;
+  --color-amber-ink: #835400;
+  --color-grey-tint: #f1f3f5;
+  --color-grey-ink: #3b3f45;
+  --color-brick: #b42318;
   --font-serif: var(--font-source), system-ui, sans-serif;
   --font-sans: var(--font-source), system-ui, sans-serif;
 }
 
-html { font-size: 18px; background: var(--color-paper); color-scheme: dark; }
+@layer base {
+html { font-size: 18px; background: var(--color-paper); color-scheme: light; }
 body {
-  background: var(--color-paper);
+  background:
+    radial-gradient(60% 50% at 0% 0%, #e3f1ec 0%, transparent 70%),
+    radial-gradient(60% 50% at 100% 100%, #e6edf8 0%, transparent 70%),
+    var(--color-paper);
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   line-height: 1.6;
 }
 h1, h2, h3 { font-family: var(--font-sans); line-height: 1.12; letter-spacing: -0.015em; }
-a { color: var(--color-accent); text-underline-offset: 3px; }
-:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 3px; border-radius: 6px; }
+a { color: var(--color-ink); text-decoration: none; text-underline-offset: 3px; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 3px; border-radius: 8px; }
 img, video { max-width: 100%; }
+}
 
+@layer components {
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
   min-height: 52px; padding: .6rem 1.4rem; border-radius: 999px; font-weight: 600;
-  border: 2px solid var(--color-accent); cursor: pointer; text-decoration: none; text-align: center;
-  transition: transform .15s ease, background-color .15s ease;
+  border: 1px solid transparent; cursor: pointer; text-decoration: none; text-align: center;
+  transition: transform .15s ease, background-color .15s ease, border-color .15s ease;
 }
 .btn:active { transform: scale(.97); }
-.btn-primary { background: var(--color-accent); color: #1a1109; }
-.btn-primary:hover { background: #ffad66; }
-.btn-secondary { background: transparent; color: var(--color-ink); border-color: #5a544c; }
-.btn-secondary:hover { background: #2a2724; }
-.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn-primary { background: #111214; color: #fff; border-color: #111214; }
+.btn-primary:hover { background: #2a2c30; border-color: #2a2c30; }
+.btn-secondary { background: #fff; color: var(--color-ink); border-color: #e3e6ea; }
+.btn-secondary:hover { background: #f1f3f5; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
 .field {
-  width: 100%; min-height: 52px; padding: .7rem 1rem; border: 2px solid #5a544c;
-  border-radius: 14px; background: #1a1917; color: var(--color-ink); font: inherit;
+  width: 100%; min-height: 52px; padding: .7rem 1rem; border: 1px solid #d5d9de;
+  border-radius: 14px; background: #fff; color: var(--color-ink); font: inherit;
 }
-.field::placeholder { color: #9d968a; }
-.card { background: var(--color-card); border: 1px solid var(--color-line); border-radius: 20px; }
+.field::placeholder { color: #8d939a; }
+.card {
+  background: var(--color-card); border: 1px solid rgba(17, 18, 20, .06); border-radius: 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 12px 32px rgba(17, 18, 20, .06);
+}
 .chip {
   display: inline-block; padding: .15rem .7rem; border-radius: 999px; font-size: .85rem;
   background: var(--color-grey-tint); color: var(--color-grey-ink);
 }
-.eyebrow { font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--color-soft); font-weight: 600; }
+.eyebrow { font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--color-muted); font-weight: 600; }
 
-/* Frosted glass used on the owner deck. */
+/* Small white chip button, used for the in-card sheet triggers. */
+.chip-btn {
+  display: inline-flex; align-items: center; min-height: 40px; padding: .2rem .95rem; border-radius: 999px;
+  background: #fff; border: 1px solid #e3e6ea; color: var(--color-ink); font-weight: 600; font-size: .85rem;
+  transition: background-color .15s ease;
+}
+.chip-btn:hover { background: #f1f3f5; }
+
+/* Frosted label used on top of a photo. */
 .glass {
-  background: rgba(255, 255, 255, .1);
-  border: 1px solid rgba(255, 255, 255, .16);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2);
-  backdrop-filter: blur(18px) saturate(1.2);
+  background: rgba(255, 255, 255, .78);
+  border: 1px solid rgba(255, 255, 255, .6);
+  color: var(--color-ink);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
 }
-.glass-dark {
-  background: rgba(20, 19, 18, .72);
-  border: 1px solid rgba(255, 255, 255, .12);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
 }
-.warm-bg {
-  background:
-    radial-gradient(120% 80% at 20% 10%, #8a4a22 0%, transparent 60%),
-    radial-gradient(100% 70% at 90% 90%, #5a2f1a 0%, transparent 65%),
-    linear-gradient(160deg, #3a2a20, #1d1714);
-}
+
 @keyframes soft-pulse { 0%, 100% { opacity: .55; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.06); } }
 .soft-pulse { animation: soft-pulse 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .soft-pulse { animation: none; } .btn { transition: none; } }

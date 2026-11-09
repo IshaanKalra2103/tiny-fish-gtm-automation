@@ -20,9 +20,9 @@ export default async function Page({ params }: PageProps<"/tool/[id]">) {
   const jobs = tool.need_ids.map((n) => needById(n)?.title ?? n);
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
-      <Link href="/catalog" className="text-base">Back to the catalog</Link>
+      <Link href="/catalog" className="text-base font-semibold text-muted">Back to the catalog</Link>
       <h1 className="text-4xl sm:text-5xl font-semibold mt-3">{tool.name}</h1>
-      <p className="text-soft mt-1">Made by {tool.vendor}. <a href={tool.url} target="_blank" rel="noopener noreferrer">Visit their site</a></p>
+      <p className="text-soft mt-1">Made by {tool.vendor}. <a href={tool.url} target="_blank" rel="noopener noreferrer" className="font-semibold">Visit their site</a></p>
       <p className="mt-2">Good for: {jobs.join(", ")}</p>
       <div className="mt-6">
         <ToolCard tool={tool} detailLink={false} expanded />
@@ -41,7 +41,7 @@ export default async function Page({ params }: PageProps<"/tool/[id]">) {
       {tool.sources.length > 0 && (
         <section className="mt-10">
           <h2 className="text-2xl font-semibold">Where our information comes from</h2>
-          <ul className="mt-3 list-disc pl-5 break-all">
+          <ul className="mt-3 list-disc pl-5 break-all text-muted">
             {tool.sources.map((s) => <li key={s}><a href={s} target="_blank" rel="noopener noreferrer">{s}</a></li>)}
           </ul>
         </section>

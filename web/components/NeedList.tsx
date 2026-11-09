@@ -5,7 +5,7 @@ export default function NeedList({ needs }: { needs: Needs }) {
     <ol className="grid gap-4">
       {needs.items.map((n, i) => (
         <li key={n.need_id} data-testid="need-item" className="card p-5 flex gap-4">
-          <span className="font-serif text-3xl text-accent leading-none" aria-hidden>{i + 1}</span>
+          <span className="text-3xl font-light tabular-nums text-faint leading-none" aria-hidden>{i + 1}</span>
           <div className="flex-1">
             <h3 className="text-xl font-semibold">{n.title}</h3>
             <p className="mt-1">{n.why}</p>
