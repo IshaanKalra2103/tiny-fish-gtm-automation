@@ -269,6 +269,13 @@ KIN = {
            ("phone is", [("his phone is", L), ("ringing", H)], {"punch": True}),
            ("Dave is made", [("Dave is", L), ("made up", B)], {}),
            ("missed call", [("the missed call", L), ("isn't.", M)], {"punch": True})],
+    "C2B": [("Mainstreet AI", [("so we built", L), ("MainStreet AI", B)], {}),
+            ("Think Angie", [("Angie's List", A), ("for AI tools", B)], {"punch": True}),
+            ("reads your", [("it reads", L), ("your business", B)], {}),
+            ("finds the jobs", [("finds the jobs", B), ("AI can take on", L)], {}),
+            ("compares", [("compares", L), ("checked", A), ("tools", B)], {}),
+            ("say yes", [("you say", L), ("yes", M)], {}),
+            ("sets one", [("it sets one", L), ("up for you", A)], {"punch": True})],
     "C4": [("Every directory", [("every directory", L), ("stops at a list", B)], {}),
            ("one step", [("we go", L), ("one step", A), ("further", B)], {}),
            ("set the tool", [("and set", L), ("the tool up", B)], {}),
@@ -366,7 +373,8 @@ def two_lines(t: dict, after: str | None = None) -> list[tuple[float, float]]:
         return [(t["line_start"], t["line_end"])]
     i = find(ws, after) if after else None
     if i is not None and i < len(ws) - 1:   # pinned split: the end of the first line, by word
-        return [(ws[0]["s"], ws[i]["e"]), (ws[i + 1]["s"], ws[-1]["e"])]
+        s2 = max(ws[i + 1]["s"], ws[i + 1]["e"] - 0.45)   # Whisper stretches the first word over the pause
+        return [(ws[0]["s"], ws[i]["e"]), (s2, ws[-1]["e"])]
     gaps = [(ws[i + 1]["s"] - ws[i]["e"], i) for i in range(len(ws) - 1)]
     g, i = max(gaps)
     if g < 0.6:
@@ -376,14 +384,22 @@ def two_lines(t: dict, after: str | None = None) -> list[tuple[float, float]]:
 
 ta, tb = take("C2A"), take("C2B")
 if ta and tb:
-    la, lb = two_lines(ta), two_lines(tb, after="Forge")   # Dylan pauses longer mid-line 2 than after line 1
-    seq = [("A", la[0]), ("B", lb[0])] + ([("A", la[1])] if len(la) > 1 else []) + ([("B", lb[1])] if len(lb) > 1 else [])
-    at, side_lines = 0.3, {"A": [], "B": []}
-    for s, (a, b) in seq:
-        side_lines[s].append({"in": round(a - 0.1, 2), "out": round(b + 0.2, 2), "at": round(at, 2)})
-        at += (b - a) + 0.3 + 0.35
-    seg("C2", kind="split", dur=round(at + 0.4, 2), left={"file": rel(ta["file"]), "lines": side_lines["A"]},
-        right={"file": rel(tb["file"]), "lines": side_lines["B"]})
+    # No split screen: cut between full-frame faces, one line each, only the speaker's picture and voice.
+    la, lb = two_lines(ta, after="Ishan"), two_lines(tb, after="Forge")   # Dylan pauses longer mid-line 2 than after line 1
+    seq = [(ta, "C2A", la[0], ISHAAN), (tb, "C2B", lb[0], DYLAN)]
+    seq += [(ta, "C2A", la[1], None)] if len(la) > 1 else []
+    seq += [(tb, "C2B", lb[1], None)] if len(lb) > 1 else []
+    for n, (t, cid, (a, b), low) in enumerate(seq):
+        a0, b0 = round(max(0.0, a - 0.25), 2), round(min(t["duration"], b + 0.35), 2)
+        kw = {"kind": "clip", "file": rel(t["file"]), "in": a0, "out": b0}
+        beats = [bt for bt in kin_beats(cid, t, a0) if 0.06 < bt["at"] < (b0 - a0) - 0.4]
+        if beats:
+            kw.update(kin=beats, reframe=[1.18, -170], kin_x=1262, kin_y=190)
+            if SFX.exists():
+                kw["sfx"] = [{"file": rel(SFX / "pop.wav"), "at": bt["at"], "gain_db": -22} for bt in beats]
+        if low:
+            kw["lower_third"] = low
+        seg(f"C2.{n + 1}", **kw)
 elif ta:
     clip("C2A")
     missing.append("C2B (Dylan's C2): C2 runs as Ishaan alone")
