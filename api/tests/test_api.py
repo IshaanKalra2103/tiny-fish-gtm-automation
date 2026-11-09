@@ -47,17 +47,14 @@ async def test_session_id_first_then_resume(make_client):
     assert runner.calls[0]["session_id"] == runner.calls[1]["session_id"]
 
 
-async def test_second_turn_same_owner_waits(make_client):
+async def test_turn_beyond_concurrency_is_queued(make_client):
     runner = FakeRunner(script(), delay=0.05)
     app, c = make_client(runner)
-    oid = await new_owner(c)
-    t1 = (await c.post(f"/api/owners/{oid}/turns", json={"text": "one"})).json()["turn_id"]
-    await asyncio.sleep(0.02)
-    t2 = (await c.post(f"/api/owners/{oid}/turns", json={"text": "two"})).json()["turn_id"]
-    e1, e2 = await asyncio.gather(sse_events(c, t1), sse_events(c, t2))
-    assert e2[0]["type"] == "queued"
-    assert runner.max_active_per_owner[oid] == 1
-    assert e1[-1]["type"] == e2[-1]["type"] == "done"
+    owners = [await new_owner(c) for _ in range(3)]
+    tids = [(await c.post(f"/api/owners/{o}/turns", json={"text": "go"})).json()["turn_id"] for o in owners]
+    results = await asyncio.gather(*(sse_events(c, t) for t in tids))
+    assert results[2][0] == {"type": "queued", "position": 1}
+    assert all(r[-1]["type"] == "done" for r in results)
 
 
 async def test_max_two_concurrent(make_client):
@@ -198,3 +195,147 @@ async def test_media_serves_only_preview_mp4(make_client, settings):
     assert (await c.get(f"/media/{oid}/preview_chat-a.mp4")).status_code == 200
     assert (await c.get(f"/media/{oid}/source.json")).status_code == 404
     assert (await c.get(f"/media/{oid}/setup_chat-a.json")).status_code == 404
+
+
+class GateRunner(FakeRunner):
+    """Holds every turn open until `gate` is set, so tests can see queued and running turns."""
+
+    def __init__(self, events=None):
+        super().__init__(events or script())
+        self.gate = asyncio.Event()
+
+    async def run(self, owner_id, prompt, session_id, resume):
+        await self.gate.wait()
+        async for ev in super().run(owner_id, prompt, session_id, resume):
+            yield ev
+
+
+BUSY_OWNER = "I'm still working on your last message. Give me a minute."
+BUSY_ALL = "We're busy right now. Try again in a few minutes."
+
+
+def write_approval(settings, oid, ap_id="ap_1"):
+    d = Workspaces(settings.workspaces).owner_dir(oid) / "approvals"
+    d.mkdir(exist_ok=True)
+    (d / f"{ap_id}.json").write_text(json.dumps(
+        {"id": ap_id, "tool_id": "chat-a", "summary": "Create a free account", "status": "pending", "created_at": "2026-11-08T00:00:00Z"}))
+
+
+async def test_owner_cap_per_client_ip(make_client, settings):
+    assert settings.owners_per_ip_day == 6 and settings.owners_per_day == 120
+    app, c = make_client()
+    judge = {"CF-Connecting-IP": "203.0.113.7"}
+    for _ in range(6):
+        assert (await c.post("/api/owners", json={"source": "x"}, headers=judge)).status_code == 200
+    r = await c.post("/api/owners", json={"source": "x"}, headers=judge)
+    assert r.status_code == 429 and r.json()["detail"]
+    other = await c.post("/api/owners", json={"source": "x"}, headers={"CF-Connecting-IP": "198.51.100.2"})
+    assert other.status_code == 200
+    # No header: keyed on the socket peer, which has its own six.
+    for _ in range(6):
+        assert (await c.post("/api/owners", json={"source": "x"})).status_code == 200
+    assert (await c.post("/api/owners", json={"source": "x"})).status_code == 429
+
+
+async def test_one_unfinished_turn_per_owner(make_client):
+    runner = GateRunner()
+    app, c = make_client(runner)
+    oid = await new_owner(c)
+    t1 = (await c.post(f"/api/owners/{oid}/turns", json={"text": "one"})).json()["turn_id"]
+    r2 = await c.post(f"/api/owners/{oid}/turns", json={"text": "two"})
+    assert r2.status_code == 429 and r2.json()["detail"] == BUSY_OWNER
+    runner.gate.set()
+    assert (await sse_events(c, t1))[-1]["type"] == "done"
+    assert (await c.post(f"/api/owners/{oid}/turns", json={"text": "three"})).status_code == 200
+    msgs = (await c.get(f"/api/owners/{oid}")).json()["messages"]
+    assert [m["text"] for m in msgs if m["role"] == "owner"] == ["one", "three"]
+
+
+async def test_global_waiting_cap(make_client, settings):
+    runner = GateRunner()
+    app, c = make_client(runner)
+    owners = [app.state.ws.create_owner("x") for _ in range(9)]
+    for o in owners[:8]:  # 2 running + 6 waiting
+        assert (await c.post(f"/api/owners/{o}/turns", json={"text": "go"})).status_code == 200
+    r = await c.post(f"/api/owners/{owners[8]}/turns", json={"text": "go"})
+    assert r.status_code == 429 and r.json()["detail"] == BUSY_ALL
+    runner.gate.set()
+
+
+async def test_approval_busy_leaves_it_pending(make_client, settings):
+    runner = GateRunner()
+    app, c = make_client(runner)
+    oid = await new_owner(c)
+    write_approval(settings, oid)
+    t1 = (await c.post(f"/api/owners/{oid}/turns", json={"text": "one"})).json()["turn_id"]
+    r = await c.post(f"/api/owners/{oid}/approvals/ap_1", json={"decision": "approve"})
+    assert r.status_code == 429 and r.json()["detail"] == BUSY_OWNER
+    ws = Workspaces(settings.workspaces)
+    assert json.loads((ws.owner_dir(oid) / "approvals" / "ap_1.json").read_text())["status"] == "pending"
+    assert not (ws.decisions_dir(oid) / "ap_1.json").exists()
+    runner.gate.set()
+    await sse_events(c, t1)
+    ok = await c.post(f"/api/owners/{oid}/approvals/ap_1", json={"decision": "approve"})
+    assert ok.status_code == 200 and ok.json()["turn_id"]
+
+
+async def test_imessage_busy_owner_gets_text(make_client):
+    runner = GateRunner()
+    app, c = make_client(runner)
+    app.state.imessage.wait_s = 0.5
+    oid = app.state.ws.owner_for_phone(HASH)
+    app.state.turns.start(oid, "first", "imessage")
+    r = await c.post("/api/imessage", json={"from_hash": HASH, "text": "hello?"})
+    assert r.status_code == 429 and r.json()["detail"] == BUSY_OWNER
+    runner.gate.set()
+
+
+async def test_health_serves_cache_while_refreshing(make_client, settings):
+    import threading
+    release, calls = threading.Event(), []
+
+    def docker():
+        calls.append(1)
+        if len(calls) > 1:
+            release.wait(5)
+            return False
+        return True
+
+    settings.health_ttl = 0.0
+    app, c = make_client(check_docker=docker, check_token=lambda: True)
+    assert (await c.get("/api/health")).json()["ok"] is True
+    # Stale: the refresh runs in a thread, and callers get the cached body meanwhile.
+    for _ in range(3):
+        r = await asyncio.wait_for(c.get("/api/health"), 1.0)
+        assert r.json()["ok"] is True
+    for _ in range(50):
+        if len(calls) >= 2:
+            break
+        await asyncio.sleep(0.02)
+    assert len(calls) == 2  # one refresh in flight, not one per caller
+    release.set()
+    for _ in range(50):
+        await asyncio.sleep(0.02)
+        if (await c.get("/api/health")).json()["docker"] is False:
+            break
+    else:
+        raise AssertionError("refresh never landed")
+
+
+async def test_poll_pages_public_events(make_client):
+    runner = GateRunner([{"type": "system", "subtype": "init"}, {"type": "runner_error", "message": "secret stack"}])
+    app, c = make_client(runner)
+    oid = await new_owner(c)
+    tid = (await c.post(f"/api/owners/{oid}/turns", json={"text": "hi"})).json()["turn_id"]
+    r = await c.get(f"/api/turns/{tid}/poll")
+    assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
+    assert r.json()["done"] is False
+    runner.gate.set()
+    await sse_events(c, tid)
+    full = (await c.get(f"/api/turns/{tid}/poll?after=0")).json()
+    assert full["done"] is True and full["next"] == len(full["events"])
+    assert full["events"][-1]["type"] == "error" and "secret stack" not in json.dumps(full)
+    tail = (await c.get(f"/api/turns/{tid}/poll?after=1")).json()
+    assert tail["events"] == full["events"][1:] and tail["next"] == full["next"]
+    assert (await c.get(f"/api/turns/{tid}/poll?after={full['next']}")).json()["events"] == []
+    assert (await c.get("/api/turns/t_000000000000/poll")).status_code == 404

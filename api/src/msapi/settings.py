@@ -23,8 +23,11 @@ class Settings:
     model: str = os.environ.get("MS_AGENT_MODEL", "claude-sonnet-5-5")
     turn_timeout: float = 1500.0
     relay_secret: str | None = os.environ.get("MS_RELAY_SECRET") or None
-    owners_per_day: int = 40
+    owners_per_day: int = 120
+    owners_per_ip_day: int = 6  # keyed on CF-Connecting-IP (the tunnel), else the socket peer
     turns_per_owner_day: int = 40
+    max_waiting: int = 6  # turns queued for the semaphore; beyond this, new turns get a 429
+    health_ttl: float = 20.0
     imessage_min_gap: float = 5.0
     imessage_per_day: int = 40
     imessage_wait: float = 280.0

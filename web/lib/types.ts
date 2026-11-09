@@ -142,6 +142,7 @@ export interface OwnerBundle {
   setups: Record<string, SetupRecord & { has_password: boolean }>;
   approvals: Approval[];
   messages: Message[];
+  active_turn?: string | null;
 }
 export type TurnEvent =
   | { type: "queued"; position: number }

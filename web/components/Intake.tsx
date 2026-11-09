@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createOwner, health, startTurn } from "@/lib/api";
+import { ApiError, createOwner, health, startTurn } from "@/lib/api";
 import OfflineBanner from "./OfflineBanner";
 
 export default function Intake() {
@@ -10,6 +10,8 @@ export default function Intake() {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  // Reuse an owner whose first turn was refused (busy), so retries do not use up the per-client owner cap.
+  const ownerRef = useRef<string | null>(null);
 
   useEffect(() => {
     let gone = false;
@@ -25,12 +27,16 @@ export default function Intake() {
         if (!text.trim()) return;
         setBusy(true); setError("");
         try {
-          const owner = await createOwner(text.trim());
+          const owner = ownerRef.current ?? (ownerRef.current = await createOwner(text.trim()));
           const turn = await startTurn(owner, `Here is my business: ${text.trim()}. What should I try first?`);
           router.push(`/b/${owner}?turn=${turn}`);
-        } catch {
-          setError("We could not reach our agent just now. You can still look at the example businesses.");
-          setOnline(false);
+        } catch (err) {
+          if (err instanceof ApiError && err.status < 500) {
+            setError(err.message); // a limit (429) or a bad request: the agent is up, so stay here
+          } else {
+            setError("We could not reach our agent just now. You can still look at the example businesses.");
+            setOnline(false);
+          }
           setBusy(false);
         }
       }}

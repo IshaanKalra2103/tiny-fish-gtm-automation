@@ -2,7 +2,7 @@
 import { useState } from "react";
 import type { OwnerBundle } from "@/lib/types";
 import { toolById } from "@/lib/catalog";
-import { decide, revealPassword } from "@/lib/api";
+import { ApiError, decide, revealPassword } from "@/lib/api";
 
 const HELPERS = [
   { name: "Maryland SBDC", url: "https://www.marylandsbdc.org", what: "Free one-on-one business advice from the Maryland Small Business Development Center." },
@@ -22,6 +22,7 @@ const STATUS_TEXT: Record<string, string> = {
 function Approval({ ownerId, a, onTurn }: { ownerId: string; a: OwnerBundle["approvals"][number]; onTurn: (id: string) => void }) {
   const [state, setState] = useState<"idle" | "busy" | "sent" | "already" | "error">("idle");
   const [already, setAlready] = useState("");
+  const [problem, setProblem] = useState("");
   const name = toolById(a.tool_id)?.name ?? a.tool_id;
   const go = async (d: "approve" | "reject") => {
     setState("busy");
@@ -32,19 +33,23 @@ function Approval({ ownerId, a, onTurn }: { ownerId: string; a: OwnerBundle["app
         setState("already");
       }
       else { setState("sent"); if (r.turn_id) onTurn(r.turn_id); }
-    } catch { setState("error"); }
+    } catch (e) {
+      // A 429 ("still working on your last message") leaves the approval pending, so the buttons stay usable.
+      setProblem(e instanceof ApiError ? e.message : "That did not go through. Please try again in a minute.");
+      setState("error");
+    }
   };
   return (
     <div className="card p-5 border-2 border-accent">
       <h3 className="text-xl font-semibold">Ready to set up {name}</h3>
       <p className="mt-2">{a.summary}</p>
       <div className="mt-4 flex flex-wrap gap-3">
-        <button className="btn btn-primary" disabled={state !== "idle"} onClick={() => go("approve")}>Yes, set it up</button>
-        <button className="btn btn-secondary" disabled={state !== "idle"} onClick={() => go("reject")}>Not now</button>
+        <button className="btn btn-primary" disabled={state !== "idle" && state !== "error"} onClick={() => go("approve")}>Yes, set it up</button>
+        <button className="btn btn-secondary" disabled={state !== "idle" && state !== "error"} onClick={() => go("reject")}>Not now</button>
       </div>
       {state === "sent" && <p className="mt-3 text-accent-dark font-semibold">Thank you. We are on it.</p>}
       {state === "already" && <p className="mt-3 font-semibold">{already}</p>}
-      {state === "error" && <p className="mt-3 text-brick font-semibold">That did not go through. Please try again in a minute.</p>}
+      {state === "error" && <p role="alert" className="mt-3 text-brick font-semibold">{problem}</p>}
     </div>
   );
 }

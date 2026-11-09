@@ -15,7 +15,7 @@ export default function TurnLog({ events, active }: { events: TurnEvent[]; activ
     <section aria-live="polite" aria-label="Progress" className="card p-5 border-accent">
       <p className="eyebrow !text-accent">{active ? "Working on it" : "Finished"}</p>
       <ul className="mt-2 grid gap-1.5">
-        {lines.map((l, i) => <li key={i}>{l}</li>)}
+        {lines.map((l, i) => <li key={i} className="whitespace-pre-line">{l}</li>)}
         {active && <li className="text-soft">Still working. This can take a minute or two.</li>}
       </ul>
     </section>

@@ -16,6 +16,8 @@ from .workspaces import NotFound, Workspaces
 log = logging.getLogger("msapi.turns")
 TURN_RE = re.compile(r"^t_[0-9a-f]{12}$")
 FAILED = "Something went wrong on my side. Please try again in a minute."
+BUSY_OWNER = "I'm still working on your last message. Give me a minute."
+BUSY_ALL = "We're busy right now. Try again in a few minutes."
 
 # Bash command prefix -> what the owner sees while it runs.
 STATUS = [
@@ -140,19 +142,31 @@ class TurnManager:
         if new:
             f.chmod(0o600)
 
-    def start(self, owner_id: str, text: str, channel: str = "web", log_text: str | None = None) -> str:
+    def _unfinished(self) -> int:
+        return sum(1 for t in self.turns.values() if not t.done)
+
+    def check(self, owner_id: str) -> None:
+        """Raise LimitReached if a new turn for this owner would be refused. No side effects."""
         self.ws.require(owner_id)
-        key = (owner_id, date.today().isoformat())
-        if self.counts.get(key, 0) >= self.s.turns_per_owner_day:
+        if self.active_turn(owner_id):
+            raise LimitReached(BUSY_OWNER)
+        # One unfinished turn per owner, so every unfinished turn past max_concurrent waits for the semaphore.
+        if self._unfinished() - self.s.max_concurrent >= self.s.max_waiting:
+            raise LimitReached(BUSY_ALL)
+        if self.counts.get((owner_id, date.today().isoformat()), 0) >= self.s.turns_per_owner_day:
             raise LimitReached("That's a lot for one day. Please come back tomorrow.")
+
+    def start(self, owner_id: str, text: str, channel: str = "web", log_text: str | None = None) -> str:
+        self.check(owner_id)
+        key = (owner_id, date.today().isoformat())
         self.counts[key] = self.counts.get(key, 0) + 1
+        ahead = self._unfinished()
         turn = Turn(id="t_" + secrets.token_hex(6), owner_id=owner_id, channel=channel)
         self.turns[turn.id] = turn
         self.ws.add_message(owner_id, "owner", log_text or text, channel)
-        lock = self.locks.setdefault(owner_id, asyncio.Lock())
-        if lock.locked() or self.sem.locked():
-            waiting = sum(1 for t in self.turns.values() if not t.done and not t.started and t.id != turn.id)
-            self._emit(turn, {"type": "queued", "position": waiting + 1})
+        self.locks.setdefault(owner_id, asyncio.Lock())
+        if ahead >= self.s.max_concurrent:
+            self._emit(turn, {"type": "queued", "position": ahead - self.s.max_concurrent + 1})
         task = asyncio.create_task(self._run(turn, text))
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)

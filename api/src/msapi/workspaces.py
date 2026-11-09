@@ -101,17 +101,22 @@ class Workspaces:
         return [json.loads(line) for line in p.read_text().splitlines() if line.strip()]
 
     # approvals: decided only here, never by the agent
-    def decide(self, owner_id: str, approval_id: str, decision: str) -> dict:
-        """Flip a pending approval. Raises NotFound, or ValueError if it was already decided."""
+    def pending_approval(self, owner_id: str, approval_id: str) -> dict:
+        """The approval if it is still pending. Raises NotFound, or ValueError if it was already decided."""
         if not re.fullmatch(r"ap_[A-Za-z0-9]+", approval_id or ""):
             raise NotFound(approval_id)
-        p = self.require(owner_id) / "approvals" / f"{approval_id}.json"
-        ap = _read(p)
+        ap = _read(self.require(owner_id) / "approvals" / f"{approval_id}.json")
         if not ap:
             raise NotFound(approval_id)
         prior = _read(self.decisions_dir(owner_id) / f"{approval_id}.json")
         if prior or ap.get("status") != "pending":
             raise ValueError((prior or ap).get("status"))
+        return ap
+
+    def decide(self, owner_id: str, approval_id: str, decision: str) -> dict:
+        """Flip a pending approval. Raises NotFound, or ValueError if it was already decided."""
+        ap = self.pending_approval(owner_id, approval_id)
+        p = self.owner_dir(owner_id) / "approvals" / f"{approval_id}.json"
         ap = {**ap, "status": "approved" if decision == "approve" else "rejected", "decided_at": now()}
         _write(self.decisions_dir(owner_id) / f"{approval_id}.json",
                {"id": approval_id, "tool_id": ap["tool_id"], "status": ap["status"], "decided_at": ap["decided_at"]})

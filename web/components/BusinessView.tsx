@@ -52,11 +52,22 @@ export default function BusinessView({ ownerId, demo }: { ownerId: string; demo?
     if (!live) return;
     let gone = false;
     health().then((ok) => { if (!gone) setOffline(!ok); });
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void refresh();
-    if (initialTurn) follow(initialTurn);
+    // After the first load, follow the turn that is running now; ?turn= can be an old one after a reload.
+    getOwner(ownerId).then(
+      (b) => {
+        if (gone) return;
+        setBundle(b); setLoadError(false);
+        const turn = b.active_turn ?? initialTurn;
+        if (turn) follow(turn);
+      },
+      () => {
+        if (gone) return;
+        setLoadError(true);
+        if (initialTurn) follow(initialTurn);
+      },
+    );
     return () => { gone = true; closeRef.current?.(); };
-  }, [live, refresh, follow, initialTurn]);
+  }, [live, ownerId, follow, initialTurn]);
 
   const send = async (text: string) => {
     const id = await startTurn(ownerId, text);

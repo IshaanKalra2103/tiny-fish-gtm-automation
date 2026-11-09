@@ -2,10 +2,12 @@
 import { useState } from "react";
 import type { Profile } from "@/lib/types";
 import { BUSINESS_TYPE_LABELS, INTEGRATION_LABELS } from "@/lib/catalog";
+import { ApiError } from "@/lib/api";
 
 export default function ProfileCard({ profile, onEdit }: { profile: Profile; onEdit?: (text: string) => Promise<void> }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState("");
   return (
     <div className="card p-5 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -42,7 +44,9 @@ export default function ProfileCard({ profile, onEdit }: { profile: Profile; onE
             e.preventDefault();
             if (!text.trim()) return;
             setBusy(true);
-            try { await onEdit(text.trim()); setText(""); } finally { setBusy(false); }
+            try { await onEdit(text.trim()); setText(""); setProblem(""); }
+            catch (err) { setProblem(err instanceof ApiError ? err.message : "We could not reach our agent just now. Please try again in a minute."); }
+            finally { setBusy(false); }
           }}
         >
           <label htmlFor="profile-edit" className="font-semibold">Something not right? Tell us what to change.</label>
@@ -51,6 +55,7 @@ export default function ProfileCard({ profile, onEdit }: { profile: Profile; onE
           <button className="btn btn-secondary mt-3" disabled={busy || !text.trim()}>
             {busy ? "Sending..." : "Update what you understood"}
           </button>
+          {problem && <p role="alert" className="mt-3 text-brick font-semibold">{problem}</p>}
         </form>
       )}
     </div>

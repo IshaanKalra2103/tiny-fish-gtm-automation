@@ -4,7 +4,7 @@ import time
 from datetime import date
 
 from .settings import Settings
-from .turns import TurnManager
+from .turns import LimitReached, TurnManager
 from .workspaces import Workspaces
 
 MAX_TEXTS = 3
@@ -42,7 +42,11 @@ class IMessage:
         self.counts[key] = self.counts.get(key, 0) + 1
         oid = self.ws.owner_for_phone(from_hash)
         link = f"{self.s.web_url}/b/{oid}"
-        ev = await self.turns.wait(self.turns.start(oid, text, "imessage"), self.wait_s)
+        try:
+            tid = self.turns.start(oid, text, "imessage")
+        except LimitReached as e:  # busy owner, full queue, daily cap: the relay texts the detail back
+            raise RateLimited(str(e))
+        ev = await self.turns.wait(tid, self.wait_s)
         if ev is None:
             replies = ["Still working on that. I'll put everything on your page."]
         elif ev["type"] == "error":
