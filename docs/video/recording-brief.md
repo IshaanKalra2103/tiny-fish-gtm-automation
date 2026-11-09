@@ -15,7 +15,7 @@ The four parts the rubric asks for each get a title card, so judges can check th
 | 5:15 to 6:45 | 2. How we approached building it | Architecture and catalog diagrams, code | A and B |
 | 6:45 to 7:55 | 3. Evidence it works and is worth it | Results cards from tonight's real runs | A and B |
 | 7:55 to 9:20 | 4. The next 16 weeks | You two on camera, a timeline card building beside you | A and B alternate |
-| 9:20 to 9:45 | Who built what | Split screen of you both | A and B |
+| 9:20 to 9:45 | Close | Ishaan, then the end card | A |
 
 About 3.5 minutes of this is you on camera. The rest is voice-over on screen recordings, which I capture myself.
 
@@ -31,12 +31,13 @@ Camera (on-camera clips, marked C):
 Recording apart (you are not in the same place):
 - Each of you records only your own lines, on your own phone, whenever suits you. Nobody needs to be on a call.
 - Match each other so the cuts look like one film. Both stand (or both sit), lens at eye level, about 1.2 m away, light from a window in front, a plain wall or a tidy room behind, no strong colored light.
-- Sit or stand in the middle of the frame with space on both sides. The split-screen clips (C2 and C15) keep the middle half of each frame, so your head and shoulders must fit there.
+- Sit or stand in the middle of the frame with space on both sides. The split-screen opener (C2) keeps the middle half of each frame, so your head and shoulders must fit there.
 - Before recording, each of you takes one photo from your camera spot and texts it to the other. Fix anything that looks very different (one much darker, one much closer). It takes a minute.
-- Split-screen dialogue (C2, C15): say your own lines only, with a two-second pause between them, looking into the lens. I time the back-and-forth in the edit.
+- Split-screen dialogue (C2): say your own lines only, with a two-second pause between them, looking into the lens. I time the back-and-forth in the edit.
 
 Voice-over (clips marked V):
 - Record in the same quiet room with Voice Memos, phone about 30 cm from your mouth. Not AirPods: their mic sounds thin.
+- Dylan: record your V lines as landscape video like the rest; I take the sound from them. For those clips move the phone to arm's length (framing doesn't matter, the picture is not used), so the voice sounds close, not roomy.
 - Turn off fans and AC. Soft furnishings help; a bare kitchen echoes.
 
 Every clip:
@@ -104,7 +105,7 @@ You don't need the exact words. Keep the meaning, and say every number exactly a
 **V11 (A)**, safety:
 > The rule that matters most is no account without the owner's yes. At first that was a line in the prompt. But the agent reads websites, and a website can tell it to ignore its instructions. So we moved the rule into code. The owner's answer goes into a folder the agent can only read, and the sign-up tool won't start without a yes for that exact tool. No open web access, no payment details, and hard spending caps.
 
-**C6 (B, single)**:
+**C6 (A, single)**:
 > We tested it the way an owner would use it: on real websites, in the live product, through the same buttons. That's how we found that iMessage showed raw formatting symbols, and that the agent's reply showed up twice. We fixed both today.
 
 ## Part 3. Evidence it works and is worth it (6:45 to 7:55)
@@ -144,13 +145,12 @@ All on camera, singles, alternating. A timeline card builds beside you.
 **C14 (B)**:
 > Why couldn't a big AI company do this overnight? They could build the chat. The hard part is a catalog a person checks against evidence every week, partners owners already trust, and actually setting the tool up.
 
-## Part 5. Who built what (9:20 to 9:45)
+## Part 5. Close (9:20 to 9:45)
 
-**C15 (split screen: each of you records your own lines)**. Each says one plain sentence about their own part. The rubric scores each member's contribution.
-> A: I built [your part, e.g. "the agent, the sandbox it runs in, and the setup flow"].
-> B: I built [your part].
-> A: Thanks to [Coach name] for coaching us on [topic]. (Drop this line if nobody coached you.)
-> A and B (each records it): Thanks for watching.
+**C15 (A, single)**:
+> That's MainStreet AI. We find the AI tools worth a small business's time, check them, and set them up. It's live right now, so try it with your own business. Thanks for watching.
+
+Then the end card: "MainStreet AI", "Team Forge", the site link https://mainstreet-ai-five.vercel.app, and the coaching credit if there is one (the rules ask for it).
 
 ## B-roll (phone, 10 minutes)
 
@@ -167,4 +167,4 @@ All on camera, singles, alternating. A timeline card builds beside you.
 ## Send me
 
 1. Ishaan: AirDrop your files to the Mac (they land in Downloads). Dylan: upload yours to a Google Drive or iCloud folder and text Ishaan the link; he puts the files in `footage/` in the repo. Nobody renames anything: the clip numbers you said out loud are how I sort them.
-2. In the chat: Dylan's name as it should appear in the credits, and the coach's name and topic, or "no coach".
+2. In the chat: the coach's name and topic for the end card, or "no coach".
