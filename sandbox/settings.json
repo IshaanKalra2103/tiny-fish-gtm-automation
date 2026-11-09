@@ -7,9 +7,10 @@
       "Bash(inbox:*)",
       "Bash(preview:*)",
       "Bash(approval:*)",
-      "Read",
-      "Write",
-      "Edit",
+      "Read(//work/**)",
+      "Read(//sandbox/**)",
+      "Write(//work/**)",
+      "Edit(//work/**)",
       "Skill"
     ],
     "deny": [
@@ -27,7 +28,15 @@
       "Edit(//work/source.json)",
       "Edit(//work/.revealed.json)",
       "Edit(//budget/**)",
-      "Edit(//sandbox/**)"
+      "Edit(//sandbox/**)",
+      "Read(//proc/**)",
+      "Read(//sys/**)",
+      "Read(//etc/**)",
+      "Read(//work/.claude-config/**)",
+      "Edit(//work/.claude-config/**)",
+      "Write(//work/.claude-config/**)",
+      "Edit(//work/.claude/**)",
+      "Write(//work/.claude/**)"
     ]
   },
   "env": {

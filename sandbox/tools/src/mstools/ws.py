@@ -2,14 +2,30 @@
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
 from . import config
 from .cli import ToolError, run
-from .schemas import KINDS
+from .schemas import APPROVAL_ID_PATTERN, ID_PATTERN, KINDS
 
 REDACTED = "***"
+
+
+def check_id(value: str | None, what: str = "tool id", pattern: str = ID_PATTERN) -> str:
+    """Ids from the model become file names, so they are checked before any path is built."""
+    if not isinstance(value, str) or not re.fullmatch(pattern, value):
+        raise ToolError(f"'{value}' is not a valid {what}. Use the id exactly as the catalog gives it "
+                        "(lowercase letters, digits and dashes).")
+    return value
+
+
+def _inside(work: Path, path: Path) -> Path:
+    """Second wall: whatever the id, the file must land inside the workspace."""
+    if not path.resolve().is_relative_to(work.resolve()):
+        raise ToolError("That record would be saved outside your workspace, so it was not saved.")
+    return path
 
 
 def path_for(kind: str, data: dict, work: Path) -> Path:
@@ -18,13 +34,13 @@ def path_for(kind: str, data: dict, work: Path) -> Path:
     if kind == "needs":
         return work / "needs.json"
     if kind == "compare":
-        return work / f"compare_{data['need_id']}.json"
+        return _inside(work, work / f"compare_{check_id(data['need_id'], 'job id')}.json")
     if kind == "preview":
-        return work / f"preview_{data['tool_id']}.json"
+        return _inside(work, work / f"preview_{check_id(data['tool_id'])}.json")
     if kind == "setup":
-        return work / f"setup_{data['tool_id']}.json"
+        return _inside(work, work / f"setup_{check_id(data['tool_id'])}.json")
     if kind == "approval":
-        return work / "approvals" / f"{data['id']}.json"
+        return _inside(work, work / "approvals" / f"{check_id(data['id'], 'approval id', APPROVAL_ID_PATTERN)}.json")
     raise ToolError(f"Unknown kind '{kind}'. Use one of: {', '.join(KINDS)}.")
 
 

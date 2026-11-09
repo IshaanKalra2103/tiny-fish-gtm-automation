@@ -1,7 +1,13 @@
 """Typed records the agent writes into the owner workspace and the catalog holds. Field names follow spec §6."""
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
+
+# Ids that end up in file names. Catalog ids are slugs (catalog extract.slug), so no dots, slashes or "..".
+ID_PATTERN = r"^[a-z0-9][a-z0-9-]{0,63}$"
+APPROVAL_ID_PATTERN = r"^ap_[A-Za-z0-9]{1,32}$"
+ToolId = Annotated[str, Field(pattern=ID_PATTERN)]
+ApprovalId = Annotated[str, Field(pattern=APPROVAL_ID_PATTERN)]
 
 BusinessType = Literal["restaurant", "coffee_shop", "hvac", "landscaping", "salon", "other"]
 NeedId = Literal[
@@ -93,19 +99,19 @@ class Needs(BaseModel):
 
 
 class CompareOption(BaseModel):
-    tool_id: str
+    tool_id: ToolId
     fit_sentence: str
     works_with: list[Integration] = []
 
 
 class Compare(BaseModel):
     need_id: NeedId
-    options: list[CompareOption] = Field(min_length=2, max_length=3)
-    recommended_tool_id: str
+    options: list[CompareOption] = Field(min_length=1, max_length=3)
+    recommended_tool_id: ToolId
 
 
 class Preview(BaseModel):
-    tool_id: str
+    tool_id: ToolId
     prompt: str
     status: Literal["completed", "failed", "capped"]
     video_file: str | None = None
@@ -113,7 +119,7 @@ class Preview(BaseModel):
 
 
 class SetupRecord(BaseModel):
-    tool_id: str
+    tool_id: ToolId
     status: Literal["planned", "awaiting_approval", "running", "needs_owner", "done", "failed"]
     approval_id: str | None = None
     run_id: str | None = None
@@ -128,8 +134,8 @@ class SetupRecord(BaseModel):
 
 
 class Approval(BaseModel):
-    id: str
-    tool_id: str
+    id: ApprovalId
+    tool_id: ToolId
     summary: str
     status: Literal["pending", "approved", "rejected"] = "pending"
     created_at: str

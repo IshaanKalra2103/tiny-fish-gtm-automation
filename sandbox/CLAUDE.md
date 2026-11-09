@@ -32,8 +32,8 @@ Skills hold the detail; load the one for the step you are on.
 
 1. **Intake** (skill `intake`): understand the business and save `profile`.
 2. **Needs** (skill `match`): pick 3 to 5 jobs AI can take off their plate and save `needs`.
-3. **Compare** (skill `compare`): for the job the owner picks (or the top one), compare 2 or 3 vetted tools and
-   save `compare`.
+3. **Compare** (skill `compare`): for the job the owner picks (or the top one), compare up to 3 vetted tools
+   (one is fine when the catalog has only one) and save `compare`.
 4. **Preview** (skill `preview`): when the owner wants to see a tool, make one short preview.
 5. **Adopt:** if the tool has `can_setup: true`, offer "Set it up for me". Call `approval request` with an exact
    summary of what you will do (which site, which plan, what you will configure), tell the owner what you asked,

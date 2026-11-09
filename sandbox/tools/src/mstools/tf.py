@@ -13,12 +13,19 @@ from .cli import ToolError, log, run
 DEFAULT_MAX_STEPS = 45
 MAX_STEPS = int(config.CAPS["setup"] / config.AGENT_USD_PER_STEP)  # $1.00 per setup -> 62; spec says about 60
 RUNS_PER_APPROVAL = 2  # sign-up, then email verification + configuration
+RUN_ID_RE = r"[A-Za-z0-9][A-Za-z0-9_-]{0,127}"  # TinyFish run ids name files under /work/runs
+
+
+def check_run_id(run_id: str | None) -> str:
+    if not isinstance(run_id, str) or not re.fullmatch(RUN_ID_RE, run_id):
+        raise ToolError(f"'{run_id}' is not a run id. Use the run_id that `tf agent-start` returned.")
+    return run_id
 
 
 def _save_run(info: dict) -> None:
     d = config.work() / "runs"
     d.mkdir(parents=True, exist_ok=True)
-    (d / f"{info['run_id']}.json").write_text(json.dumps(info, indent=1, default=str))
+    (d / f"{check_run_id(info['run_id'])}.json").write_text(json.dumps(info, indent=1, default=str))
 
 
 def check_approval(aid: str, tool: str) -> None:
@@ -82,6 +89,7 @@ def _main(a: argparse.Namespace) -> dict:
         return {"run_id": run_id, "max_steps": steps, "reserved_usd": reserve,
                 "next": f"tf agent-wait {run_id}"}
     # agent-wait / agent-status
+    check_run_id(a.run_id)
     poll = float(os.environ.get("MS_POLL_SECONDS", "5"))
     deadline = time.time() + (a.timeout if a.cmd == "agent-wait" else 0)
     seen_stream = False

@@ -16,13 +16,20 @@ def test_needs_requires_3_to_5_items():
     assert len(Needs(items=[need()] * 3).items) == 3
 
 
-def test_compare_requires_2_to_3_options():
+def test_compare_takes_1_to_3_options():
     opt = CompareOption(tool_id="a", fit_sentence="Fits", works_with=["square"])
     with pytest.raises(ValidationError):
-        Compare(need_id="reviews", options=[opt], recommended_tool_id="a")
+        Compare(need_id="reviews", options=[], recommended_tool_id="a")
     with pytest.raises(ValidationError):
         Compare(need_id="reviews", options=[opt] * 4, recommended_tool_id="a")
     assert Compare(need_id="reviews", options=[opt, opt], recommended_tool_id="a")
+
+
+def test_compare_with_one_option_saves(env):
+    from mstools import ws
+    path = ws.save("compare", {"need_id": "missed-calls", "recommended_tool_id": "recep-a",
+                               "options": [{"tool_id": "recep-a", "fit_sentence": "Answers calls", "works_with": []}]})
+    assert path.name == "compare_missed-calls.json"
 
 
 def tool_data(**over):

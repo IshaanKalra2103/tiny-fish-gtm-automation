@@ -33,6 +33,7 @@ def _record(tool: str, prompt: str, status: str, video_file: str | None = None, 
 
 
 def make(tool: str, prompt: str, seconds: int) -> dict:
+    ws.check_id(tool)  # it names the .mp4 and the record: check before any spend or file write
     work = config.work()
     seconds = max(config.PREVIEW_MIN_SECONDS, min(config.PREVIEW_MAX_SECONDS, seconds))
     allowed = [d for d in config.VIDEO_DURATIONS if d <= seconds] or [min(config.VIDEO_DURATIONS)]
