@@ -1,10 +1,16 @@
 #!/bin/bash
 # ms-relay startup-script (instance metadata). Runs at every boot; does its work once.
 # Installs Node 22 and the msrelay user. The relay code and its (disabled) unit come from push.sh relay.
-trap 'echo "mainstreet-bootstrap: FAILED"' ERR # set before -x, so the trace never shows this text
+# The result also goes to the guest attribute mainstreet/bootstrap (the serial log can drop short output).
+report() {
+  echo "mainstreet-bootstrap: $1"
+  curl -fsS -m 5 -X PUT --data "$1" -H "Metadata-Flavor: Google" \
+    http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/mainstreet/bootstrap >/dev/null 2>&1 || true
+}
+trap 'report FAILED' ERR # set before -x, so the trace never shows the marker text
 set -euxo pipefail
 MARK=/var/lib/mainstreet/bootstrap.done
-if [[ -f $MARK ]]; then echo "mainstreet-bootstrap: done"; exit 0; fi
+if [[ -f $MARK ]]; then report done; exit 0; fi
 
 id msrelay >/dev/null 2>&1 || useradd -r -m -d /var/lib/msrelay -s /usr/sbin/nologin msrelay
 
@@ -25,4 +31,4 @@ fi
 install -d -o msrelay -g msrelay /opt/ms-relay
 install -d /usr/local/lib/mainstreet /var/lib/mainstreet
 touch "$MARK"
-echo "mainstreet-bootstrap: done"
+report done

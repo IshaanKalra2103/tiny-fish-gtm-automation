@@ -3,10 +3,16 @@
 # Installs Docker, uv and the mainstreet user. The app itself, its units and the sandbox image come from push.sh.
 # push.sh waits for these lines on the serial console before its first SSH (an SSH login creates a user,
 # which would take uid 1000 if it came first).
-trap 'echo "mainstreet-bootstrap: FAILED"' ERR # set before -x, so the trace never shows this text
+# The result also goes to the guest attribute mainstreet/bootstrap (the serial log can drop short output).
+report() {
+  echo "mainstreet-bootstrap: $1"
+  curl -fsS -m 5 -X PUT --data "$1" -H "Metadata-Flavor: Google" \
+    http://metadata.google.internal/computeMetadata/v1/instance/guest-attributes/mainstreet/bootstrap >/dev/null 2>&1 || true
+}
+trap 'report FAILED' ERR # set before -x, so the trace never shows the marker text
 set -euxo pipefail
 MARK=/var/lib/mainstreet/bootstrap.done
-if [[ -f $MARK ]]; then echo "mainstreet-bootstrap: done"; exit 0; fi
+if [[ -f $MARK ]]; then report done; exit 0; fi
 
 # The user comes first and takes uid 1000: that is the sandbox image's "node" user, and the API and the
 # container both write the bind-mounted workspaces, so they must be the same uid (as on the Mac).
@@ -34,4 +40,4 @@ install -d -o mainstreet -g mainstreet /opt/mainstreet /opt/mainstreet/workspace
 install -d -m 700 /etc/mainstreet
 install -d /usr/local/lib/mainstreet /var/lib/mainstreet
 touch "$MARK"
-echo "mainstreet-bootstrap: done"
+report done
