@@ -129,6 +129,16 @@ def marks(name: str) -> dict[str, float]:
     return out
 
 
+def frame_size(p: Path) -> tuple[int, int]:
+    r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height",
+                        "-of", "csv=p=0", str(p)], capture_output=True, text=True)
+    try:
+        w, h = r.stdout.strip().split(",")[:2]
+        return int(w), int(h)
+    except ValueError:
+        return 0, 0
+
+
 def media_len(p: Path) -> float:
     r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(p)],
                        capture_output=True, text=True)
@@ -183,6 +193,8 @@ def screen(label: str, name: str, a: str | None, b: str | None, part: dict | Non
     # last frame (prep pads with it), so a beat never runs into the next one's footage.
     speed = round(span / need, 2) if span >= need else round(max(0.6, span / need), 2)
     kw = {"kind": "screen", "file": rel(f), "in": round(t0, 2), "out": round(t1, 2)}
+    if f.parent == SCR and frame_size(f) == (1920, 1080):   # rec_screens: 1440x810 page, grey-padded to 1080p
+        kw["crop"] = [0, 0, 1440, 810]
     if span / speed < need - 0.05:
         kw["dur"] = round(need, 2)
     if speed < 0.95:

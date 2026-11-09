@@ -115,16 +115,19 @@ class Prep:
     def venc(self):
         return ["-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "17", "-g", "30", "-pix_fmt", "yuv420p"]
 
-    def video(self, name, file, t_in, length, tw, th, speed=1.0, mode="cover", src_max=None):
+    def video(self, name, file, t_in, length, tw, th, speed=1.0, mode="cover", src_max=None, crop=None):
         path = self.src(file)
         info = probe(path)
         if mode == "screen":
+            # crop = [x, y, w, h]: the part of the frame that holds the page (Playwright pads with grey)
+            pre = f"crop={crop[2]}:{crop[3]}:{crop[0]}:{crop[1]}," if crop else ""
+            iw, ih = (crop[2], crop[3]) if crop else (info["w"], info["h"])
             # long side 1920, keep aspect; Rust fits it into the screen frame
-            if info["w"] >= info["h"]:
-                sw, sh = 1920, round(1920 * info["h"] / info["w"] / 2) * 2
+            if iw >= ih:
+                sw, sh = 1920, round(1920 * ih / iw / 2) * 2
             else:
-                sh, sw = 1920, round(1920 * info["w"] / info["h"] / 2) * 2
-            fit = f"scale={sw}:{sh},setsar=1"
+                sh, sw = 1920, round(1920 * iw / ih / 2) * 2
+            fit = f"{pre}scale={sw}:{sh}:flags=lanczos,setsar=1"
             tw, th = sw, sh
         else:
             fit = self.fit_filter(info, tw, th)
@@ -186,7 +189,8 @@ class Prep:
         if t_out is not None:
             cmd += ["-t", f"{t_out - (t_in or 0):.3f}"]
         cmd += ["-i", path, "-vn"]
-        af = f"loudnorm=I={lufs}:TP=-2:LRA=11,aresample=48000" if normalize else "aresample=48000"
+        hp = "highpass=f=70," if lufs == VOICE_LUFS else ""   # room rumble off voices, never off music
+        af = f"{hp}loudnorm=I={lufs}:TP=-2:LRA=11,aresample=48000" if normalize else "aresample=48000"
         cmd += ["-af", af, "-ac", "2", "-ar", "48000", "-c:a", "pcm_s16le"]
         real = self.cached(name, cmd, [path])
         return real, probe(self.media / real)["dur"]
@@ -260,7 +264,7 @@ class Prep:
                 t_out = float(seg["out"]) if "out" in seg else probe(self.src(seg["file"]))["dur"]
                 dur = float(seg.get("dur", (t_out - t_in) / speed))
                 vname, vw, vh = self.video(f"{tag}_screen.mp4", seg["file"], t_in, dur, W, H, speed=speed, mode="screen",
-                                          src_max=t_out - t_in)
+                                          src_max=t_out - t_in, crop=seg.get("crop"))
                 out.update(video=vname, vw=vw, vh=vh)
             elif kind == "card":
                 style = seg.get("style") or die(f"seg {i}: card needs style")
