@@ -12,6 +12,7 @@ from .cli import ToolError, log, run
 
 DEFAULT_MAX_STEPS = 45
 MAX_STEPS = int(config.CAPS["setup"] / config.AGENT_USD_PER_STEP)  # $1.00 per setup -> 62; spec says about 60
+RUNS_PER_APPROVAL = 2  # sign-up, then email verification + configuration
 
 
 def _save_run(info: dict) -> None:
@@ -35,9 +36,9 @@ def check_approval(aid: str, tool: str) -> None:
     if ap.get("status") != "approved":
         raise ToolError(f"Approval {aid} is {ap.get('status')}, not approved. Do not start a setup.")
     runs = config.work() / "runs"
-    for f in sorted(runs.glob("*.json")) if runs.exists() else []:
-        if json.loads(f.read_text()).get("approval") == aid:
-            raise ToolError(f"Approval {aid} was already used for run {f.stem}. Ask the owner again with `approval request`.")
+    used = [f.stem for f in sorted(runs.glob("*.json")) if json.loads(f.read_text()).get("approval") == aid] if runs.exists() else []
+    if len(used) >= RUNS_PER_APPROVAL:
+        raise ToolError(f"Approval {aid} was already used for runs {', '.join(used)}. Ask the owner again with `approval request`.")
 
 
 def outcome(info: dict) -> str:

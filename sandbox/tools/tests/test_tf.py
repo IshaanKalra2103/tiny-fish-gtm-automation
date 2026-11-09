@@ -92,12 +92,17 @@ def test_agent_start_refuses_approval_for_other_tool(env, monkeypatch, capsys):
     assert code == 1 and "chat-b" in out["error"] and fake.queued == []
 
 
-def test_agent_start_refuses_reused_approval(env, monkeypatch, capsys):
+def test_agent_start_allows_two_runs_per_approval_then_refuses(env, monkeypatch, capsys):
+    """Sign-up, then a second run to verify the email and configure; a third needs a new yes."""
     approve(env)
     fake = FakeClient()
-    assert call(monkeypatch, capsys, fake, *START)[0] == 0
-    code, out = call(monkeypatch, capsys, fake, *START)
-    assert code == 1 and "already used" in out["error"] and len(fake.queued) == 1
+    small = (*START, "--max-steps", "20")
+    assert call(monkeypatch, capsys, fake, *small)[0] == 0
+    fake.agent = NS(queue=lambda **kw: (fake.queued.append(kw), NS(run_id="run_2", error=None))[1])
+    assert call(monkeypatch, capsys, fake, *small)[0] == 0
+    fake.agent = NS(queue=lambda **kw: (fake.queued.append(kw), NS(run_id="run_3", error=None))[1])
+    code, out = call(monkeypatch, capsys, fake, *small)
+    assert code == 1 and "already used" in out["error"] and len(fake.queued) == 2
 
 
 def test_agent_start_refuses_when_budget_below_one_setup(env, monkeypatch, capsys):
