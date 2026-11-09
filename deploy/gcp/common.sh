@@ -81,11 +81,26 @@ ensure_running() {
     sleep 5
   done
   [[ $(vm_status "$vm") == RUNNING ]] || die "$vm did not reach RUNNING"
+  wait_bootstrap_serial "$vm"
   for ((i = 0; i < 30; i++)); do
     vm_ssh "$vm" true >/dev/null 2>&1 && return 0
     sleep 6
   done
   die "$vm is RUNNING but SSH over IAP does not answer"
+}
+
+# Wait for the startup-script's "mainstreet-bootstrap: done" on the serial console, without SSH: the first
+# SSH login creates the caller's user, and on ms-agent that must not happen before mainstreet takes uid 1000.
+wait_bootstrap_serial() {
+  local vm=$1 i out
+  for ((i = 0; i < 80; i++)); do
+    out="$(gcloud compute instances get-serial-port-output "$vm" --zone "$ZONE" 2>/dev/null | grep -Eo 'mainstreet-bootstrap: (done|FAILED)' | tail -1 || true)"
+    [[ $out == *done ]] && return 0
+    [[ $out == *FAILED ]] && die "$vm's startup-script failed; see: gcloud compute instances get-serial-port-output $vm --zone $ZONE"
+    ((i == 0)) && say "waiting for $vm's startup-script (serial console)"
+    sleep 8
+  done
+  die "$vm's startup-script did not finish in 10 min"
 }
 
 wait_bootstrap() { # wait_bootstrap VM: the startup-script installs packages once; up to 10 min

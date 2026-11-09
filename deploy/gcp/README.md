@@ -16,7 +16,7 @@ Project and location: see `project.env` (written by `setup.sh`). Region `us-east
 | `ms-waker` | Cloud Run service, the public API URL (`WAKER_URL` in `project.env`). Proxies every request to `ms-agent:8787` and starts the VM when it is stopped. min 0, max 2 instances, 900 s timeout, Direct VPC egress (private ranges only). |
 | `ms-relay` | VM, e2-micro (free tier), Debian 12, Node 22. The iMessage relay (`imessage/`) as the systemd unit `ms-relay`, installed disabled. |
 | `ms-killswitch` | Cloud Run function (2nd gen) on the Pub/Sub topic `billing-alerts`. Disables billing on this project when the budget is used up. |
-| Budget | `aisb-mainstreet 200 USD cap` on the billing account, scoped to this project, credits excluded, alerts at 50/90/100%, notifications to `billing-alerts`. |
+| Budget | `aisb-mainstreet 200 USD cap` on the billing account, scoped to this project, cumulative since 2026-11-01 (not monthly), credits excluded, alerts at 50/90/100%, notifications to `billing-alerts`. |
 | Firewall | `ms-allow-iap-ssh` (22 from 35.235.240.0/20, IAP only), `ms-allow-waker-8787` (8787 from the default us-east1 subnet only), `ms-deny-other-ingress` (everything else denied for both VMs). The default 0.0.0.0/0 SSH/RDP/ICMP rules are deleted. |
 | Service accounts | `ms-agent-vm` and `ms-relay-vm` (read their own secrets), `ms-waker` (custom role with only `compute.instances.get` and `compute.instances.start`, bound on `ms-agent` alone), `ms-killswitch` (Project Billing Manager on this project only). |
 | Artifact Registry | `ms` (docker) for the waker image. |

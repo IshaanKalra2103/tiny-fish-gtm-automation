@@ -220,7 +220,7 @@ gcloud functions add-invoker-policy-binding "$KILLSWITCH" --region "$REGION" \
 
 BUDGET="$(gcloud billing budgets list --billing-account "$BILLING_ACCOUNT" --billing-project "$PROJECT_ID" \
   --format='value(name,displayName)' 2>/dev/null | grep -F "$BUDGET_NAME" | cut -f1 | head -1 || true)"
-BUDGET_ARGS=(--budget-amount=200USD --filter-projects="projects/$PROJECT_ID" --credit-types-treatment=exclude-all-credits
+BUDGET_ARGS=(--budget-amount=200USD --start-date=2026-11-01 --filter-projects="projects/$PROJECT_ID" --credit-types-treatment=exclude-all-credits
   --notifications-rule-pubsub-topic="projects/$PROJECT_ID/topics/$TOPIC" --billing-project "$PROJECT_ID")
 if [[ -z $BUDGET ]]; then
   say "creating budget: 200 USD on $PROJECT_ID, alerts at 50/90/100%"
