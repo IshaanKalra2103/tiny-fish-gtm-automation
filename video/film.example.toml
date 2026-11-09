@@ -67,6 +67,12 @@ fade = 0.3
 vo = [{ file = "../footage/placeholder/vo1.wav", at = 0.2 }]
 
 [[seg]]
+kind = "screen"
+file = "../footage/placeholder/portrait.mp4"
+in = 0.0
+out = 3.0
+
+[[seg]]
 kind = "card"
 style = "bullets"
 title = "What the agent does"

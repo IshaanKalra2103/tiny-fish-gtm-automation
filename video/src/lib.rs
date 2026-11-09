@@ -252,9 +252,9 @@ impl Seg {
         let (max_w, max_h, cy) = if full {
             (1920.0, 1080.0, 540.0)
         } else if p.get("caption").is_some() {
-            (1766.0, 900.0, 505.0)
+            (1766.0, 920.0, 500.0)
         } else {
-            (1766.0, 960.0, 540.0)
+            (1766.0, 980.0, 540.0)
         };
         let s = (max_w / vw).min(max_h / vh);
         let (bw, bh) = (vw * s, vh * s);
@@ -512,7 +512,7 @@ fn image<'a>(frame: &mut Frame, ctx: &FFramesContext<'a, '_>, p: &Value, dur: f3
     let Some(img) = sv(p, "image").and_then(|n| ctx.get_image(n)) else { return Svgr::empty() };
     let s = 1.0 + 0.06 * clamp01(frame.seconds() / dur.max(0.1));
     let (_, o) = enter(frame, 0.0);
-    let pad = fv(p, "pad").unwrap_or(0.0);
+    let pad = fv(p, "pad").unwrap_or(48.0);
     fframes::svgr!(<g opacity={o} transform={format!("translate({} {}) scale({}) translate(-960 -540)", 960.0, 540.0, s)}>
         <image href={img.href()} x={pad} y={pad} width={1920.0 - 2.0 * pad} height={1080.0 - 2.0 * pad} preserveAspectRatio="xMidYMid meet" />
     </g>)

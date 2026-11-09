@@ -107,7 +107,8 @@ right = { file = "../footage/b.mov", in = 1.0, out = 5.0, audio_at = 4.5 }
 
 Each side is center-cropped to 958x1080 with a 4 px dark gap. Each side's audio (`in`..`out`)
 plays at `audio_at` seconds into the segment, and that side's picture is shifted to stay in lip
-sync (before and after the line it shows the footage around it, frozen if the file runs out).
+sync (before and after the line it shows the footage around it; frozen on the first or last
+frame where the file has no footage there, so give each take some lead-in).
 Several lines per side: replace `in/out/audio_at` with
 `lines = [{ in = 2.0, out = 4.1, at = 0.2 }, { in = 9.0, out = 12.5, at = 6.0 }]`.
 
@@ -179,7 +180,7 @@ blocks = [{ label = "Weeks 1-4", title = "Real owners", line = "...", at = 0.5 }
 kind = "card"
 style = "image"
 file = "../docs/video/architecture.png"   # full frame, fitted, slow 1.0 -> 1.06 push-in
-pad = 0                                   # optional margin in px
+pad = 48                                  # optional margin in px (default 48)
 
 [[seg]]
 kind = "card"
